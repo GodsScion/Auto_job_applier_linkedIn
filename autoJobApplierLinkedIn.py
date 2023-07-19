@@ -1,20 +1,19 @@
 # Imports
 import csv
 from datetime import datetime
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from openChrome import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
 from config import *
 from helpers import *
 from clickers_and_finders import *
+from resume_generator import is_logged_in_GPT ,login_GPT, open_resume_chat
 
 
 
 # Login Functions
-def is_logged_in():
+def is_logged_in_LN():
     if driver.current_url == "https://www.linkedin.com/feed/": return True
     try:
         driver.find_element(By.LINK_TEXT, "Sign in")
@@ -25,23 +24,25 @@ def is_logged_in():
             return False
         except Exception as e2:
             # print(e1, e2)
-            print("\n  -->  Didn't find Sign in link, so assuming user is logged in!\n\n")
+            print("Didn't find Sign in link, so assuming user is logged in!")
             return True
 
 
-def login():
+def login_LN():
     # Find the username and password fields and fill them with user credentials
     driver.get("https://www.linkedin.com/login")
     try:
         wait.until(EC.presence_of_element_located((By.LINK_TEXT, "Forgot password?")))
         try:
-            driver.find_element(By.ID, "username").send_keys(username)
+            text_input_by_ID(driver, "username", username, 1)
         except Exception as e:
-            print("\n  -->  Couldn't find username field.\n\n") #, e)
+            print("Couldn't find username field.")
+            # print(e)
         try:
-            driver.find_element(By.ID, "password").send_keys(password)
+            text_input_by_ID(driver, "password", password, 1)
         except Exception as e:
-            print("\n  -->  Couldn't find password field.\n\n") #, e)
+            print("Couldn't find password field.")
+            # print(e)
         # Find the login submit button and click it
         driver.find_element(By.XPATH, '//button[@type="submit" and contains(text(), "Sign in")]').click()
     except Exception as e1:
@@ -50,26 +51,16 @@ def login():
             profile_button.click()
         except Exception as e2:
             # print(e1, e2)
-            print("\n  -->  Couldn't Login!\n\n")
+            print("Couldn't Login!")
 
     try:
         # Wait until successful redirect, indicating successful login
         wait.until(EC.url_to_be("https://www.linkedin.com/feed/")) # wait.until(EC.presence_of_element_located((By.XPATH, '//button[normalize-space(.)="Start a post"]')))
-        return print("\n  -->  Login successful!\n\n")
+        return print("Login successful!")
     except Exception as e:
-        print("\n  -->  Seems like login attempt failed! Possibly due to wrong credentials or already logged in! Try logging in manually!\n\n") #, e)
-        count = 0
-        while not is_logged_in():
-            print("\n  -->  Seems like you're not logged in!")
-            message = "  -->  Press Enter to continue after you logged in..."
-            if count > 1:
-                message = "  -->  If you're seeing this message even after you logged in, type 'skip' and press Enter to continue or just press Enter to try again..."
-            count += 1
-            try:
-                value = input(message).lower().strip()
-                if value == 'skip': return
-            except:
-                print("  --> Only type 'skip' to skip. Try again!")
+        print("Seems like login attempt failed! Possibly due to wrong credentials or already logged in! Try logging in manually!")
+        # print(e)
+        manual_login_retry(is_logged_in_LN)
 
 
 
@@ -118,7 +109,8 @@ def apply_filters():
         show_results_button.click()
 
     except Exception as e:
-        print("\n  -->  Setting the preferences failed!\n\n") #, e)
+        print("Setting the preferences failed!")
+        # print(e)
 
 
 
@@ -147,7 +139,8 @@ def apply_to_jobs(keywords):
                     pagination_element = find_by_class(driver, "artdeco-pagination")
                     scroll_to_view(driver, pagination_element)
                 except Exception as e:
-                    print("\n  -->  Failed to find Pagination element, hence couldn't scroll till end!\n\n") #, e)
+                    print("Failed to find Pagination element, hence couldn't scroll till end!")
+                    # print(e)
 
                 # Find all job listings
                 job_listings = driver.find_elements(By.CLASS_NAME, "jobs-search-results__list-item")            
@@ -168,10 +161,10 @@ def apply_to_jobs(keywords):
                     # Skip if already applied
                     try:
                         if job_id in applied_jobs or driver.find_element(By.CLASS_NAME, "jobs-s-apply__application-link"):
-                            print("\n  -->  Already applied to '{}' job  with Job ID: {}!\n\n".format(title,job_id))
+                            print("Already applied to '{}' job  with Job ID: {}!".format(title,job_id))
                             continue
                     except Exception as e:
-                        print("\n  -->  Trying to Apply to '{}' with Job ID: {}\n\n".format(title,job_id))
+                        print("Trying to Apply to '{}' with Job ID: {}".format(title,job_id))
 
                     job_link = "https://www.linkedin.com/jobs/view/"+job_id
                     application_link = "Easy Applied"
@@ -187,7 +180,8 @@ def apply_to_jobs(keywords):
                         scroll_to_view(driver, find_by_class(driver, "jobs-company__box"))
                         scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card__content--two-pane"))
                     except Exception as e:
-                        print("\n  -->  Failed to scroll!\n\n") #, e)
+                        print("Failed to scroll!")
+                        # print(e)
 
 
                     # Hiring Manager info
@@ -196,20 +190,23 @@ def apply_to_jobs(keywords):
                         hr_link = hr_info_card.find_element(By.TAG_NAME, "a").get_attribute("href")
                         hr_name = hr_info_card.find_element(By.TAG_NAME, "span").text
                     except Exception as e:
-                        print(f"\n  -->  HR info was not given for '{title}' with Job ID: {job_id}!\n\n") #, e)
+                        print(f"HR info was not given for '{title}' with Job ID: {job_id}!")
+                        # print(e)
 
                     # Calculation of date posted
                     try:
                         time_posted_text = find_by_class(driver, "jobs-unified-top-card__posted-date").text
                         date_listed = calculate_date_posted(time_posted_text)
                     except Exception as e:
-                        print("\n  -->  Failed to calculate the date posted!\n\n") #, e)
+                        print("Failed to calculate the date posted!")
+                        # print(e)
 
                     # Get job description
                     try:
                         description = find_by_class(driver, "jobs-box__html-content").text
                     except Exception as e:
-                        print("\n  -->  Unable to extract job description!\n\n") #, e)
+                        print("Unable to extract job description!")
+                        # print(e)
 
                     # Case 1: Easy Apply Button
                     if wait_span_click(driver, "Easy Apply", 1.5): # WebDriverWait(driver,1.5).until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Easy Apply")]'))).click()
@@ -219,7 +216,7 @@ def apply_to_jobs(keywords):
                                 while (next_button):
                                     next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
                                     
-
+                                    break
                                     print()
                             except TimeoutException:
                                 wait_span_click(driver, "Submit application",2)
@@ -227,22 +224,23 @@ def apply_to_jobs(keywords):
 
                             date_applied = datetime.now()
                         except Exception as e:
-                            print("\n  -->  Failed to Easy apply!\n\n") #, e)
+                            print("Failed to Easy apply!")
+                            # print(e)
                             failed_job(job_id, job_link, resume, date_listed, "Problem in Easy Applying", e, application_link)
                             continue
                     else:
                         # Case 2: Apply externally
-                        if easy_apply_only: raise Exception("\n  -->  Easy apply failed i guess!\n\n")
+                        if easy_apply_only: raise Exception("Easy apply failed i guess!")
                         try:
                             wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Apply") and not(span[contains(@class, "disabled")])]'))).click()
                             windows = driver.window_handles
                             driver.switch_to.window(windows[len(windows)-1])
                             application_link = driver.current_url
                             driver.switch_to.window(windows[0])
-                        except Exception as e2:
-                            print(e1,e2)
-                            print("\n  -->  Failed to apply!\n\n")
-                            failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e2, application_link)
+                        except Exception as e:
+                            # print(e)
+                            print("Failed to apply!")
+                            failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link)
                             continue
                     
                     # Once the application is submitted successfully, add the application details to the CSV
@@ -250,7 +248,8 @@ def apply_to_jobs(keywords):
                     applied_jobs.add(job_id)
 
             except Exception as e:
-                print("\n  -->  Failed to find Job listings!\n\n") #, e)
+                print("Failed to find Job listings!")
+                # print(e)
     
     # Close the browser and csv file
     csvfile.close()
@@ -260,31 +259,27 @@ def apply_to_jobs(keywords):
         
 
 
-# Set up WebDriver with Chrome Profile
-options = Options()
-profile_dir = find_default_profile_directory()
-if profile_dir:
-    options.add_argument(f"--user-data-dir={profile_dir}")
-else:
-    print("\n  -->  Default profile directory not found. Using a new profile.")
-driver = webdriver.Chrome(options=options)
-driver.maximize_window()  # Maximize the browser window
-driver.switch_to.window(driver.window_handles[0])
-wait = WebDriverWait(driver, 5)
-actions = ActionChains(driver)
 
 
-
+chatGPT_tab = False
 def main():
     try:
         driver.get("https://www.linkedin.com/login")
+        if not is_logged_in_LN(): login_LN()
+        
+        try:
+            driver.switch_to.new_window('tab')
+            driver.get("https://chat.openai.com/")
+            if not is_logged_in_GPT(): login_GPT()
+            open_resume_chat()
+            
+            global chatGPT_tab
+            chatGPT_tab = driver.current_window_handle
+        except Exception as e:
+            print("Opening OpenAI chatGPT tab failed!")
 
-        # If not logged in, perform the login process
-        if not is_logged_in(): login()                    
-                
         # Start applying to jobs
         apply_to_jobs(keywords)
-        
         
 
     except Exception as e:

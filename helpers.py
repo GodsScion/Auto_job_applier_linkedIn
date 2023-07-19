@@ -81,4 +81,19 @@ def get_applied_job_ids():
                 job_ids.add(row[0])
     except FileNotFoundError:
         print(f"The CSV file '{file_name}' does not exist.")
-    return job_ids 
+    return job_ids
+
+
+def manual_login_retry(is_logged_in):
+    count = 0
+    while not is_logged_in():
+        print("Seems like you're not logged in!")
+        message = "Press Enter to continue after you logged in..."
+        if count > 1:
+            message = "If you're seeing this message even after you logged in, type 'skip' and press Enter to continue or just press Enter to try again..."
+        count += 1
+        try:
+            value = input(message).lower().strip()
+            if value == 'skip': return
+        except:
+            print("  --> Only type 'skip' to skip. Try again!")

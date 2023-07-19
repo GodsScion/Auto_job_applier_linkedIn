@@ -1,21 +1,26 @@
-# Configure your tool here
+# CONFIGURE YOUR TOOLS HERE
 
-# These Sentences are Searched in LinkedIn
-keywords = ["Java Developer", "Amazon Software Developer", "Full Stack Developer", "Meta Software Engineer"]
-resumes = ["","","","",""]
-
-username = "username@example.com" 
-password = "examplepassword"
-
-chatGPT_username = "username@example.com"
-chatGPT_password = "examplepassword"
-
-# Set the amount of time to wait between each click
-click_gap = 0                   # Enter how max secs to wait approximately.
 
 # Directory and name of the files where history of applied jobs is saved.
 file_name = "all_applied_applications_history.csv"
 failed_file_name = "all_failed_applications_history.csv"
+
+# Set the amount of time to wait between each click
+click_gap = 0                   # Enter how max secs to wait approximately.
+
+
+
+
+# ----------------------------------------------  AUTO APPLIER  ---------------------------------------------- #
+
+# Login Credentials for LinkedIn
+username = "username@example.com" 
+password = "examplepassword"
+
+
+# These Sentences are Searched in LinkedIn
+keywords = ["Java Developer", "Amazon Software Developer", "Full Stack Developer", "Meta Software Engineer"]
+
 
 # Preferences for job search
 sort_by = "Most relevant"       # "Most recent", "Most relevant"
@@ -35,3 +40,14 @@ fair_chance_employer = False    # True or False
 salary = ""                     # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 benefits = []
 commitments = []
+
+
+
+
+# ----------------------------------------------  RESUME GENERATOR  ---------------------------------------------- #
+
+# Login Credentials for ChatGPT
+chatGPT_username = "username@example.com"
+chatGPT_password = "examplepassword"
+
+chatGPT_resume_chat_title = ""

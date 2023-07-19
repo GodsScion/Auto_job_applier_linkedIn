@@ -1,13 +1,13 @@
 # Imports
 import csv
 from datetime import datetime
-from openChrome import *
+from modules.open_chrome import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from config import *
-from helpers import *
-from clickers_and_finders import *
+from setup.config import *
+from modules.helpers import *
+from modules.clickers_and_finders import *
 from resume_generator import is_logged_in_GPT ,login_GPT, open_resume_chat
 
 
@@ -234,9 +234,10 @@ def apply_to_jobs(keywords):
                         try:
                             wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Apply") and not(span[contains(@class, "disabled")])]'))).click()
                             windows = driver.window_handles
-                            driver.switch_to.window(windows[len(windows)-1])
+                            driver.switch_to.window(windows[-1])
                             application_link = driver.current_url
-                            driver.switch_to.window(windows[0])
+                            if close_tabs: driver.close()
+                            driver.switch_to.window(linkedIn_tab)
                         except Exception as e:
                             # print(e)
                             print("Failed to apply!")
@@ -262,11 +263,16 @@ def apply_to_jobs(keywords):
 
 
 chatGPT_tab = False
+linkedIn_tab = False
 def main():
     try:
+        # Login to LinkedIn
         driver.get("https://www.linkedin.com/login")
         if not is_logged_in_LN(): login_LN()
-        
+        global linkedIn_tab
+        linkedIn_tab = driver.current_window_handle
+
+        # Opening ChatGPT tab for resume customization
         try:
             driver.switch_to.new_window('tab')
             driver.get("https://chat.openai.com/")

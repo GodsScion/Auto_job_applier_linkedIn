@@ -57,7 +57,7 @@ profile_dir = find_default_profile_directory()
 if profile_dir:
     options.add_argument(f"--user-data-dir={profile_dir}")
 else:
-    print("\n  -->  Default profile directory not found. Using a new profile.")
+    print("Default profile directory not found. Using a new profile.")
 driver = webdriver.Chrome(options=options)
 driver.maximize_window()  # Maximize the browser window
 wait = WebDriverWait(driver, 10)
@@ -105,10 +105,10 @@ try:
         try:
             if job_id in applied_jobs: continue
             driver.find_element(By.CLASS_NAME, "jobs-s-apply__application-link")
-            print("\n  -->  Already applied to {} job!\n\n".format(title))
+            print("Already applied to {} job!".format(title))
             continue
         except Exception as e:
-            print("\n  -->  Trying to Apply to {} with Job ID: {}\n\n".format(title,job_id))
+            print("Trying to Apply to {} with Job ID: {}".format(title,job_id))
 
         easy_applied = False
         
@@ -118,7 +118,7 @@ try:
             buffer(click_gap)
         except Exception as e2:
             print(e1,e2)
-            print("\n  -->  Failed to apply!\n\n")
+            print("Failed to apply!")
 
         # Case 1: Apply externally
         try:

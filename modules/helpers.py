@@ -3,7 +3,7 @@ import csv
 from time import sleep
 from random import randint
 from datetime import datetime, timedelta
-from config import file_name, failed_file_name
+from setup.config import file_name, failed_file_name
 
 # Function to search for Chrome Profiles
 def find_default_profile_directory():

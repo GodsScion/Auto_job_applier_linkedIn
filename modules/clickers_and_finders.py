@@ -1,4 +1,4 @@
-from config import click_gap
+from setup.config import click_gap
 from helpers import buffer
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait

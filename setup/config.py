@@ -2,8 +2,8 @@
 
 
 # Directory and name of the files where history of applied jobs is saved.
-file_name = "all_applied_applications_history.csv"
-failed_file_name = "all_failed_applications_history.csv"
+file_name = "all excels/all_applied_applications_history.csv"
+failed_file_name = "all excels/all_failed_applications_history.csv"
 
 # Set the amount of time to wait between each click
 click_gap = 0                   # Enter how max secs to wait approximately.
@@ -12,6 +12,9 @@ click_gap = 0                   # Enter how max secs to wait approximately.
 
 
 # ----------------------------------------------  AUTO APPLIER  ---------------------------------------------- #
+
+# Keep the External Application tabs open?
+close_tabs = True               # True or False
 
 # Login Credentials for LinkedIn
 username = "username@example.com" 

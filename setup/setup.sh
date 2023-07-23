@@ -7,7 +7,7 @@ if ! python -V &> /dev/null; then
         echo "Please install Python and make sure it is added to your system's PATH environment variable."
         echo "Hold Ctrl and click on the link below or search 'Python Download' in your browser."
         echo "https://www.python.org/downloads/"
-        echo "After installing Python and adding it to PATH, press Enter to continue."
+        echo "After installing Python and adding it to PATH, close and reopen setup file."
         read -p ""
     done
 else
@@ -24,7 +24,7 @@ if ! command -v "C:\Program Files\Google\Chrome\Application\chrome.exe" &> /dev/
         echo "Hold Ctrl and click on the link below or search 'google chrome download' in your browser."
         echo "https://www.google.com/chrome/"
         echo "Please follow the Google Chrome installation wizard."
-        echo "After the installation is complete, press Enter to continue."
+        echo "After the installation is complete, press Enter to continue, if that does not work then close and reopen setup file.."
         read -p ""
     done
 else
@@ -33,12 +33,14 @@ fi
 
 # Install required Python packages
 pip install selenium
-pip install beautifulsoup4
+pip install undetected-chromedriver
+# pip install beautifulsoup4
 
 # Get the latest ChromeDriver version
 LATEST_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE)
 
 # Download ChromeDriver
+echo "Installing latest version of Google Chrome Driver (${LATEST_VERSION})"
 CHROMEDRIVER_URL="https://chromedriver.storage.googleapis.com/${LATEST_VERSION}/chromedriver_win32.zip"
 CHROMEDRIVER_FILE="chromedriver.zip"
 CHROMEDRIVER_DIR="chromedriver"
@@ -64,3 +66,4 @@ echo "Setup complete. You can now use the web scraping tool."
 
 # Remove the environment setup script
 rm setup_env.bat
+read -p "Press any key to continue!"

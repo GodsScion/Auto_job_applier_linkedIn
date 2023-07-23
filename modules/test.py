@@ -81,10 +81,10 @@ try:
     job_listings = driver.find_elements(By.CLASS_NAME, "jobs-search-results__list-item")
 
     # Create or append to the CSV file
-    with open(file_name, mode='a', newline='') as csvfile:
+    with open(file_name, mode='a', newline='') as csv_file:
         fieldnames = ['Job ID', 'Job Title', 'Company', 'Job Link', 'Job Description', 'Skills', 'HR Name', 'HR Link', 'Resume Used', 'Date listed', 'Date Applied', 'Easy Apply' ] #['Job Title', 'Company', 'Application Link', 'Date and Time']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        if csvfile.tell() == 0:
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        if csv_file.tell() == 0:
             writer.writeheader()
     
     

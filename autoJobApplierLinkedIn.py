@@ -2,12 +2,14 @@
 import csv
 from datetime import datetime
 from modules.open_chrome import *
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from setup.config import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
+from modules.validator import validate_config
 from resume_generator import is_logged_in_GPT ,login_GPT, open_resume_chat
 
 
@@ -118,10 +120,10 @@ def apply_filters():
 def apply_to_jobs(keywords):
     applied_jobs = get_applied_job_ids()
     # Create or append to the CSV file
-    with open(file_name, mode='a', newline='') as csvfile:
+    with open(file_name, mode='a', newline='') as csv_file:
         fieldnames = ['Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume Used', 'Date listed', 'Date Applied', 'Job Link', 'External Job link']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        if csvfile.tell() == 0:
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        if csv_file.tell() == 0:
             writer.writeheader()
         
         for keyword in keywords:
@@ -174,7 +176,7 @@ def apply_to_jobs(keywords):
                     date_listed = "Unknown"
                     description = "Unknown"
                     skills = "Unknown" # Still in development
-                    resume = "Unknown" # Still in development
+                    resume = "Pending"
 
                     try:
                         scroll_to_view(driver, find_by_class(driver, "jobs-company__box"))
@@ -211,33 +213,36 @@ def apply_to_jobs(keywords):
                     # Case 1: Easy Apply Button
                     if wait_span_click(driver, "Easy Apply", 1.5): # WebDriverWait(driver,1.5).until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Easy Apply")]'))).click()
                         try:
+                            if not chatGPT_tab: raise Exception("Failed to open ChatGPT tab!")
                             try:
                                 next_button = wait_span_click(driver, "Next", 1, False) # WebDriverWait(driver,1).until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Next")]')))
                                 while (next_button):
                                     next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
                                     
-                                    break
-                                    print()
+                                    
+                                    
+                                    next_button.click()
+                                    buffer(click_gap)
                             except TimeoutException:
-                                wait_span_click(driver, "Submit application",2)
-                                # WebDriverWait(driver,2).until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Submit application")]'))).click()
+                                wait_span_click(driver, "Submit application", 2) # WebDriverWait(driver,2).until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Submit application")]'))).click()
 
                             date_applied = datetime.now()
                         except Exception as e:
                             print("Failed to Easy apply!")
                             # print(e)
                             failed_job(job_id, job_link, resume, date_listed, "Problem in Easy Applying", e, application_link)
+                            # -----------> close easy apply dialog
                             continue
                     else:
                         # Case 2: Apply externally
-                        if easy_apply_only: raise Exception("Easy apply failed i guess!")
+                        if easy_apply_only: raise Exception("Easy apply failed I guess!")
                         try:
                             wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Apply") and not(span[contains(@class, "disabled")])]'))).click()
                             windows = driver.window_handles
                             driver.switch_to.window(windows[-1])
                             application_link = driver.current_url
                             if close_tabs: driver.close()
-                            driver.switch_to.window(linkedIn_tab)
+                            driver.switch_to.window(linkedIn_tab) 
                         except Exception as e:
                             # print(e)
                             print("Failed to apply!")
@@ -253,7 +258,7 @@ def apply_to_jobs(keywords):
                 # print(e)
     
     # Close the browser and csv file
-    csvfile.close()
+    csv_file.close()
     driver.quit()
 
 
@@ -266,6 +271,8 @@ chatGPT_tab = False
 linkedIn_tab = False
 def main():
     try:
+        validate_config()
+
         # Login to LinkedIn
         driver.get("https://www.linkedin.com/login")
         if not is_logged_in_LN(): login_LN()
@@ -278,18 +285,20 @@ def main():
             driver.get("https://chat.openai.com/")
             if not is_logged_in_GPT(): login_GPT()
             open_resume_chat()
-            
             global chatGPT_tab
             chatGPT_tab = driver.current_window_handle
         except Exception as e:
             print("Opening OpenAI chatGPT tab failed!")
 
         # Start applying to jobs
+        driver.switch_to.window(linkedIn_tab)
         apply_to_jobs(keywords)
         
 
     except Exception as e:
         print(e)
         driver.quit()
+    finally:
+        exit(0)
 
 main()

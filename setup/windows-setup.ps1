@@ -28,6 +28,7 @@ Write-Host "Google Chrome is installed."
 
 # Install required Python packages
 pip install selenium
+pip install undetected-chromedriver
 
 # Get the latest ChromeDriver version
 $latestVersionUrl = "https://chromedriver.storage.googleapis.com/LATEST_RELEASE"

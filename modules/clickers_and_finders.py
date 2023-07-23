@@ -1,5 +1,5 @@
 from setup.config import click_gap
-from helpers import buffer
+from modules.helpers import buffer
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC

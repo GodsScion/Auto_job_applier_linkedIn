@@ -9,27 +9,33 @@ from modules.clickers_and_finders import text_input_by_ID, wait_span_click
 
 # Login Functions
 def is_logged_in_GPT():
-    if wait_span_click(driver, "Verify you are human", 3): return False
-    if driver.current_url == "https://chat.openai.com/": return True
     if driver.current_url == "https://chat.openai.com/auth/login": return False
+    try:
+        WebDriverWait(driver,2).until(EC.presence_of_element_located((By.ID, "prompt-textarea")))
+        return True
+    except Exception as e: 
+        print("Didn't find Prompt text area! So highly likely that not logged in!")
+        # print(e)
     try:
         driver.find_element(By.XPATH, "//button[contains(., 'Log in')]")
         return False
-    except Exception as e1:
-        try:
-            driver.find_element(By.ID, "prompt-textarea")
-            return True
-        except Exception as e2:
-            # print(e1, e2)
-            print("Didn't find Prompt text area, so assuming user is not logged in!")
+    except Exception as e:
+        print("Didn't find Log In button! Highly likely to be on Human Verification page!")
+        # print(e)
+    if driver.current_url == "https://chat.openai.com/":
+        print("Very high probability we're on Human Verification Page")
+        return False
+    return False
+            
             
 
 def login_GPT():
     # Find the username and password fields and fill them with user credentials
     try:
         gap = click_gap if click_gap > 1 else 2
-        driver.get("https://chat.openai.com/auth/login")
-        buffer(gap)
+        if driver.current_url != "https://chat.openai.com/auth/login":
+            driver.get("https://chat.openai.com/auth/login")
+            buffer(gap)
         wait.until(EC.presence_of_element_located((By.XPATH, "//button[contains(., 'Log in')]"))).click()
         buffer(gap)
         text_input_by_ID(driver, "username", chatGPT_username)
@@ -56,11 +62,11 @@ def login_GPT():
 
 
 def open_resume_chat():
-    wait_span_click(driver, "Open sidebar", 2, False)
-    try:
-        driver.find_element(By.LINK_TEXT, chatGPT_resume_chat_title).click()
-    except:
-        print()
+    open_sidebar = wait_span_click(driver, "Open sidebar", 1, False)
+    if open_sidebar: actions.move_to_element(open_sidebar).click().perform()
+    driver.find_element(By.LINK_TEXT, chatGPT_resume_chat_title).click()
+    close_sidebar = wait_span_click(driver, "Close sidebar", 1, False)
+    if close_sidebar: actions.move_to_element(close_sidebar).click().perform()
 
 def enter_prompt(prompt):
     text_input_by_ID(driver, "prompt-textarea", prompt, 4.0)
@@ -77,7 +83,7 @@ def resume_main():
                 
         # Start applying to jobs
         open_resume_chat()
-        print("Log In worked")
+        print("Resume Log In worked")
         
         
 
@@ -85,5 +91,6 @@ def resume_main():
         print(e)
         driver.quit()
 
-if __name__ == "__main__":
-    resume_main()
+
+if __name__ == "__main__": resume_main()
+# resume_main()

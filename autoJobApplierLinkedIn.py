@@ -2,10 +2,10 @@
 import csv
 from datetime import datetime
 from modules.open_chrome import *
-from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from setup.config import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
@@ -121,14 +121,14 @@ def apply_to_jobs(keywords):
     applied_jobs = get_applied_job_ids()
     # Create or append to the CSV file
     with open(file_name, mode='a', newline='') as csv_file:
-        fieldnames = ['Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume Used', 'Date listed', 'Date Applied', 'Job Link', 'External Job link']
+        fieldnames = ['Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume Used', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         if csv_file.tell() == 0:
             writer.writeheader()
         
         for keyword in keywords:
-            url = f"https://www.linkedin.com/jobs/search/?keywords={keyword}"
-            driver.get(url)
+            driver.get(f"https://www.linkedin.com/jobs/search/?keywords={keyword}")
+            print(f'\nNow searching for "{keyword}"\n')
 
             apply_filters()
 
@@ -151,7 +151,7 @@ def apply_to_jobs(keywords):
                 for job in job_listings:
                     count += 1
                     assert count < 4
-                    # Extract job details 'Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume Used', 'Date listed', 'Date Applied', 'Job Link', 'External Job link'
+                    # Extract job details 'Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume Used', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link'
                     job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
                     job_id = job.get_dom_attribute('data-occludable-job-id')
                     title = job_details_button.text
@@ -163,10 +163,10 @@ def apply_to_jobs(keywords):
                     # Skip if already applied
                     try:
                         if job_id in applied_jobs or driver.find_element(By.CLASS_NAME, "jobs-s-apply__application-link"):
-                            print("Already applied to '{}' job  with Job ID: {}!".format(title,job_id))
+                            print('Already applied to "{} - {}" job. Job ID: {}!'.format(company, title, job_id))
                             continue
                     except Exception as e:
-                        print("Trying to Apply to '{}' with Job ID: {}".format(title,job_id))
+                        print('Trying to Apply to "{} - {}" job. Job ID: {}'.format(company, title, job_id))
 
                     job_link = "https://www.linkedin.com/jobs/view/"+job_id
                     application_link = "Easy Applied"
@@ -177,6 +177,7 @@ def apply_to_jobs(keywords):
                     description = "Unknown"
                     skills = "Unknown" # Still in development
                     resume = "Pending"
+                    repost = False
 
                     try:
                         scroll_to_view(driver, find_by_class(driver, "jobs-company__box"))
@@ -197,7 +198,12 @@ def apply_to_jobs(keywords):
 
                     # Calculation of date posted
                     try:
-                        time_posted_text = find_by_class(driver, "jobs-unified-top-card__posted-date").text
+                        # try: time_posted_text = find_by_class(driver, "jobs-unified-top-card__posted-date", 2).text
+                        # except: 
+                        time_posted_text = driver.find_element(By.XPATH, '//span[contains(normalize-space(), "ago")]').text
+                        if time_posted_text.__contains__("Reposted"):
+                            repost = True
+                            time_posted_text = time_posted_text.replace("Reposted", "")
                         date_listed = calculate_date_posted(time_posted_text)
                     except Exception as e:
                         print("Failed to calculate the date posted!")
@@ -215,11 +221,16 @@ def apply_to_jobs(keywords):
                         try:
                             if not chatGPT_tab: raise Exception("Failed to open ChatGPT tab!")
                             try:
-                                next_button = wait_span_click(driver, "Next", 1, False) # WebDriverWait(driver,1).until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Next")]')))
+                                next_button = wait_span_click(driver, "Next", 1) # WebDriverWait(driver,1).until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Next")]')))
+                                driver.find_element(By.XPATH, '//label[contains(text(), "Upload resume")]').click()
+                                driver.find_element(By.NAME, "file").send_keys(resume_file_path)
+                                next_button = wait_span_click(driver, "Next", 1, False)
                                 while (next_button):
                                     next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
-                                    
-                                    
+                                    try:
+                                        pass
+                                    except Exception as e:
+                                        print("Failed ")
                                     
                                     next_button.click()
                                     buffer(click_gap)
@@ -231,7 +242,7 @@ def apply_to_jobs(keywords):
                             print("Failed to Easy apply!")
                             # print(e)
                             failed_job(job_id, job_link, resume, date_listed, "Problem in Easy Applying", e, application_link)
-                            # -----------> close easy apply dialog
+                            pass# -----------> close easy apply dialog
                             continue
                     else:
                         # Case 2: Apply externally
@@ -250,7 +261,7 @@ def apply_to_jobs(keywords):
                             continue
                     
                     # Once the application is submitted successfully, add the application details to the CSV
-                    writer.writerow({'Job ID':job_id, 'Title':title, 'Company':company, 'Description':description, 'Skills':skills, 'HR Name':hr_name, 'HR Link':hr_link, 'Resume Used':resume, 'Date listed':date_listed, 'Date Applied':date_applied, 'Job Link':job_link, 'External Job link':application_link})
+                    writer.writerow({'Job ID':job_id, 'Title':title, 'Company':company, 'Description':description, 'Skills':skills, 'HR Name':hr_name, 'HR Link':hr_link, 'Resume Used':resume, 'Re-post':repost, 'Date listed':date_listed, 'Date Applied':date_applied, 'Job Link':job_link, 'External Job link':application_link})
                     applied_jobs.add(job_id)
 
             except Exception as e:

@@ -34,6 +34,7 @@ def buffer(speed=0):
 
 # Date posted calculator
 def calculate_date_posted(time_string):
+    time_string = time_string.strip()
     now = datetime.now()
     if "second" in time_string:
         seconds = int(time_string.split()[0])
@@ -97,3 +98,8 @@ def manual_login_retry(is_logged_in):
             if value == 'skip': return
         except:
             print("  --> Only type 'skip' to skip. Try again!")
+
+
+def critical_error_log(possible_reason, stack_trace, date):
+    print(possible_reason, stack_trace, date)
+    pass

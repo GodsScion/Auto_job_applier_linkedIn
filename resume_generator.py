@@ -62,11 +62,13 @@ def login_GPT():
 
 
 def open_resume_chat():
-    open_sidebar = wait_span_click(driver, "Open sidebar", 1, False)
-    if open_sidebar: actions.move_to_element(open_sidebar).click().perform()
+    open_sidebar = wait_span_click(driver, "Open sidebar", 2, False)
+    try: open_sidebar = driver.find_element(By.XPATH, '//button[@aria-label="Open sidebar"]')
+    except: pass
+    if open_sidebar and open_sidebar.is_displayed(): actions.move_to_element(open_sidebar).click().perform()
     driver.find_element(By.LINK_TEXT, chatGPT_resume_chat_title).click()
     close_sidebar = wait_span_click(driver, "Close sidebar", 1, False)
-    if close_sidebar: actions.move_to_element(close_sidebar).click().perform()
+    if close_sidebar and close_sidebar.is_displayed(): actions.move_to_element(close_sidebar).click().perform()
 
 def enter_prompt(prompt):
     text_input_by_ID(driver, "prompt-textarea", prompt, 4.0)

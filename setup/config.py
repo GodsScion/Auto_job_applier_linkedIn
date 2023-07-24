@@ -26,6 +26,9 @@ password = "examplepassword"
 # These Sentences are Searched in LinkedIn
 keywords = ["Java Developer", "Amazon Software Developer", "Full Stack Developer", "Meta Software Engineer"]
 
+# Default resume path and name
+resume_file_path = "all resumes/temp/resume.pdf"
+
 
 ### Preferences for job search
 ''' 

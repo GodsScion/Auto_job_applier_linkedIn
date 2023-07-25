@@ -73,6 +73,9 @@ def open_resume_chat():
 def enter_prompt(prompt):
     text_input_by_ID(driver, "prompt-textarea", prompt, 4.0)
     
+def create_custom_resume(job_description):
+    pass
+
 
 
 

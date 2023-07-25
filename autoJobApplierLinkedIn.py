@@ -1,16 +1,17 @@
 # Imports
+import os
 import csv
 from datetime import datetime
 from modules.open_chrome import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from setup.config import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
-from resume_generator import is_logged_in_GPT ,login_GPT, open_resume_chat
+from resume_generator import is_logged_in_GPT ,login_GPT, open_resume_chat, create_custom_resume
 
 
 
@@ -121,7 +122,7 @@ def apply_to_jobs(keywords):
     applied_jobs = get_applied_job_ids()
     # Create or append to the CSV file
     with open(file_name, mode='a', newline='') as csv_file:
-        fieldnames = ['Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume Used', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link']
+        fieldnames = ['Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link', 'Questions']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         if csv_file.tell() == 0:
             writer.writeheader()
@@ -151,7 +152,7 @@ def apply_to_jobs(keywords):
                 for job in job_listings:
                     count += 1
                     assert count < 4
-                    # Extract job details 'Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume Used', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link'
+                    # Extract job details 'Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link', 'Questions'
                     job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
                     job_id = job.get_dom_attribute('data-occludable-job-id')
                     title = job_details_button.text
@@ -178,6 +179,7 @@ def apply_to_jobs(keywords):
                     skills = "Unknown" # Still in development
                     resume = "Pending"
                     repost = False
+                    questions_list = None
 
                     try:
                         scroll_to_view(driver, find_by_class(driver, "jobs-company__box"))
@@ -217,32 +219,57 @@ def apply_to_jobs(keywords):
                         # print(e)
 
                     # Case 1: Easy Apply Button
-                    if wait_span_click(driver, "Easy Apply", 1.5): # WebDriverWait(driver,1.5).until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Easy Apply")]'))).click()
-                        try:
-                            if not chatGPT_tab: raise Exception("Failed to open ChatGPT tab!")
+                    if wait_span_click(driver, "Easy Apply", 1.5):
+                        try: 
                             try:
-                                next_button = wait_span_click(driver, "Next", 1) # WebDriverWait(driver,1).until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Next")]')))
-                                driver.find_element(By.XPATH, '//label[contains(text(), "Upload resume")]').click()
-                                driver.find_element(By.NAME, "file").send_keys(resume_file_path)
+                                next_button = wait_span_click(driver, "Next", 1)
+                                resume = resume_file_path
+                                # if description != "Unknown":
+                                #     resume = create_custom_resume(description)
+                                driver.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
+                                resume = os.path.basename(resume)
                                 next_button = wait_span_click(driver, "Next", 1, False)
+                                questions_list = []
                                 while (next_button):
-                                    next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
-                                    try:
-                                        pass
-                                    except Exception as e:
-                                        print("Failed ")
                                     
+                                    # Find all radio buttons with text as Yes and click them
+                                    yes_radio_buttons = driver.find_elements(By.XPATH, "//label[normalize-space()='Yes']")
+                                    for radio_button in yes_radio_buttons:
+                                        radio_button.click()
+
+                                    # Find all text inputs and fill them with years_of_experience if it's empty
+                                    text_inputs = driver.find_elements(By.CLASS_NAME, "artdeco-text-input--input")
+                                    for text_input in text_inputs:
+                                        if not text_input.get_attribute("value"): text_input.send_keys(years_of_experience)
+                                    
+                                    # Gathering questions
+                                    all_radio_questions = driver.find_elements(By.CLASS_NAME, "fb-dash-form-element__label")
+                                    for question in all_radio_questions:
+                                        question = question.find_element(By.CLASS_NAME, "visually-hidden").text
+                                        questions_list.append((question, "Yes", "radio"))
+                                    
+                                    all_text_questions = driver.find_elements(By.CLASS_NAME, "artdeco-text-input--label")
+                                    for question in all_text_questions:
+                                        question = question.text
+                                        questions_list.append((question, years_of_experience, "text"))
+                                    
+                                    next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
                                     next_button.click()
                                     buffer(click_gap)
-                            except TimeoutException:
-                                wait_span_click(driver, "Submit application", 2) # WebDriverWait(driver,2).until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Submit application")]'))).click()
 
-                            date_applied = datetime.now()
+                            except NoSuchElementException:
+                                if questions_list:
+                                    print("Answered the following questions...")
+                                    print(questions_list)
+                                wait_span_click(driver, "Review", 2)
+                                wait_span_click(driver, "Submit application", 2)
+                                print("Successful Test")
                         except Exception as e:
                             print("Failed to Easy apply!")
                             # print(e)
                             failed_job(job_id, job_link, resume, date_listed, "Problem in Easy Applying", e, application_link)
-                            pass# -----------> close easy apply dialog
+                            actions.send_keys(Keys.ESCAPE).perform()
+                            driver.find_element(By.XPATH, "//span[normalize-space()='Discard']").click()
                             continue
                     else:
                         # Case 2: Apply externally
@@ -261,7 +288,10 @@ def apply_to_jobs(keywords):
                             continue
                     
                     # Once the application is submitted successfully, add the application details to the CSV
-                    writer.writerow({'Job ID':job_id, 'Title':title, 'Company':company, 'Description':description, 'Skills':skills, 'HR Name':hr_name, 'HR Link':hr_link, 'Resume Used':resume, 'Re-post':repost, 'Date listed':date_listed, 'Date Applied':date_applied, 'Job Link':job_link, 'External Job link':application_link})
+                    writer.writerow({'Job ID':job_id, 'Title':title, 'Company':company, 'Description':description, 'Skills':skills, 
+                                     'HR Name':hr_name, 'HR Link':hr_link, 'Resume':resume, 'Re-post':repost, 
+                                     'Date listed':date_listed, 'Date Applied':date_applied, 'Job Link':job_link, 'External Job link':application_link, 
+                                     'Questions':questions_list})
                     applied_jobs.add(job_id)
 
             except Exception as e:

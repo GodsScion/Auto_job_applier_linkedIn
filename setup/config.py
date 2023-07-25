@@ -27,7 +27,10 @@ password = "examplepassword"
 keywords = ["Java Developer", "Amazon Software Developer", "Full Stack Developer", "Meta Software Engineer"]
 
 # Default resume path and name
-resume_file_path = "all resumes/temp/resume.pdf"
+resume_file_path = "all resumes/default/resume.pdf"
+
+# What do you want to enter in questions...
+years_of_experience = '3'
 
 
 ### Preferences for job search

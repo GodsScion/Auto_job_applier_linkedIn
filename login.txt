@@ -1,2 +1,0 @@
-userEmail@example.com
-ExamplePassword

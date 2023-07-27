@@ -1,2 +1,5 @@
-login.txt
-all_quick_applied_history.csv
+__pycache__
+.vscode
+
+all excels
+all resumes

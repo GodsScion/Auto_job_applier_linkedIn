@@ -8,7 +8,7 @@ from selenium.common.exceptions import NoSuchElementException
 try: 
     try:
         next_button = wait_span_click(driver, "Next", 1)
-        driver.find_element(By.NAME, "file").send_keys(os.path.abspath(resume_file_path))
+        driver.find_element(By.NAME, "file").send_keys(os.path.abspath(default_resume_path))
         next_button = wait_span_click(driver, "Next", 1, False)
         questions_list = []
         while (next_button):

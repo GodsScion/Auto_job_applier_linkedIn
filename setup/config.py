@@ -9,7 +9,9 @@ failed_file_name = "all excels/all_failed_applications_history.csv"
 click_gap = 0                   # Enter max allowed secs to wait approximately. (Only Non Negative Integers like 0,1,2,3,....)
 
 # If you want to see Chrome running then set this as False. May reduce performance...
-run_in_background = False       # True of False
+run_in_background = False       # True or False
+
+
 
 
 
@@ -24,14 +26,21 @@ password = "examplepassword"
 
 
 # These Sentences are Searched in LinkedIn
-keywords = ["Java Developer", "Amazon Software Developer", "Full Stack Developer", "Meta Software Engineer"]
+keywords = ["Software Developer", "Software Engineer"]
 
-# Default resume path and name
-resume_file_path = "all resumes/default/resume.pdf"
+# Give an relative or absolute path of your default resume...
+default_resume_path = "all resumes/default/resume.pdf"
 
 # What do you want to enter in questions...
 years_of_experience = '3'
 
+# After how many number of applications should we keep switching? 
+switch_number = 100
+
+# Do you want the program to run continuously until you stop it?
+run_non_stop = True             # True or False
+alternate_sortby = True         # True or False
+cycle_date_posted = True        # True or False
 
 ### Preferences for job search
 ''' 
@@ -42,10 +51,12 @@ Multiple_Select = []
 '''
 
 sort_by = "Most relevant"       # "Most recent", "Most relevant" or ("" to not select) 
-date_posted = "Any time"        # "Any time", "Past week", "Past 24 hours", "Past month" or ("" for default)
+date_posted = "Any time"        # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                     # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
-experience_level = ["Internship", "Entry level", "Associate"] # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
+easy_apply_only = True          # True or False
+
+experience_level = ["Internship", "Entry level"] # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
 job_type = []                   # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
 on_site = []                    # (multiple select) "On-site", "Remote", "Hybrid"
 
@@ -57,7 +68,6 @@ job_titles = []                 # (dynamic multiple select)
 benefits = []                   # (dynamic multiple select)
 commitments = []                # (dynamic multiple select)
 
-easy_apply_only = False         # True or False
 under_10_applicants = False     # True or False
 in_your_network = False         # True or False
 fair_chance_employer = False    # True or False
@@ -73,7 +83,8 @@ chatGPT_password = "examplepassword"
 
 chatGPT_resume_chat_title = "Resume review and feedback."
 
-
+# Give the path to the folder where all the generated resumes are to be stored
+generated_resume_path = "all resumes"
 
 
 

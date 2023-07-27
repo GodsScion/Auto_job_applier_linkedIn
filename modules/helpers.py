@@ -100,6 +100,6 @@ def manual_login_retry(is_logged_in):
             print("  --> Only type 'skip' to skip. Try again!")
 
 
-def critical_error_log(possible_reason, stack_trace, date):
-    print(possible_reason, stack_trace, date)
+def critical_error_log(possible_reason, stack_trace):
+    print(possible_reason, stack_trace, datetime.now())
     pass

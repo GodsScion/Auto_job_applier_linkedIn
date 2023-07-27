@@ -67,8 +67,3 @@ def text_input_by_ID(driver, id, value, time=5.0):
     username_field.send_keys(Keys.CONTROL + "a")
     return username_field.send_keys(value)
 
-# Try click function
-def click_Xpath(driver, xpath):
-    try: 
-        driver.find_element(By.XPATH, xpath).click()
-    except: return False

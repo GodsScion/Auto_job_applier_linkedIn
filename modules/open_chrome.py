@@ -10,10 +10,8 @@ try:
     options = uc.ChromeOptions()
     options.headless = run_in_background
     profile_dir = find_default_profile_directory()
-    if profile_dir:
-        options.add_argument(f"--user-data-dir={profile_dir}")
-    else:
-        print("Default profile directory not found. Using a new profile.")
+    if profile_dir: options.add_argument(f"--user-data-dir={profile_dir}")
+    else: print("Default profile directory not found. Using a new profile.")
     driver = uc.Chrome(use_subprocess=True, options=options)
     driver.maximize_window()
     wait = WebDriverWait(driver, 5)
@@ -21,5 +19,5 @@ try:
 except Exception as e:
     print("Seems like Google Chrome browser is already running! Close it and run this program.")
     from datetime import datetime
-    critical_error_log("", e, datetime.now())
+    critical_error_log("In Resume Generator", e)
     exit(1)

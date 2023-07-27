@@ -6,6 +6,7 @@ from modules.open_chrome import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from setup.config import *
 from modules.helpers import *
@@ -87,7 +88,7 @@ def apply_filters():
         multi_sel(driver, on_site)
         if job_type or on_site: buffer(recommended_wait)
 
-        if easy_apply_only: boolean_button_click(driver, "Easy Apply")
+        if easy_apply_only: boolean_button_click(driver, actions, "Easy Apply")
         
         multi_sel_noWait(driver, location)
         multi_sel_noWait(driver, industry)
@@ -97,9 +98,9 @@ def apply_filters():
         multi_sel_noWait(driver, job_titles)
         if job_function or job_titles: buffer(recommended_wait)
 
-        if under_10_applicants: boolean_button_click(driver, "Under 10 applicants")
-        if in_your_network: boolean_button_click(driver, "In your network")
-        if fair_chance_employer: boolean_button_click(driver, "Fair Chance Employer")
+        if under_10_applicants: boolean_button_click(driver, actions, "Under 10 applicants")
+        if in_your_network: boolean_button_click(driver, actions, "In your network")
+        if fair_chance_employer: boolean_button_click(driver, actions, "Fair Chance Employer")
 
         wait_span_click(driver, salary)
         buffer(recommended_wait)
@@ -120,54 +121,51 @@ def apply_filters():
 # Apply to jobs function
 def apply_to_jobs(keywords):
     applied_jobs = get_applied_job_ids()
-    # Create or append to the CSV file
-    with open(file_name, mode='a', newline='') as csv_file:
-        fieldnames = ['Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link', 'Questions']
-        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-        if csv_file.tell() == 0:
-            writer.writeheader()
         
-        for keyword in keywords:
-            driver.get(f"https://www.linkedin.com/jobs/search/?keywords={keyword}")
-            print(f'\nNow searching for "{keyword}"\n')
+    for keyword in keywords:
+        driver.get(f"https://www.linkedin.com/jobs/search/?keywords={keyword}")
+        print(f'\nNow searching for "{keyword}"\n')
 
-            apply_filters()
+        apply_filters()
 
-            try:
+        current_count = 0
+        try:
+            while current_count >= switch_number:
                 # Wait until job listings are loaded
                 wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'jobs-search-results__list-item')]")))
                 buffer(3)
 
-                try:
-                    pagination_element = find_by_class(driver, "artdeco-pagination")
-                    scroll_to_view(driver, pagination_element)
-                except Exception as e:
-                    print("Failed to find Pagination element, hence couldn't scroll till end!")
-                    # print(e)
+                # try:
+                pagination_element = find_by_class(driver, "artdeco-pagination")
+                scroll_to_view(driver, pagination_element)
+                current_page = int(pagination_element.find_element(By.XPATH, "//li[contains(@class, 'active')]").text)
+                # except Exception as e:
+                #     print("Failed to find Pagination element, hence couldn't scroll till end!")
+                #     # print(e)
 
-                # Find all job listings
-                job_listings = driver.find_elements(By.CLASS_NAME, "jobs-search-results__list-item")            
-                
-                count = 0
+
+                # Find all job listings in current page
+                job_listings = driver.find_elements(By.CLASS_NAME, "jobs-search-results__list-item")  
+
+            
                 for job in job_listings:
-                    count += 1
-                    assert count < 4
-                    # Extract job details 'Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link', 'Questions'
-                    job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
-                    job_id = job.get_dom_attribute('data-occludable-job-id')
-                    title = job_details_button.text
-                    company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
-                    scroll_to_view(driver, job_details_button)
-                    job_details_button.click()
-                    buffer(click_gap)
+                    if current_count >= switch_number: break
 
                     # Skip if already applied
+                    job_id = job.get_dom_attribute('data-occludable-job-id')
                     try:
                         if job_id in applied_jobs or driver.find_element(By.CLASS_NAME, "jobs-s-apply__application-link"):
                             print('Already applied to "{} - {}" job. Job ID: {}!'.format(company, title, job_id))
                             continue
                     except Exception as e:
                         print('Trying to Apply to "{} - {}" job. Job ID: {}'.format(company, title, job_id))
+
+                    job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
+                    title = job_details_button.text
+                    company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
+                    scroll_to_view(driver, job_details_button)
+                    job_details_button.click()
+                    buffer(click_gap)
 
                     job_link = "https://www.linkedin.com/jobs/view/"+job_id
                     application_link = "Easy Applied"
@@ -209,7 +207,7 @@ def apply_to_jobs(keywords):
                         date_listed = calculate_date_posted(time_posted_text)
                     except Exception as e:
                         print("Failed to calculate the date posted!")
-                        # print(e)
+                        print(e)
 
                     # Get job description
                     try:
@@ -223,7 +221,7 @@ def apply_to_jobs(keywords):
                         try: 
                             try:
                                 next_button = wait_span_click(driver, "Next", 1)
-                                resume = resume_file_path
+                                resume = default_resume_path
                                 # if description != "Unknown":
                                 #     resume = create_custom_resume(description)
                                 driver.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
@@ -241,6 +239,12 @@ def apply_to_jobs(keywords):
                                     text_inputs = driver.find_elements(By.CLASS_NAME, "artdeco-text-input--input")
                                     for text_input in text_inputs:
                                         if not text_input.get_attribute("value"): text_input.send_keys(years_of_experience)
+
+                                    # Find all radio buttons with text as Yes and click them
+                                    select_buttons = driver.find_elements(By.XPATH, "//select")
+                                    for select in select_buttons:
+                                        select = Select(select)
+                                        select.select_by_visible_text('Yes')
                                     
                                     # Gathering questions
                                     all_radio_questions = driver.find_elements(By.CLASS_NAME, "fb-dash-form-element__label")
@@ -252,6 +256,11 @@ def apply_to_jobs(keywords):
                                     for question in all_text_questions:
                                         question = question.text
                                         questions_list.append((question, years_of_experience, "text"))
+
+                                    all_select_questions = driver.find_elements(By.XPATH, "//label[@data-test-text-entity-list-form-title]")
+                                    for question in all_select_questions:
+                                        question = question.text
+                                        questions_list.append((question, "Yes", "select"))
                                     
                                     next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
                                     next_button.click()
@@ -263,7 +272,8 @@ def apply_to_jobs(keywords):
                                     print(questions_list)
                                 wait_span_click(driver, "Review", 2)
                                 wait_span_click(driver, "Submit application", 2)
-                                print("Successful Test")
+                                try: driver.find_element(By.XPATH, "//button[@data-test-modal-close-btn]").click()
+                                except: pass
                         except Exception as e:
                             print("Failed to Easy apply!")
                             # print(e)
@@ -287,24 +297,46 @@ def apply_to_jobs(keywords):
                             failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link)
                             continue
                     
-                    # Once the application is submitted successfully, add the application details to the CSV
-                    writer.writerow({'Job ID':job_id, 'Title':title, 'Company':company, 'Description':description, 'Skills':skills, 
-                                     'HR Name':hr_name, 'HR Link':hr_link, 'Resume':resume, 'Re-post':repost, 
-                                     'Date listed':date_listed, 'Date Applied':date_applied, 'Job Link':job_link, 'External Job link':application_link, 
-                                     'Questions':questions_list})
+                    # Create or append to the CSV file
+                    with open(file_name, mode='a', newline='') as csv_file:
+                        fieldnames = ['Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link', 'Questions']
+                        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                        if csv_file.tell() == 0: writer.writeheader()
+                        # Once the application is submitted successfully, add the application details to the CSV
+                        writer.writerow({'Job ID':job_id, 'Title':title, 'Company':company, 'Description':description, 'Skills':skills, 
+                                            'HR Name':hr_name, 'HR Link':hr_link, 'Resume':resume, 'Re-post':repost, 
+                                            'Date listed':date_listed, 'Date Applied':date_applied, 'Job Link':job_link, 
+                                            'External Job link':application_link, 'Questions':questions_list})
+                    csv_file.close()
+                    current_count += 1
                     applied_jobs.add(job_id)
 
-            except Exception as e:
-                print("Failed to find Job listings!")
-                # print(e)
-    
-    # Close the browser and csv file
-    csv_file.close()
-    driver.quit()
+                # Switching to next page
+                try: pagination_element.find_element(By.XPATH, f"//button[@aria-label='Page {current_page+1}']").click()
+                except NoSuchElementException:
+                    print(f"Didn't find Page {current_page+1}. Probably at the end page of result!")
+                    break
 
+        except Exception as e:
+            print("Failed to find Job listings!")
+            critical_error_log("In Applier", e)
+            # print(e)
+
+    # Close csv file
+    csv_file.close()
 
         
-
+def run(total_runs):
+    print("__________________________________________________________")
+    print(f"Cycle number {total_runs+1} ...")
+    print("Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'")
+    apply_to_jobs(keywords)
+    print("__________________________________________________________")
+    print("Sleeping for 10 min...")
+    sleep(600)
+    print("Few more min... Gonna start with in next 5 min...")
+    buffer(300)
+    return total_runs + 1
 
 
 
@@ -321,23 +353,36 @@ def main():
         linkedIn_tab = driver.current_window_handle
 
         # Opening ChatGPT tab for resume customization
-        try:
-            driver.switch_to.new_window('tab')
-            driver.get("https://chat.openai.com/")
-            if not is_logged_in_GPT(): login_GPT()
-            open_resume_chat()
-            global chatGPT_tab
-            chatGPT_tab = driver.current_window_handle
-        except Exception as e:
-            print("Opening OpenAI chatGPT tab failed!")
+        # try:
+        #     driver.switch_to.new_window('tab')
+        #     driver.get("https://chat.openai.com/")
+        #     if not is_logged_in_GPT(): login_GPT()
+        #     open_resume_chat()
+        #     global chatGPT_tab
+        #     chatGPT_tab = driver.current_window_handle
+        # except Exception as e:
+        #     print("Opening OpenAI chatGPT tab failed!")
 
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)
-        apply_to_jobs(keywords)
+        total_runs = 0
+        total_runs = run(total_runs)
+        while(run_non_stop):
+            if cycle_date_posted:
+                date_options = ["Any time", "Past month", "Past week", "Past 24 hours"]
+                global date_posted
+                date_posted = date_options[0 if date_options.index(date_posted) + 1 > len(date_options) else date_options.index(date_posted) + 1]
+            if alternate_sortby:
+                total_runs = run(total_runs)
+                global sort_by
+                sort_by = "Most recent" if sort_by == "Most relevant" else "Most relevant"
+            
+            total_runs = run(total_runs)
         
 
     except Exception as e:
         print(e)
+        critical_error_log("In Applier Main", e)
         driver.quit()
     finally:
         exit(0)

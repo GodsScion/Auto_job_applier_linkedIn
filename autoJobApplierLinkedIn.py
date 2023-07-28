@@ -27,8 +27,8 @@ def is_logged_in_LN():
             driver.find_element(By.XPATH, '//button[@type="submit" and contains(text(), "Sign in")]')
             return False
         except Exception as e2:
-            # print(e1, e2)
-            print("Didn't find Sign in link, so assuming user is logged in!")
+            # print_lg(e1, e2)
+            print_lg("Didn't find Sign in link, so assuming user is logged in!")
             return True
 
 
@@ -40,13 +40,13 @@ def login_LN():
         try:
             text_input_by_ID(driver, "username", username, 1)
         except Exception as e:
-            print("Couldn't find username field.")
-            # print(e)
+            print_lg("Couldn't find username field.")
+            # print_lg(e)
         try:
             text_input_by_ID(driver, "password", password, 1)
         except Exception as e:
-            print("Couldn't find password field.")
-            # print(e)
+            print_lg("Couldn't find password field.")
+            # print_lg(e)
         # Find the login submit button and click it
         driver.find_element(By.XPATH, '//button[@type="submit" and contains(text(), "Sign in")]').click()
     except Exception as e1:
@@ -54,16 +54,16 @@ def login_LN():
             profile_button = find_by_class(driver, "profile__details")
             profile_button.click()
         except Exception as e2:
-            # print(e1, e2)
-            print("Couldn't Login!")
+            # print_lg(e1, e2)
+            print_lg("Couldn't Login!")
 
     try:
         # Wait until successful redirect, indicating successful login
         wait.until(EC.url_to_be("https://www.linkedin.com/feed/")) # wait.until(EC.presence_of_element_located((By.XPATH, '//button[normalize-space(.)="Start a post"]')))
-        return print("Login successful!")
+        return print_lg("Login successful!")
     except Exception as e:
-        print("Seems like login attempt failed! Possibly due to wrong credentials or already logged in! Try logging in manually!")
-        # print(e)
+        print_lg("Seems like login attempt failed! Possibly due to wrong credentials or already logged in! Try logging in manually!")
+        # print_lg(e)
         manual_login_retry(is_logged_in_LN)
 
 
@@ -113,9 +113,68 @@ def apply_filters():
         show_results_button.click()
 
     except Exception as e:
-        print("Setting the preferences failed!")
-        # print(e)
+        print_lg("Setting the preferences failed!")
+        # print_lg(e)
 
+
+def answer_questions(questions_list):
+    # Find all Select buttons with text as Yes and click them
+    select_buttons = driver.find_elements(By.XPATH, "//select")
+    for select in select_buttons:
+        select = Select(select)
+        # selected_option = select.first_selected_option.text
+        # if selected_option != "Select an option": continue
+        select.select_by_visible_text('Yes')
+    
+    # Find all radio questions
+    all_radio_questions = driver.find_elements(By.XPATH, '//fieldset[@data-test-form-builder-radio-button-form-component="true"]')
+    for question in all_radio_questions:
+        label = question.find_elements(By.XPATH, './/span[@data-test-form-builder-radio-button-form-component__title]')
+        label = label[0].find_element(By.CLASS_NAME, 'visually-hidden').text if len(label) > 0 else "Unknown"
+        label = label.lower()
+        answer = 'Yes'
+        if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
+        if 'sponsorship' in label or 'visa' in label: answer = require_visa
+        try: question.find_element(By.XPATH, f".//label[normalize-space()='{answer}']").click()
+        except:
+            random = question.find_element(By.XPATH, ".//label[@data-test-text-selectable-option__label]")
+            answer = random.text
+            random.click()
+        questions_list.append((label, answer, "radio"))
+    
+    # Find all text questions and answer them
+    all_text_questions = driver.find_elements(By.CLASS_NAME, "artdeco-text-input--container")
+    for question in all_text_questions:
+        label_org = "Unknown"
+        try: label_org = question.find_element(By.CLASS_NAME, "artdeco-text-input--label").text
+        except: continue
+        answer = years_of_experience
+        label = label_org.lower()
+        if 'your name' in label or 'full name' in label: answer = full_name
+        if 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
+        if 'salary' in label or 'desired' in label or 'expected' in label: answer = salary
+        if 'scale of 1-10' in label: answer = confidence_level
+        text_input = question.find_element(By.CLASS_NAME, "artdeco-text-input--input")
+        if not text_input.get_attribute("value"): text_input.send_keys(answer)
+        else: answer = text_input.get_attribute("value")
+        questions_list.append((label_org, answer, "text"))
+
+    # All select questions
+    all_select_questions = driver.find_elements(By.XPATH, "//label[@data-test-text-entity-list-form-title]")
+    for question in all_select_questions:
+        question = question.text
+        questions_list.append((question, "Yes", "select"))    
+
+    try_xp(driver, "//button[contains(@aria-label, 'This is today')]")
+
+    # Redundancy
+
+    # # Fill any left out texts with years_of_experience
+    # text_inputs = driver.find_elements(By.CLASS_NAME, "artdeco-text-input--input")
+    # for text_input in text_inputs:
+    #     if not text_input.get_attribute("value"): text_input.send_keys(years_of_experience)
+
+    return questions_list
 
 
 # Apply to jobs function
@@ -124,48 +183,50 @@ def apply_to_jobs(keywords):
         
     for keyword in keywords:
         driver.get(f"https://www.linkedin.com/jobs/search/?keywords={keyword}")
-        print(f'\nNow searching for "{keyword}"\n')
+        print_lg(f'\nNow searching for "{keyword}"\n')
 
         apply_filters()
 
         current_count = 0
         try:
-            while current_count >= switch_number:
+            while current_count < switch_number:
                 # Wait until job listings are loaded
                 wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'jobs-search-results__list-item')]")))
-                buffer(3)
 
                 # try:
                 pagination_element = find_by_class(driver, "artdeco-pagination")
                 scroll_to_view(driver, pagination_element)
                 current_page = int(pagination_element.find_element(By.XPATH, "//li[contains(@class, 'active')]").text)
                 # except Exception as e:
-                #     print("Failed to find Pagination element, hence couldn't scroll till end!")
-                #     # print(e)
+                #     print_lg("Failed to find Pagination element, hence couldn't scroll till end!")
+                #     # print_lg(e)
 
 
                 # Find all job listings in current page
+                buffer(3)
                 job_listings = driver.find_elements(By.CLASS_NAME, "jobs-search-results__list-item")  
 
             
                 for job in job_listings:
                     if current_count >= switch_number: break
 
+                    job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
+                    scroll_to_view(driver, job_details_button)
+                    title = job_details_button.text
+                    company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
+                    job_details_button.click()
+                    buffer(click_gap)
+
                     # Skip if already applied
                     job_id = job.get_dom_attribute('data-occludable-job-id')
                     try:
                         if job_id in applied_jobs or driver.find_element(By.CLASS_NAME, "jobs-s-apply__application-link"):
-                            print('Already applied to "{} - {}" job. Job ID: {}!'.format(company, title, job_id))
+                            print_lg(f'Already applied to "{title} - {company}" job. Job ID: {job_id}!')
                             continue
                     except Exception as e:
-                        print('Trying to Apply to "{} - {}" job. Job ID: {}'.format(company, title, job_id))
+                        print_lg(f'\nTrying to Apply to "{title} - {company}" job. Job ID: {job_id}')
 
-                    job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
-                    title = job_details_button.text
-                    company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
-                    scroll_to_view(driver, job_details_button)
-                    job_details_button.click()
-                    buffer(click_gap)
+
 
                     job_link = "https://www.linkedin.com/jobs/view/"+job_id
                     application_link = "Easy Applied"
@@ -183,8 +244,8 @@ def apply_to_jobs(keywords):
                         scroll_to_view(driver, find_by_class(driver, "jobs-company__box"))
                         scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card__content--two-pane"))
                     except Exception as e:
-                        print("Failed to scroll!")
-                        # print(e)
+                        print_lg("Failed to scroll!")
+                        # print_lg(e)
 
 
                     # Hiring Manager info
@@ -193,74 +254,46 @@ def apply_to_jobs(keywords):
                         hr_link = hr_info_card.find_element(By.TAG_NAME, "a").get_attribute("href")
                         hr_name = hr_info_card.find_element(By.TAG_NAME, "span").text
                     except Exception as e:
-                        print(f"HR info was not given for '{title}' with Job ID: {job_id}!")
-                        # print(e)
+                        print_lg(f"HR info was not given for '{title}' with Job ID: {job_id}!")
+                        # print_lg(e)
 
                     # Calculation of date posted
                     try:
                         # try: time_posted_text = find_by_class(driver, "jobs-unified-top-card__posted-date", 2).text
                         # except: 
-                        time_posted_text = driver.find_element(By.XPATH, '//span[contains(normalize-space(), "ago")]').text
+                        jobs_top_card = driver.find_element(By.CLASS_NAME, "jobs-unified-top-card__primary-description")
+                        time_posted_text = jobs_top_card.find_element(By.XPATH, './/span[contains(normalize-space(), "ago")]').text
                         if time_posted_text.__contains__("Reposted"):
                             repost = True
                             time_posted_text = time_posted_text.replace("Reposted", "")
                         date_listed = calculate_date_posted(time_posted_text)
                     except Exception as e:
-                        print("Failed to calculate the date posted!")
-                        print(e)
+                        print_lg("Failed to calculate the date posted!")
+                        print_lg(e)
 
                     # Get job description
                     try:
                         description = find_by_class(driver, "jobs-box__html-content").text
                     except Exception as e:
-                        print("Unable to extract job description!")
-                        # print(e)
+                        print_lg("Unable to extract job description!")
+                        # print_lg(e)
 
                     # Case 1: Easy Apply Button
-                    if wait_span_click(driver, "Easy Apply", 1.5):
+                    if wait_span_click(driver, "Easy Apply", 2):
                         try: 
                             try:
-                                next_button = wait_span_click(driver, "Next", 1)
+                                wait_span_click(driver, "Next", 1)
                                 resume = default_resume_path
                                 # if description != "Unknown":
                                 #     resume = create_custom_resume(description)
-                                driver.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
+                                wait_span_click(driver, "Next", 1)
+                                # driver.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
                                 resume = os.path.basename(resume)
-                                next_button = wait_span_click(driver, "Next", 1, False)
+                                next_button = True
                                 questions_list = []
                                 while (next_button):
                                     
-                                    # Find all radio buttons with text as Yes and click them
-                                    yes_radio_buttons = driver.find_elements(By.XPATH, "//label[normalize-space()='Yes']")
-                                    for radio_button in yes_radio_buttons:
-                                        radio_button.click()
-
-                                    # Find all text inputs and fill them with years_of_experience if it's empty
-                                    text_inputs = driver.find_elements(By.CLASS_NAME, "artdeco-text-input--input")
-                                    for text_input in text_inputs:
-                                        if not text_input.get_attribute("value"): text_input.send_keys(years_of_experience)
-
-                                    # Find all radio buttons with text as Yes and click them
-                                    select_buttons = driver.find_elements(By.XPATH, "//select")
-                                    for select in select_buttons:
-                                        select = Select(select)
-                                        select.select_by_visible_text('Yes')
-                                    
-                                    # Gathering questions
-                                    all_radio_questions = driver.find_elements(By.CLASS_NAME, "fb-dash-form-element__label")
-                                    for question in all_radio_questions:
-                                        question = question.find_element(By.CLASS_NAME, "visually-hidden").text
-                                        questions_list.append((question, "Yes", "radio"))
-                                    
-                                    all_text_questions = driver.find_elements(By.CLASS_NAME, "artdeco-text-input--label")
-                                    for question in all_text_questions:
-                                        question = question.text
-                                        questions_list.append((question, years_of_experience, "text"))
-
-                                    all_select_questions = driver.find_elements(By.XPATH, "//label[@data-test-text-entity-list-form-title]")
-                                    for question in all_select_questions:
-                                        question = question.text
-                                        questions_list.append((question, "Yes", "select"))
+                                    questions_list = answer_questions(questions_list)
                                     
                                     next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
                                     next_button.click()
@@ -268,22 +301,25 @@ def apply_to_jobs(keywords):
 
                             except NoSuchElementException:
                                 if questions_list:
-                                    print("Answered the following questions...")
-                                    print(questions_list)
+                                    print_lg("Answered the following questions...")
+                                    print_lg(questions_list)
+                            finally:
                                 wait_span_click(driver, "Review", 2)
                                 wait_span_click(driver, "Submit application", 2)
-                                try: driver.find_element(By.XPATH, "//button[@data-test-modal-close-btn]").click()
-                                except: pass
+                                if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
                         except Exception as e:
-                            print("Failed to Easy apply!")
-                            # print(e)
+                            print_lg("Failed to Easy apply!")
+                            # print_lg(e)
+                            critical_error_log("Somewhere in Easy Apply process",e)
                             failed_job(job_id, job_link, resume, date_listed, "Problem in Easy Applying", e, application_link)
                             actions.send_keys(Keys.ESCAPE).perform()
-                            driver.find_element(By.XPATH, "//span[normalize-space()='Discard']").click()
+                            wait_span_click(driver, 'Discard', 2)
                             continue
                     else:
                         # Case 2: Apply externally
-                        if easy_apply_only: raise Exception("Easy apply failed I guess!")
+                        if easy_apply_only: 
+                            print_lg("Easy apply failed I guess!")
+                            continue
                         try:
                             wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Apply") and not(span[contains(@class, "disabled")])]'))).click()
                             windows = driver.window_handles
@@ -292,8 +328,8 @@ def apply_to_jobs(keywords):
                             if close_tabs: driver.close()
                             driver.switch_to.window(linkedIn_tab) 
                         except Exception as e:
-                            # print(e)
-                            print("Failed to apply!")
+                            # print_lg(e)
+                            print_lg("Failed to apply!")
                             failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link)
                             continue
                     
@@ -312,30 +348,30 @@ def apply_to_jobs(keywords):
                     applied_jobs.add(job_id)
 
                 # Switching to next page
-                try: pagination_element.find_element(By.XPATH, f"//button[@aria-label='Page {current_page+1}']").click()
+                try: 
+                    pagination_element.find_element(By.XPATH, f"//button[@aria-label='Page {current_page+1}']").click()
+                    print_lg(f"\nNow on Page {current_page+1}\n")
                 except NoSuchElementException:
-                    print(f"Didn't find Page {current_page+1}. Probably at the end page of result!")
+                    print_lg(f"Didn't find Page {current_page+1}. Probably at the end page of result!")
                     break
 
         except Exception as e:
-            print("Failed to find Job listings!")
+            print_lg("Failed to find Job listings!")
             critical_error_log("In Applier", e)
-            # print(e)
-
-    # Close csv file
-    csv_file.close()
+            # print_lg(e)
 
         
 def run(total_runs):
-    print("__________________________________________________________")
-    print(f"Cycle number {total_runs+1} ...")
-    print("Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'")
+    print_lg("__________________________________________________________")
+    print_lg(f"Date and Time: {datetime.now()}\n")
+    print_lg(f"Cycle number {total_runs+1} ...")
+    print_lg(f"Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'")
     apply_to_jobs(keywords)
-    print("__________________________________________________________")
-    print("Sleeping for 10 min...")
-    sleep(600)
-    print("Few more min... Gonna start with in next 5 min...")
-    buffer(300)
+    print_lg("__________________________________________________________")
+    print_lg("Sleeping for 10 min...")
+    sleep(6)
+    print_lg("Few more min... Gonna start with in next 5 min...")
+    buffer(3)
     return total_runs + 1
 
 
@@ -361,7 +397,7 @@ def main():
         #     global chatGPT_tab
         #     chatGPT_tab = driver.current_window_handle
         # except Exception as e:
-        #     print("Opening OpenAI chatGPT tab failed!")
+        #     print_lg("Opening OpenAI chatGPT tab failed!")
 
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)
@@ -371,17 +407,18 @@ def main():
             if cycle_date_posted:
                 date_options = ["Any time", "Past month", "Past week", "Past 24 hours"]
                 global date_posted
-                date_posted = date_options[0 if date_options.index(date_posted) + 1 > len(date_options) else date_options.index(date_posted) + 1]
+                date_posted = date_options[0 if date_options.index(date_posted) + 1 >= len(date_options) else date_options.index(date_posted) + 1]
             if alternate_sortby:
-                total_runs = run(total_runs)
                 global sort_by
+                sort_by = "Most recent" if sort_by == "Most relevant" else "Most relevant"
+                total_runs = run(total_runs)
                 sort_by = "Most recent" if sort_by == "Most relevant" else "Most relevant"
             
             total_runs = run(total_runs)
         
 
     except Exception as e:
-        print(e)
+        print_lg(e)
         critical_error_log("In Applier Main", e)
         driver.quit()
     finally:

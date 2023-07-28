@@ -40,13 +40,13 @@ try:
 
     except NoSuchElementException:
         if questions_list:
-            print("Answered the following questions...")
-            print(questions_list)
+            print_lg("Answered the following questions...")
+            print_lg(questions_list)
         wait_span_click(driver, "Review", 2)
         wait_span_click(driver, "Submit application", 2)
-        print("Successful Test")
+        print_lg("Successful Test")
 except Exception as e:
-    print(e)
+    print_lg(e)
     actions.send_keys(Keys.ESCAPE).perform()
     driver.find_element(By.XPATH, "//span[normalize-space()='Discard']").click()
     driver.quit()

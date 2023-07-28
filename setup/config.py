@@ -1,9 +1,11 @@
-###### CONFIGURE YOUR TOOLS HERE ######
+###################################################### CONFIGURE YOUR TOOLS HERE ######################################################
 
+# >>>>>>>>>>> Global Settings <<<<<<<<<<<
 
 # Directory and name of the files where history of applied jobs is saved.
 file_name = "all excels/all_applied_applications_history.csv"
 failed_file_name = "all excels/all_failed_applications_history.csv"
+log_path = "all excels/log.txt"
 
 # Set the maximum amount of time allowed to wait between each click
 click_gap = 0                   # Enter max allowed secs to wait approximately. (Only Non Negative Integers like 0,1,2,3,....)
@@ -14,11 +16,8 @@ run_in_background = False       # True or False
 
 
 
-
 # ----------------------------------------------  AUTO APPLIER  ---------------------------------------------- #
 
-# Keep the External Application tabs open?
-close_tabs = True               # True or False
 
 # Login Credentials for LinkedIn
 username = "username@example.com" 
@@ -26,21 +25,39 @@ password = "examplepassword"
 
 
 # These Sentences are Searched in LinkedIn
-keywords = ["Software Developer", "Software Engineer"]
+keywords = ["Software Developer", "Software Engineer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "Grad Software Engineer", "Grad Software Developer"]
 
-# Give an relative or absolute path of your default resume...
+
+
+# >>>>>>>>>>> Easy Apply Questions <<<<<<<<<<<
+
+
+# Give an relative or absolute path of your default resume to be uploaded...
 default_resume_path = "all resumes/default/resume.pdf"
 
-# What do you want to enter in questions...
+# What do you want to answer for years of experience you have?
 years_of_experience = '3'
 
-# After how many number of applications should we keep switching? 
-switch_number = 100
+# Do you need visa sponsorship now or in future?
+require_visa = "No"             # "Yes" or "No"
 
-# Do you want the program to run continuously until you stop it?
-run_non_stop = True             # True or False
-alternate_sortby = True         # True or False
-cycle_date_posted = True        # True or False
+# What is the status of your citizenship? Some jobs are making this compulsory to be answered
+us_citizenship = "Non-citizen allowed to work for any employer" # "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident", "Other"
+
+# What is the link to your portfolio website, leave it empty as "" if you don't want to enter anything
+website = "https://github.com/GodsScion" # "www.example.bio" or "" and so on....
+
+# What is your desired salary, only enter in numbers
+desired_salary = "80000"     # "80000", "90000", "100000" or "120000" and so on....
+
+# Example question: "On a scale of 1-10 how much experience do you have building web or mobile applications? 1 being very little or only in school, 10 being that you have built and launched applications to real users"
+confidence_level = "8"          # Any number between "1" to "10", put em in quotes ""
+
+gender = "Male"                 # "Male", "Female", "Others" or "Decline"
+full_name = "Sai Vignesh Golla" # Your name in quotes
+
+
+
 
 ### Preferences for job search
 ''' 
@@ -74,6 +91,19 @@ fair_chance_employer = False    # True or False
 
 
 
+# >>>>>>>>>>> LinkedIn Settings <<<<<<<<<<<
+
+# Keep the External Application tabs open?
+close_tabs = True               # True or False
+
+# After how many number of applications should we keep switching? 
+switch_number = 100             # Only numbers greater than 25... Don't put in quotes
+
+# Do you want the program to run continuously until you stop it?
+run_non_stop = True             # True or False
+alternate_sortby = True         # True or False
+cycle_date_posted = True        # True or False
+
 
 # ----------------------------------------------  RESUME GENERATOR  ---------------------------------------------- #
 
@@ -101,3 +131,19 @@ generated_resume_path = "all resumes"
 
 
 
+############################################################################################################
+'''
+THANK YOU for using my tool! Wishing you the best in your job hunt!
+
+Sharing is caring! If you found this tool helpful, please share it with your peers. Your support keeps this project alive.
+
+Support my work on <PATREON_LINK>. Together, we can help more job seekers.
+
+As an independent developer, I pour my heart and soul into creating tools like this, driven by the genuine desire to make a positive impact.
+
+Your support, whether through donations big or small or simply spreading the word, means the world to me and helps keep this project alive and thriving.
+
+Gratefully yours,
+Sai Vignesh Golla
+'''
+############################################################################################################

@@ -3,7 +3,7 @@ import csv
 from time import sleep
 from random import randint
 from datetime import datetime, timedelta
-from setup.config import file_name, failed_file_name
+from setup.config import file_name, failed_file_name, log_path
 
 # Function to search for Chrome Profiles
 def find_default_profile_directory():
@@ -35,6 +35,7 @@ def buffer(speed=0):
 # Date posted calculator
 def calculate_date_posted(time_string):
     time_string = time_string.strip()
+    # print_lg(f"Trying to calculate date job was posted from '{time_string}'")
     now = datetime.now()
     if "second" in time_string:
         seconds = int(time_string.split()[0])
@@ -81,14 +82,14 @@ def get_applied_job_ids():
             for row in reader:
                 job_ids.add(row[0])
     except FileNotFoundError:
-        print(f"The CSV file '{file_name}' does not exist.")
+        print_lg(f"The CSV file '{file_name}' does not exist.")
     return job_ids
 
 
 def manual_login_retry(is_logged_in):
     count = 0
     while not is_logged_in():
-        print("Seems like you're not logged in!")
+        print_lg("Seems like you're not logged in!")
         message = "Press Enter to continue after you logged in..."
         if count > 1:
             message = "If you're seeing this message even after you logged in, type 'skip' and press Enter to continue or just press Enter to try again..."
@@ -97,9 +98,18 @@ def manual_login_retry(is_logged_in):
             value = input(message).lower().strip()
             if value == 'skip': return
         except:
-            print("  --> Only type 'skip' to skip. Try again!")
+            print_lg("  --> Only type 'skip' to skip. Try again!")
 
 
 def critical_error_log(possible_reason, stack_trace):
-    print(possible_reason, stack_trace, datetime.now())
+    print_lg(possible_reason, stack_trace, datetime.now())
     pass
+
+def print_lg(*msgs):
+    try:
+        message = " ".join(str(msg) for msg in msgs)
+        with open(log_path, 'a') as file:
+            file.write(message + '\n')
+        print(message)
+    except Exception as e:
+        critical_error_log("Log.txt is open or is occupied by another program!", e)

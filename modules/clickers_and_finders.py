@@ -1,5 +1,5 @@
 from setup.config import click_gap
-from modules.helpers import buffer
+from modules.helpers import buffer, print_lg
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -16,8 +16,8 @@ def wait_span_click(driver, x, time=5.0, click=True):
                 buffer(click_gap)
             return button
         except Exception as e:
-            print("Click Failed! Didn't find '"+x+"'")
-            # print(e)
+            print_lg("Click Failed! Didn't find '"+x+"'")
+            # print_lg(e)
             return False
 
 def multi_sel(driver, l, time=5.0):
@@ -28,8 +28,8 @@ def multi_sel(driver, l, time=5.0):
             button.click()
             buffer(click_gap)
         except Exception as e:
-            print("Click Failed! Didn't find '"+x+"'")
-            # print(e)
+            print_lg("Click Failed! Didn't find '"+x+"'")
+            # print_lg(e)
 
 def multi_sel_noWait(driver, l):
     for x in l:
@@ -39,8 +39,8 @@ def multi_sel_noWait(driver, l):
             button.click()
             buffer(click_gap)
         except Exception as e:
-            print("Click Failed! Didn't find '"+x+"'")
-            # print(e)
+            print_lg("Click Failed! Didn't find '"+x+"'")
+            # print_lg(e)
 
 def boolean_button_click(driver, actions, x):
     try:
@@ -50,8 +50,8 @@ def boolean_button_click(driver, actions, x):
         actions.move_to_element(button).click().perform()
         buffer(click_gap)
     except Exception as e:
-        print("Click Failed! Didn't find '"+x+"'")
-        # print(e)
+        print_lg("Click Failed! Didn't find '"+x+"'")
+        # print_lg(e)
 
 # Find functions
 def find_by_class(driver, class_name, time=5.0):
@@ -67,3 +67,6 @@ def text_input_by_ID(driver, id, value, time=5.0):
     username_field.send_keys(Keys.CONTROL + "a")
     return username_field.send_keys(value)
 
+def try_xp(driver, xpath):
+    try: driver.find_element(By.XPATH, xpath).click()
+    except: return False

@@ -65,7 +65,7 @@ def calculate_date_posted(time_string):
 
 # Failed job list update
 def failed_job(job_id, job_link, resume, date_listed, error, exception, application_link):
-    with open(failed_file_name, 'a', newline='') as file:
+    with open(failed_file_name, 'a', newline='', encoding='utf-8') as file:
         fieldnames = ['Job ID', 'Job Link', 'Resume Tried', 'Date listed', 'Date Tried', 'Predicted reason', 'Stack Trace', 'External Job link']
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         if file.tell() == 0: writer.writeheader()
@@ -77,7 +77,7 @@ def failed_job(job_id, job_link, resume, date_listed, error, exception, applicat
 def get_applied_job_ids():
     job_ids = set()
     try:
-        with open(file_name, 'r') as file:
+        with open(file_name, 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
             for row in reader:
                 job_ids.add(row[0])
@@ -107,7 +107,7 @@ def critical_error_log(possible_reason, stack_trace):
 
 def print_lg(*msgs):
     try:
-        message = " ".join(str(msg) for msg in msgs)
+        message = "\n".join(str(msg) for msg in msgs)
         with open(log_path, 'a') as file:
             file.write(message + '\n')
         print(message)

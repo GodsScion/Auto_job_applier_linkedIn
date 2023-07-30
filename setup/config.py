@@ -41,19 +41,22 @@ years_of_experience = '3'
 # Do you need visa sponsorship now or in future?
 require_visa = "No"             # "Yes" or "No"
 
-# What is the status of your citizenship? Some jobs are making this compulsory to be answered
-us_citizenship = "Non-citizen allowed to work for any employer" # "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident", "Other"
+# What is the status of your citizenship? 
+# "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident" or "Other"
+us_citizenship = "Non-citizen allowed to work for any employer" # If left empty as "", tool will not answer the question. However, note that some companies make compulsory to be answered
 
 # What is the link to your portfolio website, leave it empty as "" if you don't want to enter anything
 website = "https://github.com/GodsScion" # "www.example.bio" or "" and so on....
 
 # What is your desired salary, only enter in numbers
-desired_salary = "80000"     # "80000", "90000", "100000" or "120000" and so on....
+desired_salary = "80000"        # "80000", "90000", "100000" or "120000" and so on....
 
 # Example question: "On a scale of 1-10 how much experience do you have building web or mobile applications? 1 being very little or only in school, 10 being that you have built and launched applications to real users"
 confidence_level = "8"          # Any number between "1" to "10", put em in quotes ""
 
-gender = "Male"                 # "Male", "Female", "Others" or "Decline"
+# How do you identify yourself? If left empty as "", tool will not answer the question. However, note that some companies make compulsory to be answered
+gender = "Male"                 # "Male", "Female", "Other", "Decline" or ""
+disability_status = ""
 full_name = "Sai Vignesh Golla" # Your name in quotes
 
 

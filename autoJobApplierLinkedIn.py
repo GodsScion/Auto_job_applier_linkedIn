@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, ElementClickInterceptedException
 from setup.config import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
@@ -118,14 +118,21 @@ def apply_filters():
 
 
 def answer_questions(questions_list):
-    # Find all Select buttons with text as Yes and click them
+    # Find all Select Questions
     select_buttons = driver.find_elements(By.XPATH, "//select")
     for select in select_buttons:
+        label_org = "Unknown"
+        try: label_org = driver.find_element(By.XPATH, f"//label[@for='{select.get_attribute('id')}']").find_element(By.CLASS_NAME, "visually-hidden").text
+        except: pass
+        answer = 'Yes'
+        label = label_org.lower()
+        if 'gender' in label or 'sex' in label: answer = gender
         select = Select(select)
-        # selected_option = select.first_selected_option.text
-        # if selected_option != "Select an option": continue
-        select.select_by_visible_text('Yes')
-    
+        selected_option = select.first_selected_option.text
+        if selected_option != "Select an option": continue
+        select.select_by_visible_text(answer)
+        questions_list.add((label_org, select.first_selected_option.text, "select")) 
+
     # Find all radio questions
     all_radio_questions = driver.find_elements(By.XPATH, '//fieldset[@data-test-form-builder-radio-button-form-component="true"]')
     for question in all_radio_questions:
@@ -140,7 +147,7 @@ def answer_questions(questions_list):
             random = question.find_element(By.XPATH, ".//label[@data-test-text-selectable-option__label]")
             answer = random.text
             random.click()
-        questions_list.append((label, answer, "radio"))
+        questions_list.add((label, answer, "radio"))
     
     # Find all text questions and answer them
     all_text_questions = driver.find_elements(By.CLASS_NAME, "artdeco-text-input--container")
@@ -156,14 +163,7 @@ def answer_questions(questions_list):
         if 'scale of 1-10' in label: answer = confidence_level
         text_input = question.find_element(By.CLASS_NAME, "artdeco-text-input--input")
         if not text_input.get_attribute("value"): text_input.send_keys(answer)
-        else: answer = text_input.get_attribute("value")
-        questions_list.append((label_org, answer, "text"))
-
-    # All select questions
-    all_select_questions = driver.find_elements(By.XPATH, "//label[@data-test-text-entity-list-form-title]")
-    for question in all_select_questions:
-        question = question.text
-        questions_list.append((question, "Yes", "select"))    
+        questions_list.add((label_org, text_input.get_attribute("value"), "text"))
 
     try_xp(driver, "//button[contains(@aria-label, 'This is today')]")
 
@@ -174,7 +174,18 @@ def answer_questions(questions_list):
     # for text_input in text_inputs:
     #     if not text_input.get_attribute("value"): text_input.send_keys(years_of_experience)
 
+    # # All select questions
+    # all_select_questions = driver.find_elements(By.XPATH, "//label[@data-test-text-entity-list-form-title]")
+    # for question in all_select_questions:
+    #     question = question.text
+    #     questions_list.add((question, "Yes", "select"))    
+
     return questions_list
+
+
+def discard_job():
+    actions.send_keys(Keys.ESCAPE).perform()
+    wait_span_click(driver, 'Discard', 2)
 
 
 # Apply to jobs function
@@ -214,17 +225,22 @@ def apply_to_jobs(keywords):
                     scroll_to_view(driver, job_details_button)
                     title = job_details_button.text
                     company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
-                    job_details_button.click()
+                    try: job_details_button.click()
+                    except Exception as e:
+                        print_lg(f'Failed to click "{title} | {company}" job on details button. Job ID: {job_id}!') 
+                        # print_lg(e)
+                        discard_job()
+                        job_details_button.click()
                     buffer(click_gap)
 
                     # Skip if already applied
                     job_id = job.get_dom_attribute('data-occludable-job-id')
                     try:
-                        if job_id in applied_jobs or driver.find_element(By.CLASS_NAME, "jobs-s-apply__application-link"):
-                            print_lg(f'Already applied to "{title} - {company}" job. Job ID: {job_id}!')
+                        if job_id in applied_jobs or find_by_class(driver, "jobs-s-apply__application-link", 2):
+                            print_lg(f'Already applied to "{title} | {company}" job. Job ID: {job_id}!')
                             continue
                     except Exception as e:
-                        print_lg(f'\nTrying to Apply to "{title} - {company}" job. Job ID: {job_id}')
+                        print_lg(f'\nTrying to Apply to "{title} | {company}" job. Job ID: {job_id}')
 
 
 
@@ -242,6 +258,7 @@ def apply_to_jobs(keywords):
 
                     try:
                         scroll_to_view(driver, find_by_class(driver, "jobs-company__box"))
+                        buffer(1)
                         scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card__content--two-pane"))
                     except Exception as e:
                         print_lg("Failed to scroll!")
@@ -290,30 +307,31 @@ def apply_to_jobs(keywords):
                                 # driver.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
                                 resume = os.path.basename(resume)
                                 next_button = True
-                                questions_list = []
-                                while (next_button):
-                                    
+                                questions_list = set()
+                                next_counter = 0
+                                while next_button:
+                                    next_counter += 1
+                                    if next_counter >= 10: 
+                                        if questions_list: print_lg("Stuck for one or some of the following questions...", questions_list)
+                                        raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(questions_list)
-                                    
                                     next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
-                                    next_button.click()
+                                    try: next_button.click()
+                                    except ElementClickInterceptedException: break
                                     buffer(click_gap)
 
                             except NoSuchElementException:
-                                if questions_list:
-                                    print_lg("Answered the following questions...")
-                                    print_lg(questions_list)
+                                if questions_list: print_lg("Answered the following questions...", questions_list)
                             finally:
                                 wait_span_click(driver, "Review", 2)
-                                wait_span_click(driver, "Submit application", 2)
+                                if not wait_span_click(driver, "Submit application", 2): raise Exception("Since, Submit Application failed, discarding the job application...")
                                 if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
                         except Exception as e:
                             print_lg("Failed to Easy apply!")
                             # print_lg(e)
                             critical_error_log("Somewhere in Easy Apply process",e)
                             failed_job(job_id, job_link, resume, date_listed, "Problem in Easy Applying", e, application_link)
-                            actions.send_keys(Keys.ESCAPE).perform()
-                            wait_span_click(driver, 'Discard', 2)
+                            discard_job()
                             continue
                     else:
                         # Case 2: Apply externally
@@ -334,7 +352,7 @@ def apply_to_jobs(keywords):
                             continue
                     
                     # Create or append to the CSV file
-                    with open(file_name, mode='a', newline='') as csv_file:
+                    with open(file_name, mode='a', newline='', encoding='utf-8') as csv_file:
                         fieldnames = ['Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link', 'Questions']
                         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
                         if csv_file.tell() == 0: writer.writeheader()

@@ -12,6 +12,7 @@ try:
     profile_dir = find_default_profile_directory()
     if profile_dir: options.add_argument(f"--user-data-dir={profile_dir}")
     else: print_lg("Default profile directory not found. Using a new profile.")
+    if keep_screen_awake: options.add_argument('--disable-sleep')
     driver = uc.Chrome(use_subprocess=True, options=options)
     driver.maximize_window()
     wait = WebDriverWait(driver, 5)

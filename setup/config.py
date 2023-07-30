@@ -10,9 +10,11 @@ log_path = "all excels/log.txt"
 # Set the maximum amount of time allowed to wait between each click
 click_gap = 0                   # Enter max allowed secs to wait approximately. (Only Non Negative Integers like 0,1,2,3,....)
 
-# If you want to see Chrome running then set this as False. May reduce performance...
+# If you want to see Chrome running then set run_in_background as False. May reduce performance...
 run_in_background = False       # True or False
 
+# If you want to keep your screen lit, set keep_screen_awake as True
+keep_screen_awake = True        # True or False
 
 
 

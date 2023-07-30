@@ -1,5 +1,5 @@
 import undetected_chromedriver as uc
-from setup.config import run_in_background
+from setup.config import run_in_background, keep_screen_awake
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait

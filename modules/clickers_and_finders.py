@@ -68,5 +68,7 @@ def text_input_by_ID(driver, id, value, time=5.0):
     return username_field.send_keys(value)
 
 def try_xp(driver, xpath):
-    try: driver.find_element(By.XPATH, xpath).click()
+    try: 
+        driver.find_element(By.XPATH, xpath).click()
+        return True
     except: return False

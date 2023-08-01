@@ -5,48 +5,28 @@ from setup.config import *
 from selenium.common.exceptions import NoSuchElementException
 
 
-try: 
-    try:
-        next_button = wait_span_click(driver, "Next", 1)
-        driver.find_element(By.NAME, "file").send_keys(os.path.abspath(default_resume_path))
-        next_button = wait_span_click(driver, "Next", 1, False)
-        questions_list = []
-        while (next_button):
-            
-            # Find all radio buttons with text as Yes and click them
-            yes_radio_buttons = driver.find_elements(By.XPATH, "//label[normalize-space()='Yes']")
-            for radio_button in yes_radio_buttons:
-                radio_button.click()
 
-            # Find all text inputs and fill them with years_of_experience if it's empty
-            text_inputs = driver.find_elements(By.CLASS_NAME, "artdeco-text-input--input")
-            for text_input in text_inputs:
-                if not text_input.get_attribute("value"): text_input.send_keys(years_of_experience)
-            
-            # Gathering questions
-            all_radio_questions = driver.find_elements(By.CLASS_NAME, "fb-dash-form-element__label")
-            for question in all_radio_questions:
-                question = question.find_element(By.CLASS_NAME, "visually-hidden").text
-                questions_list.append((question, "Yes", "radio"))
-            
-            all_text_questions = driver.find_elements(By.CLASS_NAME, "artdeco-text-input--label")
-            for question in all_text_questions:
-                question = question.text
-                questions_list.append((question, years_of_experience, "text"))
-            
-            next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
-            next_button.click()
-            buffer(click_gap)
+title = "<title>"
+job_id = "<job_id>"
+max_connections_reached = False
 
-    except NoSuchElementException:
-        if questions_list:
-            print_lg("Answered the following questions...")
-            print_lg(questions_list)
-        wait_span_click(driver, "Review", 2)
-        wait_span_click(driver, "Submit application", 2)
-        print_lg("Successful Test")
+# Hiring Manager info
+try:
+    hr_info_card = WebDriverWait(driver,2).until(EC.presence_of_element_located((By.CLASS_NAME, "hirer-card__hirer-information")))
+    hr_link = hr_info_card.find_element(By.TAG_NAME, "a").get_attribute("href")
+    hr_name = hr_info_card.find_element(By.TAG_NAME, "span").text
+    def message_hr(hr_info_card):
+        if not hr_info_card: return False
+        hr_info_card.find_element(By.XPATH, ".//span[normalize-space()='Message']").click()
+        # message_box = driver.find_element(By.XPATH, "//div[@aria-label='Write a message…']")
+        # message_box.send_keys()
+        if not try_xp(driver, "//button[normalize-space()='Send']"): actions.send_keys(Keys.ESCAPE).perform()
+        if max_connections_reached: raise IndexError("Can't connect as Max Connection Request is reached")
+        driver.switch_to.new_window('tab')
+        driver.get("https://chat.openai.com/")
+
+
+        
 except Exception as e:
-    print_lg(e)
-    actions.send_keys(Keys.ESCAPE).perform()
-    driver.find_element(By.XPATH, "//span[normalize-space()='Discard']").click()
-    driver.quit()
+    print_lg(f"HR info was not given for '{title}' with Job ID: {job_id}!")
+    # print_lg(e)

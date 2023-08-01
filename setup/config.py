@@ -31,8 +31,7 @@ keywords = ["Software Developer", "Software Engineer", "Junior Software Develope
 
 
 
-# >>>>>>>>>>> Easy Apply Questions <<<<<<<<<<<
-
+# >>>>>>>>>>> Easy Apply Inputs <<<<<<<<<<<
 
 # Give an relative or absolute path of your default resume to be uploaded...
 default_resume_path = "all resumes/default/resume.pdf"
@@ -98,17 +97,26 @@ fair_chance_employer = False    # True or False
 
 # >>>>>>>>>>> LinkedIn Settings <<<<<<<<<<<
 
+# Avoid applying to companies with these words in their description...
+blacklist_words = ["Staffing", "Recruiting"] # (dynamic multiple select) or leave empty as []
+
+# Send connection requests to HR's
+connect_hr = True               # True or False
+
+# What message do you want to send during connection request? (Max. 300 Characters)
+connect_request_message = ""
+
 # Keep the External Application tabs open?
 close_tabs = True               # True or False
 
 # After how many number of applications should we keep switching? 
-switch_number = 100             # Only numbers greater than 25... Don't put in quotes
+switch_number = 50             # Only numbers greater than 25... Don't put in quotes
 
 # Do you want the program to run continuously until you stop it?
 run_non_stop = True             # True or False
 alternate_sortby = True         # True or False
 cycle_date_posted = True        # True or False
-
+stop_date_cycle_at_24hr = True  # True or False
 
 # ----------------------------------------------  RESUME GENERATOR  ---------------------------------------------- #
 

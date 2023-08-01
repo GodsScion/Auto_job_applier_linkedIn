@@ -1,6 +1,7 @@
 # Imports
 import os
 import csv
+from pyautogui import moveRel
 from datetime import datetime
 from modules.open_chrome import *
 from selenium.webdriver.common.by import By
@@ -188,6 +189,12 @@ def discard_job():
     wait_span_click(driver, 'Discard', 2)
 
 
+
+
+    
+
+
+
 # Apply to jobs function
 def apply_to_jobs(keywords):
     applied_jobs = get_applied_job_ids()
@@ -249,6 +256,7 @@ def apply_to_jobs(keywords):
                     date_applied = "Pending"
                     hr_link = "Unknown"
                     hr_name = "Unknown"
+                    connect_request = "Unavailable"
                     date_listed = "Unknown"
                     description = "Unknown"
                     skills = "Unknown" # Still in development
@@ -257,9 +265,16 @@ def apply_to_jobs(keywords):
                     questions_list = None
 
                     try:
-                        scroll_to_view(driver, find_by_class(driver, "jobs-company__box"))
+                        about_company = find_by_class(driver, "jobs-company__box")
+                        scroll_to_view(driver, about_company)
+                        about_company = about_company.text.lower()
+                        for word in blacklist_words: 
+                            if word in about_company: raise ValueError(f"Found the word '{word}' in '{about_company}'")
                         buffer(1)
                         scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card__content--two-pane"))
+                    except ValueError as e:
+                        print_lg('Skipping this job.', e)
+                        continue
                     except Exception as e:
                         print_lg("Failed to scroll!")
                         # print_lg(e)
@@ -270,6 +285,14 @@ def apply_to_jobs(keywords):
                         hr_info_card = WebDriverWait(driver,2).until(EC.presence_of_element_located((By.CLASS_NAME, "hirer-card__hirer-information")))
                         hr_link = hr_info_card.find_element(By.TAG_NAME, "a").get_attribute("href")
                         hr_name = hr_info_card.find_element(By.TAG_NAME, "span").text
+                        def message_hr(hr_info_card):
+                            if not hr_info_card: return False
+                            hr_info_card.find_element(By.XPATH, ".//span[normalize-space()='Message']").click()
+                            message_box = driver.find_element(By.XPATH, "//div[@aria-label='Write a message…']")
+                            message_box.send_keys()
+                            try_xp(driver, "//button[normalize-space()='Send']")
+
+                            
                     except Exception as e:
                         print_lg(f"HR info was not given for '{title}' with Job ID: {job_id}!")
                         # print_lg(e)
@@ -353,14 +376,14 @@ def apply_to_jobs(keywords):
                     
                     # Create or append to the CSV file
                     with open(file_name, mode='a', newline='', encoding='utf-8') as csv_file:
-                        fieldnames = ['Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link', 'Questions']
+                        fieldnames = ['Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link', 'Questions', 'Connect Request']
                         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
                         if csv_file.tell() == 0: writer.writeheader()
                         # Once the application is submitted successfully, add the application details to the CSV
                         writer.writerow({'Job ID':job_id, 'Title':title, 'Company':company, 'Description':description, 'Skills':skills, 
                                             'HR Name':hr_name, 'HR Link':hr_link, 'Resume':resume, 'Re-post':repost, 
                                             'Date listed':date_listed, 'Date Applied':date_applied, 'Job Link':job_link, 
-                                            'External Job link':application_link, 'Questions':questions_list})
+                                            'External Job link':application_link, 'Questions':questions_list, 'Connect Request':connect_request})
                     csv_file.close()
                     current_count += 1
                     applied_jobs.add(job_id)
@@ -420,12 +443,12 @@ def main():
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)
         total_runs = 0
-        total_runs = run(total_runs)
+        total_runs = run(total_runs, connect_hr)
         while(run_non_stop):
             if cycle_date_posted:
                 date_options = ["Any time", "Past month", "Past week", "Past 24 hours"]
                 global date_posted
-                date_posted = date_options[0 if date_options.index(date_posted) + 1 >= len(date_options) else date_options.index(date_posted) + 1]
+                date_posted = date_options[date_options.index(date_posted)+1 if date_options.index(date_posted)+1 > len(date_options) else -1] if stop_date_cycle_at_24hr else date_options[0 if date_options.index(date_posted)+1 >= len(date_options) else date_options.index(date_posted)+1]
             if alternate_sortby:
                 global sort_by
                 sort_by = "Most recent" if sort_by == "Most relevant" else "Most relevant"

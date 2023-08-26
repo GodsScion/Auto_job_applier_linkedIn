@@ -8,7 +8,6 @@ from selenium.common.exceptions import NoSuchElementException
 
 title = "<title>"
 job_id = "<job_id>"
-max_connections_reached = False
 
 # Hiring Manager info
 try:

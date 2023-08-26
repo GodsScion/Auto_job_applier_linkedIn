@@ -443,7 +443,7 @@ def main():
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)
         total_runs = 0
-        total_runs = run(total_runs, connect_hr)
+        total_runs = run(total_runs)
         while(run_non_stop):
             if cycle_date_posted:
                 date_options = ["Any time", "Past month", "Past week", "Past 24 hours"]

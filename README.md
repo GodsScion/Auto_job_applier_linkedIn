@@ -1,6 +1,6 @@
 # LinkedIn Job Application Tool
 
-**Disclaimer: This program is for educational purposes only. By downloading, using, copying, replicating, or interacting with this program or its code, you agree to comply with LinkedIn's terms of service and policies on web scraping. Use it at your own risk. The creators and contributors of this program are not responsible for any misuse, damages, or legal implications resulting from its usage.**
+**Disclaimer: This program is for educational purposes only. By downloading, using, copying, replicating, or interacting with this program or its code, you agree to comply with LinkedIn's terms of service and policies on web scraping. Use it at your own risk. The creators and contributors of this program are not responsible or liable for any misuse, damages, or legal implications resulting from its usage.**
 
 ## Introduction
 

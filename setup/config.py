@@ -16,6 +16,8 @@ run_in_background = False       # True or False
 # If you want to keep your screen lit, set keep_screen_awake as True
 keep_screen_awake = True        # True or False
 
+# Run in undetected mode to bypass anti-bot checks (This mode is Unstable, Recommended to leave it as False)
+undetected_mode = False
 
 
 # ----------------------------------------------  AUTO APPLIER  ---------------------------------------------- #

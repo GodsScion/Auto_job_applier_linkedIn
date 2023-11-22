@@ -1,7 +1,7 @@
 # Imports
 import os
 import csv
-from pyautogui import moveRel
+# from pyautogui import moveRel
 from datetime import datetime
 from modules.open_chrome import *
 from selenium.webdriver.common.by import By
@@ -269,14 +269,14 @@ def apply_to_jobs(keywords):
                         scroll_to_view(driver, about_company)
                         about_company = about_company.text.lower()
                         for word in blacklist_words: 
-                            if word in about_company: raise ValueError(f"Found the word '{word}' in '{about_company}'")
+                            if word.lower() in about_company: raise ValueError(f"Found the word '{word}' in '{about_company}'")
                         buffer(1)
                         scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card__content--two-pane"))
                     except ValueError as e:
                         print_lg('Skipping this job.', e)
                         continue
                     except Exception as e:
-                        print_lg("Failed to scroll!")
+                        print_lg("Failed to scroll to About Company!")
                         # print_lg(e)
 
 

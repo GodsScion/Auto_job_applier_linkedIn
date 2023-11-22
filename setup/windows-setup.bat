@@ -71,12 +71,20 @@ if %errorlevel% neq 0 (
 :: Step 6: Clean up
 del chromedriver.zip
 del latest_versions_info.json
-echo Removed setup files...
+echo Removed setup files.
 
 
 :: Step 7: Open chromedriver
 echo Opening Chrome Driver...
 start "" "%chromedriver_dir%\chromedriver.exe"
+
+
+:: Check if python and chrome are installed or not
+:: pip install undetected_chromedriver
+:: pip install setuptools
+
+
+
 
 
 :ExitSetup

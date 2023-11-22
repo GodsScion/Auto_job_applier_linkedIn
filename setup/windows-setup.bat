@@ -1,10 +1,25 @@
 @echo off
 setlocal enabledelayedexpansion
 
+:: Check for administrative privileges
+>nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+
+:: If error flag is set, we do not have admin privileges
+if %errorlevel% neq 0 (
+    echo Please run this setup as admin. & echo Requesting administrative privileges...
+    powershell -Command "& {Start-Process -FilePath '%0' -ArgumentList '-Admin' -Verb RunAs}"
+    goto End
+)
+
 echo Setting up ChromeDriver installation...
 
 :: Step 1: Get the latest version information
-powershell -Command "& {Invoke-WebRequest -Uri 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json' -OutFile 'latest_versions_info.json'}"
+powershell -Command "& { $response = Invoke-WebRequest -Uri 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json'; if ($response.StatusCode -ne 200) { exit 1 }; $response.Content | Out-File 'latest_versions_info.json' }"
+if %errorlevel% neq 0 ( 
+    echo Please check your internet connection. See if any applications, firewalls, vpns, or devices are blocking the download.
+    goto ExitSetup
+)
+
 
 :: Step 2: Extract the latest version directly from the JSON file
 for /f "delims=" %%a in ('powershell -Command "& {(Get-Content 'latest_versions_info.json' | ConvertFrom-Json).channels.Stable.version} "') do (
@@ -13,34 +28,59 @@ for /f "delims=" %%a in ('powershell -Command "& {(Get-Content 'latest_versions_
 
 :: Check if latest_version is not null or empty
 if not defined latest_version (
-    echo Failed to extract the latest version from the JSON file.
-    exit /b 1
+    echo FAILED to extract the latest version from the JSON file.
+    goto ExitSetup
 )
 
 :: Construct the ChromeDriver URL
 set "chrome_driver_url=https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/!latest_version!/win64/chromedriver-win64.zip"
 
-echo Latest ChromeDriver version: !latest_version!
-echo ChromeDriver URL: !chrome_driver_url!
+echo Latest ChromeDriver version: !latest_version!.
+echo Downloading ChromeDriver from URL: '!chrome_driver_url!' ...
 
 :: Step 3: Download ChromeDriver
 powershell -Command "& {Invoke-WebRequest -Uri !chrome_driver_url! -OutFile 'chromedriver.zip'}"
 
 :: Step 4: Create installation directory and unzip
 set "chrome_install_dir=C:\Program Files\Google\Chrome"
-mkdir "%chrome_install_dir%"
+if not exist "%chrome_install_dir%" mkdir "%chrome_install_dir%"
 
 :: Use PowerShell Expand-Archive for extraction (works with ZIP files)
-powershell -Command "& {Expand-Archive -Path 'chromedriver.zip' -DestinationPath '%chrome_install_dir%'}"
+powershell -Command "& {Expand-Archive -Path 'chromedriver.zip' -DestinationPath '%chrome_install_dir%' -Force}"
+if %errorlevel% neq 0 ( 
+    echo FAILED to extract ChromeDriver. Check if any application is denying installation or extraction.
+    goto ExitSetup
+)
+
 
 :: Step 5: Add chromedriver.exe to PATH
 set "chromedriver_dir=%chrome_install_dir%\chromedriver-win64"
-setx PATH "%PATH%;%chromedriver_dir%"
+
+:: Update PATH for the current session
+set "path=%path%;%chromedriver_dir%"
+
+:: Update PATH in the registry for future sessions
+reg add "HKCU\Environment" /v Path /t REG_EXPAND_SZ /d "%path%" /f
+
+if %errorlevel% neq 0 (
+    echo Failed to add chromedriver path to environment variables. Please add it manually.
+    goto ExitSetup
+)
+
 
 :: Step 6: Clean up
 del chromedriver.zip
-:: Add any other cleanup here
+del latest_versions_info.json
+echo Removed setup files...
 
-echo Setup complete. If it Failed, retry by running it as administrator and with proper internet connection.
 
+:: Step 7: Open chromedriver
+echo Opening Chrome Driver...
+start "" "%chromedriver_dir%\chromedriver.exe"
+
+
+:ExitSetup
 pause
+exit
+
+:End

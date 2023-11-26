@@ -13,7 +13,7 @@ from setup.config import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
-from resume_generator import is_logged_in_GPT ,login_GPT, open_resume_chat, create_custom_resume
+if use_resume_generator:    from resume_generator import is_logged_in_GPT ,login_GPT, open_resume_chat, create_custom_resume
 
 
 
@@ -271,7 +271,7 @@ def apply_to_jobs(keywords):
                         for word in blacklist_words: 
                             if word.lower() in about_company: raise ValueError(f"Found the word '{word}' in '{about_company}'")
                         buffer(1)
-                        scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card__content--two-pane"))
+                        scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card"))
                     except ValueError as e:
                         print_lg('Skipping this job.', e)
                         continue
@@ -285,23 +285,32 @@ def apply_to_jobs(keywords):
                         hr_info_card = WebDriverWait(driver,2).until(EC.presence_of_element_located((By.CLASS_NAME, "hirer-card__hirer-information")))
                         hr_link = hr_info_card.find_element(By.TAG_NAME, "a").get_attribute("href")
                         hr_name = hr_info_card.find_element(By.TAG_NAME, "span").text
-                        def message_hr(hr_info_card):
-                            if not hr_info_card: return False
-                            hr_info_card.find_element(By.XPATH, ".//span[normalize-space()='Message']").click()
-                            message_box = driver.find_element(By.XPATH, "//div[@aria-label='Write a message…']")
-                            message_box.send_keys()
-                            try_xp(driver, "//button[normalize-space()='Send']")
-
-                            
+                        # if connect_hr:
+                        #     driver.switch_to.new_window('tab')
+                        #     driver.get(hr_link)
+                        #     wait_span_click("More")
+                        #     wait_span_click("Connect")
+                        #     wait_span_click("Add a note")
+                        #     message_box = driver.find_element(By.XPATH, "//textarea")
+                        #     message_box.send_keys(connect_request_message)
+                        #     if close_tabs: driver.close()
+                        #     driver.switch_to.window(linkedIn_tab) 
+                        # def message_hr(hr_info_card):
+                        #     if not hr_info_card: return False
+                        #     hr_info_card.find_element(By.XPATH, ".//span[normalize-space()='Message']").click()
+                        #     message_box = driver.find_element(By.XPATH, "//div[@aria-label='Write a message…']")
+                        #     message_box.send_keys()
+                        #     try_xp(driver, "//button[normalize-space()='Send']")        
                     except Exception as e:
                         print_lg(f"HR info was not given for '{title}' with Job ID: {job_id}!")
                         # print_lg(e)
+
 
                     # Calculation of date posted
                     try:
                         # try: time_posted_text = find_by_class(driver, "jobs-unified-top-card__posted-date", 2).text
                         # except: 
-                        jobs_top_card = driver.find_element(By.CLASS_NAME, "jobs-unified-top-card__primary-description")
+                        jobs_top_card = driver.find_element(By.CLASS_NAME, "job-details-jobs-unified-top-card__primary-description") #"jobs-unified-top-card__primary-description")
                         time_posted_text = jobs_top_card.find_element(By.XPATH, './/span[contains(normalize-space(), "ago")]').text
                         if time_posted_text.__contains__("Reposted"):
                             repost = True
@@ -429,16 +438,17 @@ def main():
         global linkedIn_tab
         linkedIn_tab = driver.current_window_handle
 
-        # Opening ChatGPT tab for resume customization
-        # try:
-        #     driver.switch_to.new_window('tab')
-        #     driver.get("https://chat.openai.com/")
-        #     if not is_logged_in_GPT(): login_GPT()
-        #     open_resume_chat()
-        #     global chatGPT_tab
-        #     chatGPT_tab = driver.current_window_handle
-        # except Exception as e:
-        #     print_lg("Opening OpenAI chatGPT tab failed!")
+        # Login to ChatGPT in a new tab for resume customization
+        if use_resume_generator:
+            try:
+                driver.switch_to.new_window('tab')
+                driver.get("https://chat.openai.com/")
+                if not is_logged_in_GPT(): login_GPT()
+                open_resume_chat()
+                global chatGPT_tab
+                chatGPT_tab = driver.current_window_handle
+            except Exception as e:
+                print_lg("Opening OpenAI chatGPT tab failed!")
 
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)

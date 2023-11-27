@@ -7,20 +7,20 @@ file_name = "all excels/all_applied_applications_history.csv"
 failed_file_name = "all excels/all_failed_applications_history.csv"
 log_path = "all excels/log.txt"
 
-# Set the maximum amount of time allowed to wait between each click
+# Set the maximum amount of time allowed to wait between each click in secs
 click_gap = 1                   # Enter max allowed secs to wait approximately. (Only Non Negative Integers like 0,1,2,3,....)
 
 # If you want to see Chrome running then set run_in_background as False. May reduce performance...
 run_in_background = False       # True or False
 
-# If you want to keep your screen lit, set keep_screen_awake as True
+# If enabled (True), the program would keep your screen active and prevent PC from sleeping. Instead you could disable this feature (set it to false) and adjust your PC sleep settings to Never Sleep or a preferred time. 
 keep_screen_awake = True        # True or False
 
-# Run in undetected mode to bypass anti-bot checks (Preview Feature, unstable. Recommended to leave it as False)
-undetected_mode = False
+# Run in undetected mode to bypass anti-bot protections (Preview Feature, unstable. Recommended to leave it as False)
+undetected_mode = False         # True or False
 
 # Use ChatGPT for resume building (Experimental Feature can break the application. Recommended to leave it as False) 
-use_resume_generator = False    # May only work with undetected_mode = True. As ChatGPT website is hosted by CloudFlare with Anti-bot protections!
+use_resume_generator = False    # True or False ,   This feature may only work with 'undetected_mode' = True. As ChatGPT website is hosted by CloudFlare which is protected by Anti-bot protections!
 
 # ----------------------------------------------  AUTO APPLIER  ---------------------------------------------- #
 

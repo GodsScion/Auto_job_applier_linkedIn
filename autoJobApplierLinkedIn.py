@@ -1,7 +1,7 @@
 # Imports
 import os
 import csv
-# from pyautogui import moveRel
+from pyautogui import press
 from datetime import datetime
 from modules.open_chrome import *
 from selenium.webdriver.common.by import By
@@ -226,6 +226,7 @@ def apply_to_jobs(keywords):
 
             
                 for job in job_listings:
+                    if keep_screen_awake: press('shiftright')
                     if current_count >= switch_number: break
 
                     job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
@@ -375,6 +376,7 @@ def apply_to_jobs(keywords):
                             windows = driver.window_handles
                             driver.switch_to.window(windows[-1])
                             application_link = driver.current_url
+                            print_lg('Got the external application link "{}"'.format(application_link))
                             if close_tabs: driver.close()
                             driver.switch_to.window(linkedIn_tab) 
                         except Exception as e:
@@ -394,6 +396,7 @@ def apply_to_jobs(keywords):
                                             'Date listed':date_listed, 'Date Applied':date_applied, 'Job Link':job_link, 
                                             'External Job link':application_link, 'Questions':questions_list, 'Connect Request':connect_request})
                     csv_file.close()
+                    print_lg(f'\nSuccessfully saved "{title} | {company}" job. Job ID: {job_id} info')
                     current_count += 1
                     applied_jobs.add(job_id)
 

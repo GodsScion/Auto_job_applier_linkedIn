@@ -108,7 +108,7 @@ def critical_error_log(possible_reason, stack_trace):
 def print_lg(*msgs):
     try:
         message = "\n".join(str(msg) for msg in msgs)
-        with open(log_path, 'a') as file:
+        with open(log_path, 'a', encoding="utf-8") as file:
             file.write(message + '\n')
         print(message)
     except Exception as e:

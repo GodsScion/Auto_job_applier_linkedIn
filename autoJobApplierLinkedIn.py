@@ -198,7 +198,8 @@ def discard_job():
 # Apply to jobs function
 def apply_to_jobs(keywords):
     applied_jobs = get_applied_job_ids()
-        
+    rejected_jobs = set()
+
     for keyword in keywords:
         driver.get(f"https://www.linkedin.com/jobs/search/?keywords={keyword}")
         print_lg(f'\nNow searching for "{keyword}"\n')
@@ -241,16 +242,17 @@ def apply_to_jobs(keywords):
                         job_details_button.click()
                     buffer(click_gap)
 
-                    # Skip if already applied
                     job_id = job.get_dom_attribute('data-occludable-job-id')
+                    # Skip if previously rejected due to blacklist
+                    if job_id in rejected_jobs: continue
+
+                    # Skip if already applied
                     try:
                         if job_id in applied_jobs or find_by_class(driver, "jobs-s-apply__application-link", 2):
                             print_lg(f'Already applied to "{title} | {company}" job. Job ID: {job_id}!')
                             continue
                     except Exception as e:
                         print_lg(f'\nTrying to Apply to "{title} | {company}" job. Job ID: {job_id}')
-
-
 
                     job_link = "https://www.linkedin.com/jobs/view/"+job_id
                     application_link = "Easy Applied"
@@ -270,7 +272,9 @@ def apply_to_jobs(keywords):
                         scroll_to_view(driver, about_company)
                         about_company = about_company.text.lower()
                         for word in blacklist_words: 
-                            if word.lower() in about_company: raise ValueError(f"Found the word '{word}' in '{about_company}'")
+                            if word.lower() in about_company: 
+                                rejected_jobs.add(job_id)
+                                raise ValueError(f"Found the word '{word}' in '{about_company}'")
                         buffer(1)
                         scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card"))
                     except ValueError as e:
@@ -344,8 +348,9 @@ def apply_to_jobs(keywords):
                                 next_counter = 0
                                 while next_button:
                                     next_counter += 1
-                                    if next_counter >= 10: 
+                                    if next_counter >= 15: 
                                         if questions_list: print_lg("Stuck for one or some of the following questions...", questions_list)
+                                        # driver.save_screenshot("")
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(questions_list)
                                     next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
@@ -415,12 +420,13 @@ def apply_to_jobs(keywords):
 
         
 def run(total_runs):
-    print_lg("__________________________________________________________")
-    print_lg(f"Date and Time: {datetime.now()}\n")
-    print_lg(f"Cycle number {total_runs+1} ...")
-    print_lg(f"Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'")
+    print_lg("########################################################################################################################\n")
+    print_lg(f"Date and Time: {datetime.now()}")
+    print_lg(f"Cycle number: {total_runs+1}")
+    print_lg(f"Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'\n")
+    print_lg("________________________________________________________________________________________________________________________\n\n")
     apply_to_jobs(keywords)
-    print_lg("__________________________________________________________")
+    print_lg("########################################################################################################################\n")
     print_lg("Sleeping for 10 min...")
     sleep(6)
     print_lg("Few more min... Gonna start with in next 5 min...")

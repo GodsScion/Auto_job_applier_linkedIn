@@ -5,7 +5,7 @@
 # Directory and name of the files where history of applied jobs is saved.
 file_name = "all excels/all_applied_applications_history.csv"
 failed_file_name = "all excels/all_failed_applications_history.csv"
-log_path = "all excels/log.txt"
+log_path = "logs/log.txt"
 
 # Set the maximum amount of time allowed to wait between each click in secs
 click_gap = 1                   # Enter max allowed secs to wait approximately. (Only Non Negative Integers like 0,1,2,3,....)
@@ -14,7 +14,7 @@ click_gap = 1                   # Enter max allowed secs to wait approximately. 
 run_in_background = False       # True or False
 
 # If enabled (True), the program would keep your screen active and prevent PC from sleeping. Instead you could disable this feature (set it to false) and adjust your PC sleep settings to Never Sleep or a preferred time. 
-keep_screen_awake = True        # True or False
+keep_screen_awake = False        # True or False
 
 # Run in undetected mode to bypass anti-bot protections (Preview Feature, unstable. Recommended to leave it as False)
 undetected_mode = False         # True or False

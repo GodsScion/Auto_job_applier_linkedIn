@@ -60,15 +60,21 @@ set "chromedriver_dir=%chrome_install_dir%\chromedriver-win64"
 set "path=%path%;%chromedriver_dir%"
 
 :: Update PATH in the registry for future sessions
-reg add "HKCU\Environment" /v Path /t REG_EXPAND_SZ /d "%path%" /f
+echo Adding ChromeDriver to path...
+@REM echo ";%PATH%;" | find /C /I ";%path%;
+@REM if errorlevel > 0 ( 
+@REM     echo Chromedriver path was already added
+@REM     goto CleanUp 
+@REM )
 
+reg add "HKCU\Environment" /v Path /t REG_EXPAND_SZ /d "%path%" /f
 if %errorlevel% neq 0 (
     echo Failed to add chromedriver path to environment variables. Please add it manually.
     goto ExitSetup
 )
 
-
 :: Step 6: Clean up
+:CleanUp
 del chromedriver.zip
 del latest_versions_info.json
 echo Removed setup files.

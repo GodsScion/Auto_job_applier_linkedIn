@@ -245,7 +245,6 @@ def apply_to_jobs(keywords):
                     job_id = job.get_dom_attribute('data-occludable-job-id')
                     # Skip if previously rejected due to blacklist
                     if job_id in rejected_jobs: continue
-
                     # Skip if already applied
                     try:
                         if job_id in applied_jobs or find_by_class(driver, "jobs-s-apply__application-link", 2):
@@ -266,6 +265,7 @@ def apply_to_jobs(keywords):
                     resume = "Pending"
                     repost = False
                     questions_list = None
+                    screenshot_name = "Not Available"
 
                     try:
                         about_company = find_by_class(driver, "jobs-company__box")
@@ -350,7 +350,8 @@ def apply_to_jobs(keywords):
                                     next_counter += 1
                                     if next_counter >= 15: 
                                         if questions_list: print_lg("Stuck for one or some of the following questions...", questions_list)
-                                        # driver.save_screenshot("")
+                                        screenshot_name = "{} - Failed at questions - {}.png".format( job_id, str(datetime.now()) )
+                                        driver.save_screenshot(logs_folder_path+"screenshot/"+screenshot_name)
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(questions_list)
                                     next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
@@ -362,13 +363,15 @@ def apply_to_jobs(keywords):
                                 if questions_list: print_lg("Answered the following questions...", questions_list)
                             finally:
                                 wait_span_click(driver, "Review", 2)
-                                if not wait_span_click(driver, "Submit application", 2): raise Exception("Since, Submit Application failed, discarding the job application...")
-                                if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
+                                if wait_span_click(driver, "Submit application", 2): 
+                                    if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
+                                else:
+                                    print_lg("Since, Submit Application failed, discarding the job application...")
                         except Exception as e:
                             print_lg("Failed to Easy apply!")
                             # print_lg(e)
                             critical_error_log("Somewhere in Easy Apply process",e)
-                            failed_job(job_id, job_link, resume, date_listed, "Problem in Easy Applying", e, application_link)
+                            failed_job(job_id, job_link, resume, date_listed, "Problem in Easy Applying", e, application_link, screenshot_name)
                             discard_job()
                             continue
                     else:
@@ -387,7 +390,7 @@ def apply_to_jobs(keywords):
                         except Exception as e:
                             # print_lg(e)
                             print_lg("Failed to apply!")
-                            failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link)
+                            failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link, screenshot_name)
                             continue
                     
                     # Create or append to the CSV file
@@ -423,7 +426,7 @@ def run(total_runs):
     print_lg("########################################################################################################################\n")
     print_lg(f"Date and Time: {datetime.now()}")
     print_lg(f"Cycle number: {total_runs+1}")
-    print_lg(f"Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'\n")
+    print_lg(f"Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'")
     print_lg("________________________________________________________________________________________________________________________\n\n")
     apply_to_jobs(keywords)
     print_lg("########################################################################################################################\n")

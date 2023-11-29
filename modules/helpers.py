@@ -3,7 +3,7 @@ import csv
 from time import sleep
 from random import randint
 from datetime import datetime, timedelta
-from setup.config import file_name, failed_file_name, log_path
+from setup.config import file_name, failed_file_name, logs_folder_path
 
 # Function to search for Chrome Profiles
 def find_default_profile_directory():
@@ -64,12 +64,12 @@ def calculate_date_posted(time_string):
     
 
 # Failed job list update
-def failed_job(job_id, job_link, resume, date_listed, error, exception, application_link):
+def failed_job(job_id, job_link, resume, date_listed, error, exception, application_link, screenshot_name):
     with open(failed_file_name, 'a', newline='', encoding='utf-8') as file:
-        fieldnames = ['Job ID', 'Job Link', 'Resume Tried', 'Date listed', 'Date Tried', 'Predicted reason', 'Stack Trace', 'External Job link']
+        fieldnames = ['Job ID', 'Job Link', 'Resume Tried', 'Date listed', 'Date Tried', 'Predicted reason', 'Stack Trace', 'External Job link', 'Screenshot']
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         if file.tell() == 0: writer.writeheader()
-        writer.writerow({'Job ID':job_id, 'Job Link':job_link, 'Resume Tried':resume, 'Date listed':date_listed, 'Date Tried':datetime.now(), 'Predicted reason':error, 'Stack Trace':exception,'External Job link':application_link})
+        writer.writerow({'Job ID':job_id, 'Job Link':job_link, 'Resume Tried':resume, 'Date listed':date_listed, 'Date Tried':datetime.now(), 'Predicted reason':error, 'Stack Trace':exception, 'External Job link':application_link, 'Screenshot':screenshot_name})
         file.close()
 
 
@@ -108,7 +108,7 @@ def critical_error_log(possible_reason, stack_trace):
 def print_lg(*msgs):
     try:
         message = "\n".join(str(msg) for msg in msgs)
-        with open(log_path, 'a', encoding="utf-8") as file:
+        with open(logs_folder_path+"log.txt", 'a', encoding="utf-8") as file:
             file.write(message + '\n')
         print(message)
     except Exception as e:

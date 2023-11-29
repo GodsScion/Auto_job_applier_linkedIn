@@ -5,7 +5,7 @@
 # Directory and name of the files where history of applied jobs is saved.
 file_name = "all excels/all_applied_applications_history.csv"
 failed_file_name = "all excels/all_failed_applications_history.csv"
-log_path = "logs/log.txt"
+logs_folder_path = "logs/"      # Don't forget '/' in the end, it's a folder path, not a file path!
 
 # Set the maximum amount of time allowed to wait between each click in secs
 click_gap = 1                   # Enter max allowed secs to wait approximately. (Only Non Negative Integers like 0,1,2,3,....)
@@ -31,7 +31,7 @@ password = "examplepassword"
 
 
 # These Sentences are Searched in LinkedIn
-keywords = ["Software Developer", "Software Engineer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "Grad Software Engineer", "Grad Software Developer"]
+keywords = ["Software Developer", "Software Engineer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
 
 
 
@@ -54,7 +54,7 @@ us_citizenship = "Non-citizen allowed to work for any employer" # If left empty 
 website = "https://github.com/GodsScion" # "www.example.bio" or "" and so on....
 
 # What is your desired salary, only enter in numbers
-desired_salary = "80000"        # "80000", "90000", "100000" or "120000" and so on....
+desired_salary = "90000"        # "80000", "90000", "100000" or "120000" and so on....
 
 # Example question: "On a scale of 1-10 how much experience do you have building web or mobile applications? 1 being very little or only in school, 10 being that you have built and launched applications to real users"
 confidence_level = "8"          # Any number between "1" to "10", put em in quotes ""
@@ -118,7 +118,7 @@ close_tabs = False              # True or False
 switch_number = 50              # Only numbers greater than 25... Don't put in quotes
 
 # Do you want the program to run continuously until you stop it?
-run_non_stop = True             # True or False
+run_non_stop = False             # True or False
 alternate_sortby = True         # True or False
 cycle_date_posted = True        # True or False
 stop_date_cycle_at_24hr = True  # True or False

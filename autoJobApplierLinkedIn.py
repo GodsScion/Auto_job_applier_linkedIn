@@ -1,7 +1,7 @@
 # Imports
 import os
 import csv
-from pyautogui import press
+from pyautogui import press, alert
 from datetime import datetime
 from modules.open_chrome import *
 from selenium.webdriver.common.by import By
@@ -202,7 +202,8 @@ def apply_to_jobs(keywords):
 
     for keyword in keywords:
         driver.get(f"https://www.linkedin.com/jobs/search/?keywords={keyword}")
-        print_lg(f'\nNow searching for "{keyword}"\n')
+        print_lg("\n________________________________________________________________________________________________________________________\n")
+        print_lg(f'\n>>>> Now searching for "{keyword}" <<<<\n\n')
 
         apply_filters()
 
@@ -229,6 +230,7 @@ def apply_to_jobs(keywords):
                 for job in job_listings:
                     if keep_screen_awake: press('shiftright')
                     if current_count >= switch_number: break
+                    print_lg("*")
 
                     job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
                     scroll_to_view(driver, job_details_button)
@@ -251,7 +253,7 @@ def apply_to_jobs(keywords):
                             print_lg(f'Already applied to "{title} | {company}" job. Job ID: {job_id}!')
                             continue
                     except Exception as e:
-                        print_lg(f'\nTrying to Apply to "{title} | {company}" job. Job ID: {job_id}')
+                        print_lg(f'Trying to Apply to "{title} | {company}" job. Job ID: {job_id}')
 
                     job_link = "https://www.linkedin.com/jobs/view/"+job_id
                     application_link = "Easy Applied"
@@ -274,7 +276,7 @@ def apply_to_jobs(keywords):
                         for word in blacklist_words: 
                             if word.lower() in about_company: 
                                 rejected_jobs.add(job_id)
-                                raise ValueError(f"Found the word '{word}' in '{about_company}'")
+                                raise ValueError(f'Found the word "{word}" in \n"{about_company}"')
                         buffer(1)
                         scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card"))
                     except ValueError as e:
@@ -307,7 +309,7 @@ def apply_to_jobs(keywords):
                         #     message_box.send_keys()
                         #     try_xp(driver, "//button[normalize-space()='Send']")        
                     except Exception as e:
-                        print_lg(f"HR info was not given for '{title}' with Job ID: {job_id}!")
+                        print_lg(f'HR info was not given for "{title}" with Job ID: {job_id}!')
                         # print_lg(e)
 
 
@@ -315,15 +317,14 @@ def apply_to_jobs(keywords):
                     try:
                         # try: time_posted_text = find_by_class(driver, "jobs-unified-top-card__posted-date", 2).text
                         # except: 
-                        jobs_top_card = driver.find_element(By.CLASS_NAME, "job-details-jobs-unified-top-card__primary-description") #"jobs-unified-top-card__primary-description")
+                        jobs_top_card = try_find_by_classes(driver, ["job-details-jobs-unified-top-card__primary-description-container","job-details-jobs-unified-top-card__primary-description","jobs-unified-top-card__primary-description"])
                         time_posted_text = jobs_top_card.find_element(By.XPATH, './/span[contains(normalize-space(), "ago")]').text
                         if time_posted_text.__contains__("Reposted"):
                             repost = True
                             time_posted_text = time_posted_text.replace("Reposted", "")
                         date_listed = calculate_date_posted(time_posted_text)
                     except Exception as e:
-                        print_lg("Failed to calculate the date posted!")
-                        print_lg(e)
+                        print_lg("Failed to calculate the date posted!",e)
 
                     # Get job description
                     try:
@@ -350,8 +351,7 @@ def apply_to_jobs(keywords):
                                     next_counter += 1
                                     if next_counter >= 15: 
                                         if questions_list: print_lg("Stuck for one or some of the following questions...", questions_list)
-                                        screenshot_name = "{} - Failed at questions - {}.png".format( job_id, str(datetime.now()) )
-                                        driver.save_screenshot(logs_folder_path+"screenshot/"+screenshot_name)
+                                        screenshot_name = screenshot(driver, job_id, "Failed at questions")
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(questions_list)
                                     next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
@@ -423,11 +423,10 @@ def apply_to_jobs(keywords):
 
         
 def run(total_runs):
-    print_lg("########################################################################################################################\n")
+    print_lg("\n########################################################################################################################\n")
     print_lg(f"Date and Time: {datetime.now()}")
     print_lg(f"Cycle number: {total_runs+1}")
     print_lg(f"Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'")
-    print_lg("________________________________________________________________________________________________________________________\n\n")
     apply_to_jobs(keywords)
     print_lg("########################################################################################################################\n")
     print_lg("Sleeping for 10 min...")
@@ -442,8 +441,11 @@ chatGPT_tab = False
 linkedIn_tab = False
 def main():
     try:
+        alert_title = "Error Occurred. Closing Browser!"
         validate_config()
-
+        make_directories([file_name,failed_file_name,logs_folder_path+"/screenshots",default_resume_path,generated_resume_path+"/temp"])
+        if not os.path.exists(default_resume_path):   raise Exception('Your default resume "{}" is missing! Please update it\'s folder path in config.py or add a resume with exact name and path (check for spelling mistakes including cases).'.format(default_resume_path))
+        
         # Login to LinkedIn
         driver.get("https://www.linkedin.com/login")
         if not is_logged_in_LN(): login_LN()
@@ -481,10 +483,11 @@ def main():
         
 
     except Exception as e:
-        print_lg(e)
         critical_error_log("In Applier Main", e)
-        driver.quit()
+        alert(e,alert_title)
     finally:
+        print_lg("Closing the browser...")
+        driver.quit()
         exit(0)
 
 main()

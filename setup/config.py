@@ -2,10 +2,10 @@
 
 # >>>>>>>>>>> Global Settings <<<<<<<<<<<
 
-# Directory and name of the files where history of applied jobs is saved.
+# Directory and name of the files where history of applied jobs is saved (Sentence after the last "/" will be considered as the file name).
 file_name = "all excels/all_applied_applications_history.csv"
 failed_file_name = "all excels/all_failed_applications_history.csv"
-logs_folder_path = "logs/"      # Don't forget '/' in the end, it's a folder path, not a file path!
+logs_folder_path = "logs/"
 
 # Set the maximum amount of time allowed to wait between each click in secs
 click_gap = 1                   # Enter max allowed secs to wait approximately. (Only Non Negative Integers like 0,1,2,3,....)
@@ -38,7 +38,7 @@ keywords = ["Software Developer", "Software Engineer", "Junior Software Develope
 # >>>>>>>>>>> Easy Apply Inputs <<<<<<<<<<<
 
 # Give an relative or absolute path of your default resume to be uploaded...
-default_resume_path = "all resumes/default/SaiVigneshGolla_resume.pdf"
+default_resume_path = "all resumes/default/resume.pdf"
 
 # What do you want to answer for years of experience you have?
 years_of_experience = '3'
@@ -79,9 +79,9 @@ sort_by = "Most relevant"       # "Most recent", "Most relevant" or ("" to not s
 date_posted = "Any time"        # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                     # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
-easy_apply_only = False          # True or False
+easy_apply_only = True          # True or False
 
-experience_level = ["Entry level"] # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
+experience_level = []           # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
 job_type = []                   # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
 on_site = []                    # (multiple select) "On-site", "Remote", "Hybrid"
 
@@ -112,7 +112,7 @@ blacklist_words = ["Staffing", "Recruiting"] # (dynamic multiple select) or leav
 # connect_request_message = ""    # Leave Empty to send connection request without personalized invitation (recommended to leave it empty, since you only get 10 per month without LinkedIn Premium*)
 
 # Keep the External Application tabs open?
-close_tabs = False              # True or False
+close_tabs = True               # True or False
 
 # After how many number of applications should we keep switching? 
 switch_number = 50              # Only numbers greater than 25... Don't put in quotes
@@ -132,7 +132,7 @@ chatGPT_password = "examplepassword"
 chatGPT_resume_chat_title = "Resume review and feedback."
 
 # Give the path to the folder where all the generated resumes are to be stored
-generated_resume_path = "all resumes"
+generated_resume_path = "all resumes/"
 
 
 

@@ -3,7 +3,7 @@ import csv
 from time import sleep
 from random import randint
 from datetime import datetime, timedelta
-from setup.config import file_name, failed_file_name, logs_folder_path
+from setup.config import file_name, failed_file_name, logs_folder_path 
 
 # Function to search for Chrome Profiles
 def find_default_profile_directory():
@@ -113,3 +113,14 @@ def print_lg(*msgs):
         print(message)
     except Exception as e:
         critical_error_log("Log.txt is open or is occupied by another program!", e)
+
+def screenshot(driver, job_id, failedAt):
+    screenshot_name = "{} - {} - {}.png".format( job_id, failedAt, str(datetime.now()) )
+    driver.save_screenshot(logs_folder_path+"screenshots/"+screenshot_name)
+    return screenshot_name
+
+def make_directories(paths):
+    for path in paths:  
+        path = path.replace("//","/")
+        if '/' in path and '.' in path: path = path[:path.rfind('/')]
+        if not os.path.exists(path):   os.makedirs(path)

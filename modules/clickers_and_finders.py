@@ -72,3 +72,9 @@ def try_xp(driver, xpath):
         driver.find_element(By.XPATH, xpath).click()
         return True
     except: return False
+
+def try_find_by_classes(driver, classes):
+    for cla in classes:
+        try:    return driver.find_element(By.CLASS_NAME, cla)
+        except: pass
+    raise Exception("Failed to find an element with given classes")

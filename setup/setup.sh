@@ -1,3 +1,9 @@
+'''
+Author:     Sai Vignesh Golla
+LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
+
+'''
+
 # Check if Python is installed
 if ! (python -V &> /dev/null || py -V &> /dev/null); then
     # Install the latest stable Python version

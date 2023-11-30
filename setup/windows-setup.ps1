@@ -1,3 +1,9 @@
+'''
+Author:     Sai Vignesh Golla
+LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
+
+'''
+
 # Check if Python is installed
 while (-not (python -V)) {
     Write-Host "Python is not installed or not accessible!"

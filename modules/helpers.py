@@ -1,3 +1,9 @@
+'''
+Author:     Sai Vignesh Golla
+LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
+
+'''
+
 import os
 import csv
 from time import sleep

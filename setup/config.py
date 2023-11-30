@@ -1,3 +1,10 @@
+
+'''
+Author:     Sai Vignesh Golla
+LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
+
+'''
+
 ###################################################### CONFIGURE YOUR TOOLS HERE ######################################################
 
 # >>>>>>>>>>> Global Settings <<<<<<<<<<<

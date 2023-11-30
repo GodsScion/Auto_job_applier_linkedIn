@@ -1,3 +1,9 @@
+'''
+Author:     Sai Vignesh Golla
+LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
+
+'''
+
 from setup.config import *
 
 def validate_TorF(var, var_name):

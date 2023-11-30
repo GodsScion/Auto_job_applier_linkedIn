@@ -1,3 +1,9 @@
+'''
+Author:     Sai Vignesh Golla
+LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
+
+'''
+
 from modules.open_chrome import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait

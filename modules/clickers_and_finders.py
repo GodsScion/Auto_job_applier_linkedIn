@@ -1,3 +1,9 @@
+'''
+Author:     Sai Vignesh Golla
+LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
+
+'''
+
 from setup.config import click_gap
 from modules.helpers import buffer, print_lg
 from selenium.webdriver.common.by import By

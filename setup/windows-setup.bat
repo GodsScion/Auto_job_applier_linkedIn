@@ -1,3 +1,6 @@
+:: Author:     Sai Vignesh Golla
+:: LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
+
 @echo off
 setlocal enabledelayedexpansion
 

@@ -1,3 +1,9 @@
+'''
+Author:     Sai Vignesh Golla
+LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
+
+'''
+
 from setup.config import run_in_background, undetected_mode
 if undetected_mode:
     import undetected_chromedriver as uc

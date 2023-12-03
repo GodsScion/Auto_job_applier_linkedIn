@@ -5,11 +5,10 @@ LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
 '''
 
 
-
-
 # Imports
 import os
 import csv
+import re
 from pyautogui import press, alert
 from datetime import datetime
 from modules.open_chrome import *
@@ -29,17 +28,11 @@ if use_resume_generator:    from resume_generator import is_logged_in_GPT ,login
 # Login Functions
 def is_logged_in_LN():
     if driver.current_url == "https://www.linkedin.com/feed/": return True
-    try:
-        driver.find_element(By.LINK_TEXT, "Sign in")
-        return False
-    except Exception as e1:
-        try:
-            driver.find_element(By.XPATH, '//button[@type="submit" and contains(text(), "Sign in")]')
-            return False
-        except Exception as e2:
-            # print_lg(e1, e2)
-            print_lg("Didn't find Sign in link, so assuming user is logged in!")
-            return True
+    if try_linkText(driver, "Sign in"): return False
+    if try_xp(driver, '//button[@type="submit" and contains(text(), "Sign in")]'):  return False
+    if try_linkText(driver, "Join now"): return False
+    print_lg("Didn't find Sign in link, so assuming user is logged in!")
+    return True
 
 
 def login_LN():
@@ -74,7 +67,7 @@ def login_LN():
     except Exception as e:
         print_lg("Seems like login attempt failed! Possibly due to wrong credentials or already logged in! Try logging in manually!")
         # print_lg(e)
-        manual_login_retry(is_logged_in_LN)
+        manual_login_retry(is_logged_in_LN, 2)
 
 
 
@@ -127,6 +120,50 @@ def apply_filters():
         # print_lg(e)
 
 
+
+# Get Job Main details
+def get_job_main_details(job):
+    job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
+    scroll_to_view(driver, job_details_button)
+    title = job_details_button.text
+    company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
+    job_id = job.get_dom_attribute('data-occludable-job-id')
+    work_location = job.find_element(By.CLASS_NAME, "job-card-container__metadata-item").text
+    work_style = work_location[work_location.rfind('(')+1:work_location.rfind(')')]
+    work_location = work_location[:work_location.rfind('(')].strip()
+    try: job_details_button.click()
+    except Exception as e:
+        print_lg(f'Failed to click "{title} | {company}" job on details button. Job ID: {job_id}!') 
+        # print_lg(e)
+        discard_job()
+        job_details_button.click()
+    buffer(click_gap)
+    return (job_id,title,company,work_location,work_style)
+
+
+# Check for Blacklisted words in About Company
+def check_blacklist(rejected_jobs,job_id):
+    about_company = find_by_class(driver, "jobs-company__box")
+    scroll_to_view(driver, about_company)
+    about_company = about_company.text.lower()
+    for word in blacklist_words: 
+        if word.lower() in about_company: 
+            rejected_jobs.add(job_id)
+            raise ValueError(f'Found the word "{word}" in \n"{about_company}"')
+    buffer(1)
+    scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card"))
+    return rejected_jobs
+
+
+
+def extract_years_of_experience(text):
+    # Extract all patterns like '10+ years', '5 years', '3-5 years', etc.
+    matches = re.findall(r'(\d+)[+\s]*years|(\d+)[+\s]*-\s*(\d+)[+\s]*years', text, flags=re.IGNORECASE)
+    all_years = [int(match[0] if match[0] else min(int(match[1]), int(match[2]))) for match in matches]
+    return min(all_years, default=None)
+
+
+# Answer the questions for Easy Apply
 def answer_questions(questions_list):
     # Find all Select Questions
     select_buttons = driver.find_elements(By.XPATH, "//select")
@@ -193,6 +230,7 @@ def answer_questions(questions_list):
     return questions_list
 
 
+
 def discard_job():
     actions.send_keys(Keys.ESCAPE).perform()
     wait_span_click(driver, 'Discard', 2)
@@ -241,22 +279,10 @@ def apply_to_jobs(keywords):
                     if current_count >= switch_number: break
                     print_lg("*")
 
-                    job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
-                    scroll_to_view(driver, job_details_button)
-                    title = job_details_button.text
-                    company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
-                    try: job_details_button.click()
-                    except Exception as e:
-                        print_lg(f'Failed to click "{title} | {company}" job on details button. Job ID: {job_id}!') 
-                        # print_lg(e)
-                        discard_job()
-                        job_details_button.click()
-                    buffer(click_gap)
-
-                    job_id = job.get_dom_attribute('data-occludable-job-id')
-                    # Skip if previously rejected due to blacklist
+                    job_id,title,company,work_location,work_style = get_job_main_details(job)
+                    
+                    # Skip if previously rejected due to blacklist or already applied
                     if job_id in rejected_jobs: continue
-                    # Skip if already applied
                     try:
                         if job_id in applied_jobs or find_by_class(driver, "jobs-s-apply__application-link", 2):
                             print_lg(f'Already applied to "{title} | {company}" job. Job ID: {job_id}!')
@@ -269,31 +295,26 @@ def apply_to_jobs(keywords):
                     date_applied = "Pending"
                     hr_link = "Unknown"
                     hr_name = "Unknown"
-                    connect_request = "Unavailable"
+                    connect_request = "In Development" # Still in development
                     date_listed = "Unknown"
                     description = "Unknown"
-                    skills = "Unknown" # Still in development
+                    experience_required = "Unknown"
+                    skills = "In Development" # Still in development
                     resume = "Pending"
-                    repost = False
+                    reposted = False
                     questions_list = None
                     screenshot_name = "Not Available"
 
                     try:
-                        about_company = find_by_class(driver, "jobs-company__box")
-                        scroll_to_view(driver, about_company)
-                        about_company = about_company.text.lower()
-                        for word in blacklist_words: 
-                            if word.lower() in about_company: 
-                                rejected_jobs.add(job_id)
-                                raise ValueError(f'Found the word "{word}" in \n"{about_company}"')
-                        buffer(1)
-                        scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card"))
+                        rejected_jobs = check_blacklist(rejected_jobs,job_id)
                     except ValueError as e:
                         print_lg('Skipping this job.', e)
+                        failed_job(job_id, job_link, resume, date_listed, "Found Blacklisted words in About Company", e, "Skipped", screenshot_name)
                         continue
                     except Exception as e:
                         print_lg("Failed to scroll to About Company!")
                         # print_lg(e)
+
 
 
                     # Hiring Manager info
@@ -329,7 +350,7 @@ def apply_to_jobs(keywords):
                         jobs_top_card = try_find_by_classes(driver, ["job-details-jobs-unified-top-card__primary-description-container","job-details-jobs-unified-top-card__primary-description","jobs-unified-top-card__primary-description"])
                         time_posted_text = jobs_top_card.find_element(By.XPATH, './/span[contains(normalize-space(), "ago")]').text
                         if time_posted_text.__contains__("Reposted"):
-                            repost = True
+                            reposted = True
                             time_posted_text = time_posted_text.replace("Reposted", "")
                         date_listed = calculate_date_posted(time_posted_text)
                     except Exception as e:
@@ -338,8 +359,18 @@ def apply_to_jobs(keywords):
                     # Get job description
                     try:
                         description = find_by_class(driver, "jobs-box__html-content").text
+                        experience_required = extract_years_of_experience(description)
+                        if current_experience > -1 and experience_required > current_experience:
+                            message = f'Experience required {experience_required} > Current Experience {current_experience}\n{description}'
+                            print_lg('Skipping this job.', message)
+                            failed_job(job_id, job_link, resume, date_listed, "Required experience is high", message, "Skipped", screenshot_name)
+                            rejected_jobs.add(job_id)
+                            continue
                     except Exception as e:
-                        print_lg("Unable to extract job description!")
+                        if description == "Unknown":    print_lg("Unable to extract job description!")
+                        else:
+                            experience_required = "Error in extraction"
+                            print_lg("Unable to extract years of experience required!")
                         # print_lg(e)
 
                     # Case 1: Easy Apply Button
@@ -358,7 +389,7 @@ def apply_to_jobs(keywords):
                                 next_counter = 0
                                 while next_button:
                                     next_counter += 1
-                                    if next_counter >= 15: 
+                                    if next_counter >= 12: 
                                         if questions_list: print_lg("Stuck for one or some of the following questions...", questions_list)
                                         screenshot_name = screenshot(driver, job_id, "Failed at questions")
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
@@ -373,6 +404,7 @@ def apply_to_jobs(keywords):
                             finally:
                                 wait_span_click(driver, "Review", 2)
                                 if wait_span_click(driver, "Submit application", 2): 
+                                    date_applied = datetime.now()
                                     if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
                                 else:
                                     print_lg("Since, Submit Application failed, discarding the job application...")
@@ -404,16 +436,17 @@ def apply_to_jobs(keywords):
                     
                     # Create or append to the CSV file
                     with open(file_name, mode='a', newline='', encoding='utf-8') as csv_file:
-                        fieldnames = ['Job ID', 'Title', 'Company', 'Description', 'Skills', 'HR Name', 'HR Link', 'Resume', 'Re-post', 'Date listed', 'Date Applied', 'Job Link', 'External Job link', 'Questions', 'Connect Request']
+                        fieldnames = ['Job ID', 'Title', 'Company', 'Work Location', 'Work Style', 'About Job', 'Experience required', 'Skills required', 'HR Name', 'HR Link', 'Resume', 'Re-posted', 'Date Posted', 'Date Applied', 'Job Link', 'External Job link', 'Questions Found', 'Connect Request']
                         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
                         if csv_file.tell() == 0: writer.writeheader()
                         # Once the application is submitted successfully, add the application details to the CSV
-                        writer.writerow({'Job ID':job_id, 'Title':title, 'Company':company, 'Description':description, 'Skills':skills, 
-                                            'HR Name':hr_name, 'HR Link':hr_link, 'Resume':resume, 'Re-post':repost, 
-                                            'Date listed':date_listed, 'Date Applied':date_applied, 'Job Link':job_link, 
-                                            'External Job link':application_link, 'Questions':questions_list, 'Connect Request':connect_request})
+                        writer.writerow({'Job ID':job_id, 'Title':title, 'Company':company, 'Work Location':work_location, 'Work Style':work_style, 
+                                         'About Job':description, 'Experience required': experience_required, 'Skills required':skills, 
+                                            'HR Name':hr_name, 'HR Link':hr_link, 'Resume':resume, 'Re-posted':reposted, 
+                                            'Date Posted':date_listed, 'Date Applied':date_applied, 'Job Link':job_link, 
+                                            'External Job link':application_link, 'Questions Found':questions_list, 'Connect Request':connect_request})
                     csv_file.close()
-                    print_lg(f'\nSuccessfully saved "{title} | {company}" job. Job ID: {job_id} info')
+                    print_lg(f'Successfully saved "{title} | {company}" job. Job ID: {job_id} info')
                     current_count += 1
                     applied_jobs.add(job_id)
 
@@ -497,6 +530,5 @@ def main():
     finally:
         print_lg("Closing the browser...")
         driver.quit()
-        exit(0)
 
 main()

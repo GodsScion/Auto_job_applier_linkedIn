@@ -38,7 +38,7 @@ password = "examplepassword"
 
 
 # These Sentences are Searched in LinkedIn
-keywords = ["Software Developer", "Software Engineer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
+keywords = ["Software Developer", "Software Engineer", "Python Developer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
 
 
 
@@ -111,6 +111,9 @@ fair_chance_employer = False    # True or False
 # Avoid applying to companies with these words in their description...
 blacklist_words = ["Staffing", "Recruiting"] # (dynamic multiple select) or leave empty as []
 
+# Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
+current_experience = 3          # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
+
 # Upcoming features
 # # Send connection requests to HR's
 # connect_hr = True               # True or False
@@ -122,7 +125,7 @@ blacklist_words = ["Staffing", "Recruiting"] # (dynamic multiple select) or leav
 close_tabs = True               # True or False
 
 # After how many number of applications should we keep switching? 
-switch_number = 50              # Only numbers greater than 25... Don't put in quotes
+switch_number = 30              # Only numbers greater than 25... Don't put in quotes
 
 # Do you want the program to run continuously until you stop it?
 run_non_stop = False             # True or False

@@ -79,6 +79,10 @@ def try_xp(driver, xpath):
         return True
     except: return False
 
+def try_linkText(driver, linkText):
+    try:    return driver.find_element(By.LINK_TEXT, linkText)
+    except:  return False
+
 def try_find_by_classes(driver, classes):
     for cla in classes:
         try:    return driver.find_element(By.CLASS_NAME, cla)

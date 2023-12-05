@@ -158,9 +158,10 @@ def check_blacklist(rejected_jobs,job_id):
 
 def extract_years_of_experience(text):
     # Extract all patterns like '10+ years', '5 years', '3-5 years', etc.
-    matches = re.findall(r'(\d+)[+\s]*years|(\d+)[+\s]*-\s*(\d+)[+\s]*years', text, flags=re.IGNORECASE)
-    all_years = [int(match[0] if match[0] else min(int(match[1]), int(match[2]))) for match in matches]
-    return min(all_years, default=None)
+    matches = re.findall(r'[(]?\s*(\d+)\s*[)]?\s*[-to]*\s*\d*[+]*\s*year[s]?', text, flags=re.IGNORECASE)
+    if len(matches) == 0: 
+        print_lg(f'Couldn\'t find experience requirement in About job \n{text}\n')
+    return max([int(match) for match in matches if int(match) <= 12])
 
 
 # Answer the questions for Easy Apply
@@ -277,7 +278,7 @@ def apply_to_jobs(keywords):
                 for job in job_listings:
                     if keep_screen_awake: press('shiftright')
                     if current_count >= switch_number: break
-                    print_lg("*")
+                    print_lg("\n-@-\n")
 
                     job_id,title,company,work_location,work_style = get_job_main_details(job)
                     
@@ -453,7 +454,7 @@ def apply_to_jobs(keywords):
                 # Switching to next page
                 try: 
                     pagination_element.find_element(By.XPATH, f"//button[@aria-label='Page {current_page+1}']").click()
-                    print_lg(f"\nNow on Page {current_page+1}\n")
+                    print_lg(f"\n>-> Now on Page {current_page+1} \n")
                 except NoSuchElementException:
                     print_lg(f"Didn't find Page {current_page+1}. Probably at the end page of result!")
                     break

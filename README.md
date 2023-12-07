@@ -25,7 +25,7 @@ This program utilizes the Chrome Selenium driver for web scraping. Please review
 ## A Heartfelt letter to you...
 My Dear Ladies and Gentle Men,
 
-Thank you for being a part of my job application tool! Your support means everything to me. 
+Thank you for using the job application tool! Your support means everything to me. 
 
 As you continue your job search, I hope this tool has provided you with valuable assistance and streamlined your efforts.
 

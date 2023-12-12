@@ -8,7 +8,7 @@ This is a web scraping tool that automates the process of job applications on Li
 
 ## Usage
 
-Please note the following: 
+Please note the following:
 
 - **LinkedIn Policies**: LinkedIn has specific policies regarding web scraping and data collection. It is your responsibility to review and comply with these policies before using, interacting, or performing any actions with this program. Be aware of the limitations and restrictions imposed by LinkedIn to avoid any potential violation.
 

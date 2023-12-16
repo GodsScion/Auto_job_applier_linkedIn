@@ -38,7 +38,7 @@ password = "examplepassword"
 
 
 # These Sentences are Searched in LinkedIn
-keywords = ["Software Developer", "Software Engineer", "Python Developer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
+keywords = ["Software Engineer III"] #"Software Developer", "Software Engineer", "Python Developer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
 
 
 
@@ -92,7 +92,14 @@ experience_level = []           # (multiple select) "Internship", "Entry level",
 job_type = []                   # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
 on_site = []                    # (multiple select) "On-site", "Remote", "Hybrid"
 
-companies = []                  # (dynamic multiple select) "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", "Elevance Health", and so on... make sure the name you type in list exactly matches with the company name you're looking for, including capitals.
+companies = [
+"Google",
+"X, the moonshot factory",
+"YouTube",
+"CapitalG",
+"Adometry (acquired by Google)",
+"Mineral.ai"
+]                  # (dynamic multiple select) "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", "Elevance Health", and so on... make sure the name you type in list exactly matches with the company name you're looking for, including capitals.
 location = []                   # (dynamic multiple select)
 industry = []                   # (dynamic multiple select)
 job_function = []               # (dynamic multiple select)
@@ -122,7 +129,7 @@ current_experience = 3          # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
 # connect_request_message = ""    # Leave Empty to send connection request without personalized invitation (recommended to leave it empty, since you only get 10 per month without LinkedIn Premium*)
 
 # Keep the External Application tabs open?
-close_tabs = True               # True or False
+close_tabs = False              # True or False
 
 # After how many number of applications should we keep switching? 
 switch_number = 30              # Only numbers greater than 25... Don't put in quotes

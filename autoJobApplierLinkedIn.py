@@ -84,7 +84,7 @@ def apply_filters():
         buffer(recommended_wait)
 
         multi_sel(driver, experience_level) 
-        multi_sel_noWait(driver, companies)
+        multi_sel_noWait(driver, companies, actions)
         if experience_level or companies: buffer(recommended_wait)
 
         multi_sel(driver, job_type)
@@ -473,9 +473,9 @@ def run(total_runs):
     apply_to_jobs(keywords)
     print_lg("########################################################################################################################\n")
     print_lg("Sleeping for 10 min...")
-    sleep(6)
+    sleep(0)
     print_lg("Few more min... Gonna start with in next 5 min...")
-    buffer(3)
+    buffer(-3)
     return total_runs + 1
 
 

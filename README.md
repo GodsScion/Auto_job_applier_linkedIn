@@ -1,12 +1,12 @@
 # LinkedIn Job Application Tool
 
-**Disclaimer: This program is for educational purposes only. By downloading, using, copying, replicating, or interacting with this program or its code, you agree to comply with LinkedIn's terms of service and policies on web scraping. Use it at your own risk. The creators and contributors of this program are not responsible or liable for any misuse, damages, or legal implications resulting from its usage.**
+**Disclaimer: This program is for educational purposes only. By downloading, using, copying, replicating, or interacting with this program or its code, you agree to all Terms, Conditions, Policies and Licenses mentioned which are subject to change without prior notice of any kind. It's your responsibility to stay updated. To check for latest T&C or Licenses or Policies visit ["Auto Job Applier"](https://github.com/GodsScion/Auto_job_applier_linkedIn). Please also agree and comply with LinkedIn's terms of service and policies on web scraping. Use it at your own risk. The creators and contributors of this program are not responsible or liable for any misuse, damages, or legal implications resulting from its usage.**
 
 ## Introduction
 
 This is a web scraping tool that automates the process of job applications on LinkedIn. It collects job listings information such as job titles, companies, and URLs from LinkedIn job search results. 
 
-## Usage
+## Usage Policies
 
 Please note the following:
 

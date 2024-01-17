@@ -38,7 +38,7 @@ password = "examplepassword"
 
 
 # These Sentences are Searched in LinkedIn
-keywords = ["Software Engineer III"] #"Software Developer", "Software Engineer", "Python Developer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
+keywords = ["Software Engineer", "Software Developer", "Python Developer", "Junior Software Developer"] #, "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
 
 
 
@@ -86,20 +86,16 @@ sort_by = "Most relevant"       # "Most recent", "Most relevant" or ("" to not s
 date_posted = "Any time"        # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                     # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
-easy_apply_only = True          # True or False
+easy_apply_only = False         # True or False
 
 experience_level = []           # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
 job_type = []                   # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
 on_site = []                    # (multiple select) "On-site", "Remote", "Hybrid"
 
-companies = [
-"Google",
-"X, the moonshot factory",
-"YouTube",
-"CapitalG",
-"Adometry (acquired by Google)",
-"Mineral.ai"
-]                  # (dynamic multiple select) "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", "Elevance Health", and so on... make sure the name you type in list exactly matches with the company name you're looking for, including capitals.
+companies = ["7 11"]
+# "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)",
+# "Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express"
+# ]                  # (dynamic multiple select) "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", "Elevance Health", and so on... make sure the name you type in list exactly matches with the company name you're looking for, including capitals.
 location = []                   # (dynamic multiple select)
 industry = []                   # (dynamic multiple select)
 job_function = []               # (dynamic multiple select)
@@ -120,6 +116,9 @@ blacklist_words = ["Staffing", "Recruiting"] # (dynamic multiple select) or leav
 
 # Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
 current_experience = 3          # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
+
+# Do you have a Masters degree in the field you're applying to? If yes and your current_experience is >= 2. The tool will apply to jobs containing the word 'master' in it's description regardless of experience required. (Usually most companies if mentioned say 4+ years OR Masters degree and 2+ years of experience)
+did_masters = True              # True or False
 
 # Upcoming features
 # # Send connection requests to HR's

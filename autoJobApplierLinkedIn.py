@@ -360,13 +360,16 @@ def apply_to_jobs(keywords):
                     # Get job description
                     try:
                         description = find_by_class(driver, "jobs-box__html-content").text
-                        experience_required = extract_years_of_experience(description)
-                        if current_experience > -1 and experience_required > current_experience:
-                            message = f'Experience required {experience_required} > Current Experience {current_experience}\n{description}'
-                            print_lg('Skipping this job.', message)
-                            failed_job(job_id, job_link, resume, date_listed, "Required experience is high", message, "Skipped", screenshot_name)
-                            rejected_jobs.add(job_id)
-                            continue
+                        if did_masters and current_experience >= 2 and 'master' in description.lower():
+                            print_lg(f'Skipped checking for minimum years of experience required cause found the word "master" in \n{description}')
+                        else:
+                            experience_required = extract_years_of_experience(description)
+                            if current_experience > -1 and experience_required > current_experience:
+                                message = f'Experience required {experience_required} > Current Experience {current_experience}\n{description}'
+                                print_lg('Skipping this job.', message)
+                                failed_job(job_id, job_link, resume, date_listed, "Required experience is high", message, "Skipped", screenshot_name)
+                                rejected_jobs.add(job_id)
+                                continue
                     except Exception as e:
                         if description == "Unknown":    print_lg("Unable to extract job description!")
                         else:

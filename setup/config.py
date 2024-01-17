@@ -92,8 +92,8 @@ experience_level = []           # (multiple select) "Internship", "Entry level",
 job_type = []                   # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
 on_site = []                    # (multiple select) "On-site", "Remote", "Hybrid"
 
-companies = ["7 11"]
-# "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)",
+companies = ["7-eleven"]
+# , "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)",
 # "Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express"
 # ]                  # (dynamic multiple select) "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", "Elevance Health", and so on... make sure the name you type in list exactly matches with the company name you're looking for, including capitals.
 location = []                   # (dynamic multiple select)

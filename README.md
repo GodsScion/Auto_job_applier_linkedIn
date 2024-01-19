@@ -19,12 +19,21 @@ This is a web scraping tool that automates the process of job applications on Li
 - Collects skills required (In Development)
 - Collects experience required and skips if not applicable to you, must be configured
 - Auto Filters jobs based on your experience and black list key words
+- Only applies to filtered jobs
+- Auto selects next pages until it hits the quota you configured
 - Selects your default resume
 - Auto Submits
 - Saves all the info of applied jobs, failed to apply jobs in excels and logs
 - Takes screenshot of questions answered to fail, for future debugging
 - Saves info of all questions and answers for those questions
 - Continuous applications non stop (beta)
+- No need for fear of missing out, Goes through all possible filters and sorts combinations with each cycle if configged (Most Recent, Most Relevant, Newest First, Past 24 Hrs, Past Month, Past Week etc)
+
+
+
+Stealth features:
+- Click intervals can be randomised and increased to avoid suspicions
+- Scroll to view before click
 
 Upcoming Features or currently in developmnet:
 - Answer questions with help of chatGpt or other LLMS

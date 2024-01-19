@@ -8,6 +8,8 @@ This is a web scraping tool that automates the process of job applications on Li
 
 ## Feature List (I'm yet to complete the documentation, I'm adding in more features)
 
+**General Features:**
+
 - Opens browser with default logged in google account (Yet to test with browsers having multiple profiles)
 - **Auto Login**: If configged or already saved in browser (not saved passwords)
 - Apply filters (Salary, Companies, Experience Level,... ) Must config
@@ -33,19 +35,18 @@ This is a web scraping tool that automates the process of job applications on Li
 
 
 
-Stealth features: (Vetowed with lack of undetected chromedriver or stealth browsers 😭)
+**Stealth features:**  (Vetowed with lack of undetected chromedriver or stealth browsers 😭)
 - Click intervals can be randomised and increased to avoid suspicions
 - Scroll to view before click
 
-Upcoming Features or currently in developmnet:
+**Upcoming Features or currently in developmnet:**
 - Answer questions with help of chatGpt or other LLMS
 - humanise and smoothen scroll speed and mouse movements for stealth 
 - Auto send personalised messages to HR that accept messages
 - Custom resume generator based on Skills required gathering (In Development)
 - Customise resume for every job using LLMs ChatGPT (In Development). (Halted because of undetected-chromedriver is broken, ChatGPT is protected from bots and scraping 😑, will probably implement api or utilize other LLMs)
 
-
-Currently Broken 
+**Currently Broken 🥲:** 
 - Undetected Chrome driver (Browser, Selenium version incomapatability) (Hot ptched, might work if compatable versions are installed)
   
 

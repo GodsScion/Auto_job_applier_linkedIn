@@ -6,9 +6,35 @@
 
 This is a web scraping tool that automates the process of job applications on LinkedIn. It collects job listings information such as job titles, companies, URLs etc. from LinkedIn job search results. 
 
-## Feature List
+## Feature List (I'm yet to complete the documentation, I'm adding in more features)
 
-- **Auto Login**:
+- Opens browser with default logged in google account (Yet to test with browsers having multiple profiles)
+- **Auto Login**: If configged or already saved in browser (not saved passwords)
+- Apply filters (Salary, Companies, Experience Level,... ) Must config
+- Opens job search and searches key words
+- Easy applies
+- Auto Answers questions answered in config
+- Collects urls of carrer page if have to Apply externally
+- Collects HR Info
+- Collects skills required (In Development)
+- Collects experience required and skips if not applicable to you, must be configured
+- Auto Filters jobs based on your experience and black list key words
+- Selects your default resume
+- Auto Submits
+- Saves all the info of applied jobs, failed to apply jobs in excels and logs
+- Takes screenshot of questions answered to fail, for future debugging
+- Saves info of all questions and answers for those questions
+- Continuous applications non stop (beta)
+
+Upcoming Features or currently in developmnet:
+- Answer questions with help of chatGpt or other LLMS
+- Auto send personalised messages to HR that accept messages
+- Customise resume for every job using ChatGPT (In Development) Halted because of undetected-chromedriver is broken, ChatGPT is protected from bots and scraping 😑 (will probably implement api or utilize other LLMs)
+
+
+Currently Broken 
+- Undetected Chrome driver (Browser, Selenium version incomapatability) (Hot ptched, might work if compatable versions are installed)
+  
 
 ## How to install
 

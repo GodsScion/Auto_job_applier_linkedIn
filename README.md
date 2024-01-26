@@ -31,17 +31,17 @@ This is a web scraping tool that automates the process of job applications on Li
 - Continuous applications non stop (beta)
 - No need for fear of missing out, Goes through all possible filters and sorts combinations with each cycle if configged (Most Recent, Most Relevant, Newest First, Past 24 Hrs, Past Month, Past Week etc)
 - Run in background, headless browser
-- Auto collects a looooooooooooooooooooooot of info about your jobs, check applied-jobs.excel and failed_jobs.excel for info after each run.
+- Auto collects a loooooooooooooooooooooot of info about your jobs, check applied-jobs.excel and failed_jobs.excel for info after each run.
 
 
 
 **Stealth features:**  (Vetowed with lack of undetected chromedriver or stealth browsers 😭)
 - Click intervals can be randomised and increased to avoid suspicions
-- Scroll to view before click
+- Smooth Scroll to view before click
 
 **Upcoming Features or currently in developmnet:**
 - Answer questions with help of chatGpt or other LLMS
-- humanise and smoothen scroll speed and mouse movements for stealth 
+- humanise and mouse movements for stealth 
 - Auto send personalised messages to HR that accept messages
 - Custom resume generator based on Skills required gathering (In Development)
 - Customise resume for every job using LLMs ChatGPT (In Development). (Halted because of undetected-chromedriver is broken, ChatGPT is protected from bots and scraping 😑, will probably implement api or utilize other LLMs)

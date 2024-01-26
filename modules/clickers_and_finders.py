@@ -4,7 +4,7 @@ LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
 
 '''
 
-from setup.config import click_gap
+from setup.config import click_gap, run_in_background
 from modules.helpers import buffer, print_lg
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -45,8 +45,8 @@ def multi_sel_noWait(driver, l, actions=False):
             button.click()
             buffer(click_gap)
         except Exception as e:
-            print_lg("Click Failed! Didn't find '"+x+"'")
             if actions: company_search_click(driver,actions,x)
+            else:   print_lg("Click Failed! Didn't find '"+x+"'")
             # print_lg(e)
 
 def boolean_button_click(driver, actions, x):
@@ -66,7 +66,7 @@ def find_by_class(driver, class_name, time=5.0):
 
 # Scroll functions
 def scroll_to_view(driver, element):
-    return driver.execute_script("arguments[0].scrollIntoView(true);", element)
+    return driver.execute_script('arguments[0].scrollIntoView();', element) if run_in_background else driver.execute_script('arguments[0].scrollIntoView({ behavior: "smooth", block: "center"});', element)
 
 # Enter input text functions
 def text_input_by_ID(driver, id, value, time=5.0):

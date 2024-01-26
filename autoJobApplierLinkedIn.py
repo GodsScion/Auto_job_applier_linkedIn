@@ -261,13 +261,13 @@ def apply_to_jobs(keywords):
                 # Wait until job listings are loaded
                 wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'jobs-search-results__list-item')]")))
 
-                # try:
-                pagination_element = find_by_class(driver, "artdeco-pagination")
-                scroll_to_view(driver, pagination_element)
-                current_page = int(pagination_element.find_element(By.XPATH, "//li[contains(@class, 'active')]").text)
-                # except Exception as e:
-                #     print_lg("Failed to find Pagination element, hence couldn't scroll till end!")
-                #     # print_lg(e)
+                try:
+                    pagination_element = find_by_class(driver, "artdeco-pagination")
+                    scroll_to_view(driver, pagination_element)
+                    current_page = int(pagination_element.find_element(By.XPATH, "//li[contains(@class, 'active')]").text)
+                except Exception as e:
+                    print_lg("Failed to find Pagination element, hence couldn't scroll till end!")
+                    # print_lg(e)
 
 
                 # Find all job listings in current page
@@ -283,7 +283,9 @@ def apply_to_jobs(keywords):
                     job_id,title,company,work_location,work_style = get_job_main_details(job)
                     
                     # Skip if previously rejected due to blacklist or already applied
-                    if job_id in rejected_jobs: continue
+                    if job_id in rejected_jobs: 
+                        print_lg(f'Skipping previously rejected "{title} | {company}" job. Job ID: {job_id}!')
+                        continue
                     try:
                         if job_id in applied_jobs or find_by_class(driver, "jobs-s-apply__application-link", 2):
                             print_lg(f'Already applied to "{title} | {company}" job. Job ID: {job_id}!')

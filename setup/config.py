@@ -15,7 +15,7 @@ failed_file_name = "all excels/all_failed_applications_history.csv"
 logs_folder_path = "logs/"
 
 # Set the maximum amount of time allowed to wait between each click in secs
-click_gap = 1                   # Enter max allowed secs to wait approximately. (Only Non Negative Integers like 0,1,2,3,....)
+click_gap = 0                   # Enter max allowed secs to wait approximately. (Only Non Negative Integers like 0,1,2,3,....)
 
 # If you want to see Chrome running then set run_in_background as False. May reduce performance...
 run_in_background = False       # True or False
@@ -45,7 +45,7 @@ keywords = ["Software Engineer", "Software Developer", "Python Developer", "Juni
 # >>>>>>>>>>> Easy Apply Inputs <<<<<<<<<<<
 
 # Give an relative or absolute path of your default resume to be uploaded...
-default_resume_path = "all resumes/default/resume.pdf"
+default_resume_path = "all resumes/default/resume.pdf"      # (In Development)
 
 # What do you want to answer for years of experience you have?
 years_of_experience = '3'
@@ -60,7 +60,7 @@ us_citizenship = "Non-citizen allowed to work for any employer" # If left empty 
 # What is the link to your portfolio website, leave it empty as "" if you don't want to enter anything
 website = "https://github.com/GodsScion" # "www.example.bio" or "" and so on....
 
-# What is your desired salary, only enter in numbers
+# What to enter in your desired salary question, only enter in numbers as some companies only allow numbers
 desired_salary = "90000"        # "80000", "90000", "100000" or "120000" and so on....
 
 # Example question: "On a scale of 1-10 how much experience do you have building web or mobile applications? 1 being very little or only in school, 10 being that you have built and launched applications to real users"
@@ -68,7 +68,7 @@ confidence_level = "8"          # Any number between "1" to "10", put em in quot
 
 # How do you identify yourself? If left empty as "", tool will not answer the question. However, note that some companies make compulsory to be answered
 gender = "Male"                 # "Male", "Female", "Other", "Decline" or ""
-disability_status = ""
+disability_status = "Decline"          # 
 full_name = "Sai Vignesh Golla" # Your name in quotes
 
 
@@ -86,14 +86,15 @@ sort_by = "Most relevant"       # "Most recent", "Most relevant" or ("" to not s
 date_posted = "Any time"        # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                     # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
-easy_apply_only = False         # True or False
+easy_apply_only = True         # True or False
 
 experience_level = []           # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
 job_type = []                   # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
 on_site = []                    # (multiple select) "On-site", "Remote", "Hybrid"
 
-companies = ["7-eleven", "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)",
-"Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express"
+companies = [
+#     "7-eleven", "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)",
+#     "Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express"
 ]                  # (dynamic multiple select) "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", "Elevance Health", and so on... make sure the name you type in list exactly matches with the company name you're looking for, including capitals.
 location = []                   # (dynamic multiple select)
 industry = []                   # (dynamic multiple select)

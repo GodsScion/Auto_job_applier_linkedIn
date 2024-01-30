@@ -175,11 +175,16 @@ def answer_questions(questions_list):
         answer = 'Yes'
         label = label_org.lower()
         if 'gender' in label or 'sex' in label: answer = gender
+        if 'disability' in label: answer = disability_status
         select = Select(select)
         selected_option = select.first_selected_option.text
         if selected_option != "Select an option": continue
-        select.select_by_visible_text(answer)
-        questions_list.add((label_org, select.first_selected_option.text, "select")) 
+        try:
+            select.select_by_visible_text(answer)
+        except NoSuchElementException as e:
+            print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
+        questions_list.add((label_org, select.first_selected_option.text, "select")) # <<<<<<<<<<<<<<<<<<
+
 
     # Find all radio questions
     all_radio_questions = driver.find_elements(By.XPATH, '//fieldset[@data-test-form-builder-radio-button-form-component="true"]')

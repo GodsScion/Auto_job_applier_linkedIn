@@ -11,12 +11,12 @@ This is a web scraping tool that automates the process of job applications on Li
 **General Features:**
 
 - Opens browser with default logged in google account (Yet to test with browsers having multiple profiles)
-- **Auto Login**: If configged or already saved in browser (not saved passwords)
+- **Auto Login**: If configured or already saved in browser (not saved passwords)
 - Apply filters (Salary, Companies, Experience Level,... ) Must config
 - Opens job search and searches key words
 - Easy applies
 - Auto Answers questions answered in config
-- Collects urls of carrer page if have to Apply externally
+- Collects urls of career page if have to Apply externally
 - Collects HR Info
 - Collects skills required (In Development)
 - Collects experience required and skips if not applicable to you, must be configured
@@ -29,25 +29,28 @@ This is a web scraping tool that automates the process of job applications on Li
 - Takes screenshot of questions answered to fail, for future debugging
 - Saves info of all questions and answers for those questions
 - Continuous applications non stop (beta)
-- No need for fear of missing out, Goes through all possible filters and sorts combinations with each cycle if configged (Most Recent, Most Relevant, Newest First, Past 24 Hrs, Past Month, Past Week etc)
+- No need for fear of missing out, Goes through all possible filters and sorts combinations with each cycle if configured (Most Recent, Most Relevant, Newest First, Past 24 Hrs, Past Month, Past Week etc)
 - Run in background, headless browser
 - Auto collects a loooooooooooooooooooooot of info about your jobs, check applied-jobs.excel and failed_jobs.excel for info after each run.
 
 
 
-**Stealth features:**  (Vetowed with lack of undetected chromedriver or stealth browsers 😭)
-- Click intervals can be randomised and increased to avoid suspicions
+**Stealth features:**  (Vetoed with lack of undetected-chromedriver or stealth browsers 😭)
+- Click intervals can be randomized and increased to avoid suspicions
 - Smooth Scroll to view before click
 
-**Upcoming Features or currently in developmnet:**
-- Answer questions with help of chatGpt or other LLMS
-- humanise and mouse movements for stealth 
-- Auto send personalised messages to HR that accept messages
+**Upcoming Features or currently in development:**
+- Answer questions with help of chatGpt or other LLMs
+- Humanize and mouse movements for stealth 
+- Auto send personalized messages to HR that accept messages
 - Custom resume generator based on Skills required gathering (In Development)
-- Customise resume for every job using LLMs ChatGPT (In Development). (Halted because of undetected-chromedriver is broken, ChatGPT is protected from bots and scraping 😑, will probably implement api or utilize other LLMs)
+- Customize resume for every job using LLMs ChatGPT (In Development). (Halted because of undetected-chromedriver is broken, ChatGPT is protected from bots and scraping 😑, will probably implement api or utilize other LLMs)
 
 **Currently Broken 🥲:** 
-- Undetected Chrome driver (Browser, Selenium version incomapatability) (Hot ptched, might work if compatable versions are installed)
+- Undetected Chrome driver (Browser, Selenium version incompatible) (Hot patched, might work if compatible versions are installed)
+- All ChatGPT features (depends on Undetected Chrome driver):
+    - ChatGPT Login 
+    - ChatGPT resume chat window opener
   
 
 ## How to install

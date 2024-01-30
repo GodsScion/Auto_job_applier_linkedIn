@@ -32,6 +32,8 @@ This is a web scraping tool that automates the process of job applications on Li
 - No need for fear of missing out, Goes through all possible filters and sorts combinations with each cycle if configured (Most Recent, Most Relevant, Newest First, Past 24 Hrs, Past Month, Past Week etc)
 - Run in background, headless browser
 - Auto collects a loooooooooooooooooooooot of info about your jobs, check applied-jobs.excel and failed_jobs.excel for info after each run.
+- Pause before submit application.
+
 
 
 

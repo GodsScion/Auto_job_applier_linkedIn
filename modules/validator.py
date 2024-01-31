@@ -37,7 +37,7 @@ def validate_config():
     validate_String(username, "username")
     validate_String(password, "password")
 
-    validate_Multi(searchTerms, "searchTerms")
+    validate_Multi(search_terms, "search_terms")
 
     validate_String(sort_by, "sort_by", ["", "Most recent", "Most relevant"])
     validate_String(date_posted, "date_posted", ["", "Any time", "Past week", "Past 24 hours", "Past month"])

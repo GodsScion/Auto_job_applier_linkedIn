@@ -402,7 +402,11 @@ def apply_to_jobs(keywords):
                                 next_counter = 0
                                 while next_button:
                                     next_counter += 1
-                                    if next_counter >= 12: 
+                                    if next_counter >= 6: 
+                                        if pause_at_failed_question:
+                                            alert("Couldn't answer one or more questions.\nPlease click \"Continue\" once done.\nDO NOT CLICK Next or Review button in LinkedIn.\n\n\n\n\nYou can turn off \"Pause at failed question\" setting in config.py", "Help Needed", "Continue")
+                                            next_counter = 1
+                                            continue
                                         if questions_list: print_lg("Stuck for one or some of the following questions...", questions_list)
                                         screenshot_name = screenshot(driver, job_id, "Failed at questions")
                                         errored = "stuck"
@@ -418,7 +422,7 @@ def apply_to_jobs(keywords):
                                 errored = "nose"
                             finally:
                                 wait_span_click(driver, "Review", 2)
-                                if errored != "stuck" and pause_before_submit: alert('1. Please verify your information.\n2. If you went back to edit something, please return to this final screen and ...\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can change "Pause before submit" setting in config.py',"Paused")
+                                if errored != "stuck" and pause_before_submit: alert('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py',"Paused")
                                 if wait_span_click(driver, "Submit application", 2): 
                                     date_applied = datetime.now()
                                     if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()

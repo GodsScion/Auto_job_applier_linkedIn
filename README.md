@@ -30,9 +30,11 @@ This is a web scraping tool that automates the process of job applications on Li
 - Saves info of all questions and answers for those questions
 - Continuous applications non stop (beta)
 - No need for fear of missing out, Goes through all possible filters and sorts combinations with each cycle if configured (Most Recent, Most Relevant, Newest First, Past 24 Hrs, Past Month, Past Week etc)
+- Option to randomize the search order
 - Run in background, headless browser
 - Auto collects a loooooooooooooooooooooot of info about your jobs, check applied-jobs.excel and failed_jobs.excel for info after each run.
-- Pause before submit application.
+- Optional pause before submit application.
+- Optional pause if stuck at a question.
 
 
 

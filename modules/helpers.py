@@ -5,11 +5,21 @@ LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
 '''
 
 import os
-import csv
 from time import sleep
-from random import randint, choice
+from random import randint
 from datetime import datetime, timedelta
-from setup.config import file_name, failed_file_name, logs_folder_path 
+from setup.config import logs_folder_path 
+
+
+#### Common functions ####
+
+#< Directories related
+# Function to create missing directories
+def make_directories(paths):
+    for path in paths:  
+        path = path.replace("//","/")
+        if '/' in path and '.' in path: path = path[:path.rfind('/')]
+        if not os.path.exists(path):   os.makedirs(path)
 
 # Function to search for Chrome Profiles
 def find_default_profile_directory():
@@ -24,9 +34,29 @@ def find_default_profile_directory():
         if os.path.exists(profile_dir):
             return profile_dir
     return None
+#>
 
 
-# Wait Function
+#< Logging related
+# Function to log critical errors
+def critical_error_log(possible_reason, stack_trace):
+    print_lg(possible_reason, stack_trace, datetime.now())
+    pass
+
+# Function to log and print
+def print_lg(*msgs):
+    try:
+        message = "\n".join(str(msg) for msg in msgs)
+        path = logs_folder_path+"/log.txt"
+        with open(path.replace("//","/"), 'a', encoding="utf-8") as file:
+            file.write(message + '\n')
+        print(message)
+    except Exception as e:
+        critical_error_log("Log.txt is open or is occupied by another program!", e)
+#>
+
+
+# Function to wait within a period of selected random range
 def buffer(speed=0):
     if speed<=0:
         return
@@ -38,7 +68,22 @@ def buffer(speed=0):
         return sleep(randint(18,round(speed)*10)*0.1)
     
 
-# Date posted calculator
+# Function to ask and validate manual login
+def manual_login_retry(is_logged_in, limit = 2):
+    count = 0
+    while not is_logged_in():
+        from pyautogui import alert
+        print_lg("Seems like you're not logged in!")
+        button = "Confirm Login"
+        message = 'After you successfully Log In, please click "{}" button below.'.format(button)
+        if count > limit:
+            button = "Skip Confirmation"
+            message = 'If you\'re seeing this message even after you logged in, Click "{}". Seems like auto login confirmation failed!'.format(button)
+        count += 1
+        if alert(message, "Login Required", button) and count > limit: return
+
+
+# Function to calculate date posted
 def calculate_date_posted(time_string):
     time_string = time_string.strip()
     # print_lg(f"Trying to calculate date job was posted from '{time_string}'")
@@ -69,68 +114,10 @@ def calculate_date_posted(time_string):
     return date_posted
     
 
-# Failed job list update
-def failed_job(job_id, job_link, resume, date_listed, error, exception, application_link, screenshot_name):
-    with open(failed_file_name, 'a', newline='', encoding='utf-8') as file:
-        fieldnames = ['Job ID', 'Job Link', 'Resume Tried', 'Date listed', 'Date Tried', 'Assumed Reason', 'Stack Trace', 'External Job link', 'Screenshot Name']
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        if file.tell() == 0: writer.writeheader()
-        writer.writerow({'Job ID':job_id, 'Job Link':job_link, 'Resume Tried':resume, 'Date listed':date_listed, 'Date Tried':datetime.now(), 'Assumed Reason':error, 'Stack Trace':exception, 'External Job link':application_link, 'Screenshot Name':screenshot_name})
-        file.close()
 
 
-# Get list of applied job's Job IDs function
-def get_applied_job_ids():
-    job_ids = set()
-    try:
-        with open(file_name, 'r', encoding='utf-8') as file:
-            reader = csv.reader(file)
-            for row in reader:
-                job_ids.add(row[0])
-    except FileNotFoundError:
-        print_lg(f"The CSV file '{file_name}' does not exist.")
-    return job_ids
 
 
-def manual_login_retry(is_logged_in, limit = 2):
-    count = 0
-    while not is_logged_in():
-        from pyautogui import alert
-        print_lg("Seems like you're not logged in!")
-        button = "Confirm Login"
-        message = 'After you successfully Log In, please click "{}" button below.'.format(button)
-        if count > limit:
-            button = "Skip Confirmation"
-            message = 'If you\'re seeing this message even after you logged in, Click "{}". Seems like auto login confirmation failed!'.format(button)
-        count += 1
-        if alert(message, "Login Required", button) and count > limit: return
 
-def critical_error_log(possible_reason, stack_trace):
-    print_lg(possible_reason, stack_trace, datetime.now())
-    pass
-
-def print_lg(*msgs):
-    try:
-        message = "\n".join(str(msg) for msg in msgs)
-        path = logs_folder_path+"/log.txt"
-        with open(path.replace("//","/"), 'a', encoding="utf-8") as file:
-            file.write(message + '\n')
-        print(message)
-    except Exception as e:
-        critical_error_log("Log.txt is open or is occupied by another program!", e)
-
-def screenshot(driver, job_id, failedAt):
-    screenshot_name = "{} - {} - {}.png".format( job_id, failedAt, str(datetime.now()) )
-    path = logs_folder_path+"/screenshots/"+screenshot_name.replace(":",".")
-    # special_chars = {'*', '"', '\\', '<', '>', ':', '|', '?'}
-    # for char in special_chars:  path = path.replace(char, '-')
-    driver.save_screenshot(path.replace("//","/"))
-    return screenshot_name
-
-def make_directories(paths):
-    for path in paths:  
-        path = path.replace("//","/")
-        if '/' in path and '.' in path: path = path[:path.rfind('/')]
-        if not os.path.exists(path):   os.makedirs(path)
 
 

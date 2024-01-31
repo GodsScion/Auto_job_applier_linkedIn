@@ -10,6 +10,7 @@ import os
 import csv
 import re
 from pyautogui import press, alert, confirm
+from random import choice, shuffle
 from datetime import datetime
 from modules.open_chrome import *
 from selenium.webdriver.common.by import By
@@ -25,7 +26,9 @@ if use_resume_generator:    from resume_generator import is_logged_in_GPT ,login
 
 
 
-# Login Functions
+#< Login Functions
+
+# Function to check if user is logged-in in LinkedIn
 def is_logged_in_LN():
     if driver.current_url == "https://www.linkedin.com/feed/": return True
     if try_linkText(driver, "Sign in"): return False
@@ -34,7 +37,7 @@ def is_logged_in_LN():
     print_lg("Didn't find Sign in link, so assuming user is logged in!")
     return True
 
-
+# Function to login for LinkedIn
 def login_LN():
     # Find the username and password fields and fill them with user credentials
     driver.get("https://www.linkedin.com/login")
@@ -68,10 +71,25 @@ def login_LN():
         print_lg("Seems like login attempt failed! Possibly due to wrong credentials or already logged in! Try logging in manually!")
         # print_lg(e)
         manual_login_retry(is_logged_in_LN, 2)
+#>
 
 
 
-# Apply filters Function
+# Function to get list of applied job's Job IDs
+def get_applied_job_ids():
+    job_ids = set()
+    try:
+        with open(file_name, 'r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                job_ids.add(row[0])
+    except FileNotFoundError:
+        print_lg(f"The CSV file '{file_name}' does not exist.")
+    return job_ids
+
+
+
+# Function to apply job search filters
 def apply_filters():
     try:
         recommended_wait = 1 if click_gap < 1 else 0
@@ -121,7 +139,22 @@ def apply_filters():
 
 
 
-# Get Job Main details
+# Function to get pagination element and current page number
+def get_page_info():
+    try:
+        pagination_element = find_by_class(driver, "artdeco-pagination")
+        scroll_to_view(driver, pagination_element)
+        current_page = int(pagination_element.find_element(By.XPATH, "//li[contains(@class, 'active')]").text)
+    except Exception as e:
+        print_lg("Failed to find Pagination element, hence couldn't scroll till end!")
+        pagination_element = None
+        current_page = None
+        # print_lg(e)
+    return pagination_element, current_page
+
+
+
+# Function to get job main details
 def get_job_main_details(job):
     job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
     scroll_to_view(driver, job_details_button, True)
@@ -141,7 +174,7 @@ def get_job_main_details(job):
     return (job_id,title,company,work_location,work_style)
 
 
-# Check for Blacklisted words in About Company
+# Function to check for Blacklisted words in About Company
 def check_blacklist(rejected_jobs,job_id):
     about_company_org = find_by_class(driver, "jobs-company__box")
     scroll_to_view(driver, about_company_org)
@@ -157,6 +190,7 @@ def check_blacklist(rejected_jobs,job_id):
 
 
 
+# Function to extract years of experience required from About Job
 def extract_years_of_experience(text):
     # Extract all patterns like '10+ years', '5 years', '3-5 years', etc.
     matches = re.findall(r'[(]?\s*(\d+)\s*[)]?\s*[-to]*\s*\d*[+]*\s*year[s]?', text, flags=re.IGNORECASE)
@@ -165,7 +199,8 @@ def extract_years_of_experience(text):
     return max([int(match) for match in matches if int(match) <= 12])
 
 
-# Answer the questions for Easy Apply
+
+# Function to answer the questions for Easy Apply
 def answer_questions(questions_list):
     # Find all Select Questions
     select_buttons = driver.find_elements(By.XPATH, "//select")
@@ -238,6 +273,53 @@ def answer_questions(questions_list):
 
 
 
+
+
+
+
+
+
+
+#< Failed attempts logging
+
+# Function to update failed jobs list in excel
+def failed_job(job_id, job_link, resume, date_listed, error, exception, application_link, screenshot_name):
+    with open(failed_file_name, 'a', newline='', encoding='utf-8') as file:
+        fieldnames = ['Job ID', 'Job Link', 'Resume Tried', 'Date listed', 'Date Tried', 'Assumed Reason', 'Stack Trace', 'External Job link', 'Screenshot Name']
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        if file.tell() == 0: writer.writeheader()
+        writer.writerow({'Job ID':job_id, 'Job Link':job_link, 'Resume Tried':resume, 'Date listed':date_listed, 'Date Tried':datetime.now(), 'Assumed Reason':error, 'Stack Trace':exception, 'External Job link':application_link, 'Screenshot Name':screenshot_name})
+        file.close()
+
+
+# Function to to take screenshot for debugging
+def screenshot(driver, job_id, failedAt):
+    screenshot_name = "{} - {} - {}.png".format( job_id, failedAt, str(datetime.now()) )
+    path = logs_folder_path+"/screenshots/"+screenshot_name.replace(":",".")
+    # special_chars = {'*', '"', '\\', '<', '>', ':', '|', '?'}
+    # for char in special_chars:  path = path.replace(char, '-')
+    driver.save_screenshot(path.replace("//","/"))
+    return screenshot_name
+#>
+
+
+
+# Function to create or append to the CSV file, once the application is submitted successfully
+def submitted_jobs(job_id, title, company, work_location, work_style, description, experience_required, skills, hr_name, hr_link, resume, reposted, date_listed, date_applied, job_link, application_link, questions_list, connect_request):
+    with open(file_name, mode='a', newline='', encoding='utf-8') as csv_file:
+        fieldnames = ['Job ID', 'Title', 'Company', 'Work Location', 'Work Style', 'About Job', 'Experience required', 'Skills required', 'HR Name', 'HR Link', 'Resume', 'Re-posted', 'Date Posted', 'Date Applied', 'Job Link', 'External Job link', 'Questions Found', 'Connect Request']
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        if csv_file.tell() == 0: writer.writeheader()
+        writer.writerow({'Job ID':job_id, 'Title':title, 'Company':company, 'Work Location':work_location, 'Work Style':work_style, 
+                        'About Job':description, 'Experience required': experience_required, 'Skills required':skills, 
+                            'HR Name':hr_name, 'HR Link':hr_link, 'Resume':resume, 'Re-posted':reposted, 
+                            'Date Posted':date_listed, 'Date Applied':date_applied, 'Job Link':job_link, 
+                            'External Job link':application_link, 'Questions Found':questions_list, 'Connect Request':connect_request})
+    csv_file.close()
+
+
+
+# Function to discard the job application
 def discard_job():
     actions.send_keys(Keys.ESCAPE).perform()
     wait_span_click(driver, 'Discard', 2)
@@ -245,16 +327,15 @@ def discard_job():
 
 
 
-    
 
 
-
-# Apply to jobs function
-def apply_to_jobs(searchTerms):
+# Function to apply to jobs
+def apply_to_jobs(search_terms):
     applied_jobs = get_applied_job_ids()
     rejected_jobs = set()
 
-    for searchTerm in searchTerms:
+    if randomize_search_order:  shuffle(search_terms)
+    for searchTerm in search_terms:
         driver.get(f"https://www.linkedin.com/jobs/search/?keywords={searchTerm}")
         print_lg("\n________________________________________________________________________________________________________________________\n")
         print_lg(f'\n>>>> Now searching for "{searchTerm}" <<<<\n\n')
@@ -267,14 +348,7 @@ def apply_to_jobs(searchTerms):
                 # Wait until job listings are loaded
                 wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'jobs-search-results__list-item')]")))
 
-                try:
-                    pagination_element = find_by_class(driver, "artdeco-pagination")
-                    scroll_to_view(driver, pagination_element)
-                    current_page = int(pagination_element.find_element(By.XPATH, "//li[contains(@class, 'active')]").text)
-                except Exception as e:
-                    print_lg("Failed to find Pagination element, hence couldn't scroll till end!")
-                    # print_lg(e)
-
+                pagination_element, current_page = get_page_info()
 
                 # Find all job listings in current page
                 buffer(3)
@@ -449,7 +523,7 @@ def apply_to_jobs(searchTerms):
                         # Case 2: Apply externally
                         if easy_apply_only: 
                             print_lg("Easy apply failed I guess!")
-                            continue
+                            if pagination_element != None: continue
                         try:
                             wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Apply") and not(span[contains(@class, "disabled")])]'))).click()
                             windows = driver.window_handles
@@ -464,28 +538,21 @@ def apply_to_jobs(searchTerms):
                             failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link, screenshot_name)
                             continue
                     
-                    # Create or append to the CSV file
-                    with open(file_name, mode='a', newline='', encoding='utf-8') as csv_file:
-                        fieldnames = ['Job ID', 'Title', 'Company', 'Work Location', 'Work Style', 'About Job', 'Experience required', 'Skills required', 'HR Name', 'HR Link', 'Resume', 'Re-posted', 'Date Posted', 'Date Applied', 'Job Link', 'External Job link', 'Questions Found', 'Connect Request']
-                        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                        if csv_file.tell() == 0: writer.writeheader()
-                        # Once the application is submitted successfully, add the application details to the CSV
-                        writer.writerow({'Job ID':job_id, 'Title':title, 'Company':company, 'Work Location':work_location, 'Work Style':work_style, 
-                                         'About Job':description, 'Experience required': experience_required, 'Skills required':skills, 
-                                            'HR Name':hr_name, 'HR Link':hr_link, 'Resume':resume, 'Re-posted':reposted, 
-                                            'Date Posted':date_listed, 'Date Applied':date_applied, 'Job Link':job_link, 
-                                            'External Job link':application_link, 'Questions Found':questions_list, 'Connect Request':connect_request})
-                    csv_file.close()
+                    submitted_jobs(job_id, title, company, work_location, work_style, description, experience_required, skills, hr_name, hr_link, resume, reposted, date_listed, date_applied, job_link, application_link, questions_list, connect_request)
+
                     print_lg(f'Successfully saved "{title} | {company}" job. Job ID: {job_id} info')
                     current_count += 1
                     applied_jobs.add(job_id)
 
                 # Switching to next page
-                try: 
+                if pagination_element == None:
+                    print_lg("Couldn't find pagination element, probably at the end page of results!")
+                    break
+                try:
                     pagination_element.find_element(By.XPATH, f"//button[@aria-label='Page {current_page+1}']").click()
                     print_lg(f"\n>-> Now on Page {current_page+1} \n")
                 except NoSuchElementException:
-                    print_lg(f"Didn't find Page {current_page+1}. Probably at the end page of result!")
+                    print_lg(f"Didn't find Page {current_page+1}. Probably at the end page of results!")
                     break
 
         except Exception as e:
@@ -499,7 +566,7 @@ def run(total_runs):
     print_lg(f"Date and Time: {datetime.now()}")
     print_lg(f"Cycle number: {total_runs+1}")
     print_lg(f"Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'")
-    apply_to_jobs(searchTerms)
+    apply_to_jobs(search_terms)
     print_lg("########################################################################################################################\n")
     print_lg("Sleeping for 10 min...")
     sleep(0)

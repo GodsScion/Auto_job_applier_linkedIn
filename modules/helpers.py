@@ -7,7 +7,7 @@ LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
 import os
 import csv
 from time import sleep
-from random import randint
+from random import randint, choice
 from datetime import datetime, timedelta
 from setup.config import file_name, failed_file_name, logs_folder_path 
 

@@ -557,8 +557,7 @@ def main():
         critical_error_log("In Applier Main", e)
         alert(e,alert_title)
     finally:
-        import random
-        quote = random.choice([
+        quote = choice([
             "You're one step closer than before.", 
             "All the best with your future interviews.", 
             "Keep up with the progress. You got this.", 

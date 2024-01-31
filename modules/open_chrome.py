@@ -26,6 +26,9 @@ try:
     wait = WebDriverWait(driver, 5)
     actions = ActionChains(driver)
 except Exception as e:
-    print_lg("Seems like Google Chrome browser is already running or Chrome-driver is out dated. Close Chrome and run setup.sh or update the Chrome-driver and then run this program.")
+    msg = "Seems like Google Chrome browser is already running or Chrome-driver is out dated. Close Chrome and run windows-setup.bat for windows or try your luck with setup.sh or update the Chrome-driver and then run this program!"
+    print_lg(msg)
     critical_error_log("In Opening Chrome", e)
+    from pyautogui import alert
+    alert(msg, "Error in opening chrome")
     driver.quit()

@@ -123,7 +123,10 @@ did_masters = True              # True or False
 ## Allow Manual Inputs
 # Should the tool pause before every submit application during easy apply to let you check the information?
 pause_before_submit = True     # True or False
+
+# Should the tool pause if it needs help in answering questions during easy apply?
 pause_at_failed_question = True # True or False
+##
 
 # Keep the External Application tabs open?
 close_tabs = False              # True or False
@@ -131,19 +134,20 @@ close_tabs = False              # True or False
 # After how many number of applications should we keep switching? 
 switch_number = 30              # Only numbers greater than 25... Don't put in quotes
 
-# Upcoming features
-# # Send connection requests to HR's
-# connect_hr = True               # True or False
+## Upcoming features (In Development)
+# Send connection requests to HR's
+connect_hr = True               # True or False
 
-# # What message do you want to send during connection request? (Max. 200 Characters)
-# connect_request_message = ""    # Leave Empty to send connection request without personalized invitation (recommended to leave it empty, since you only get 10 per month without LinkedIn Premium*)
-
+# What message do you want to send during connection request? (Max. 200 Characters)
+connect_request_message = ""    # Leave Empty to send connection request without personalized invitation (recommended to leave it empty, since you only get 10 per month without LinkedIn Premium*)
 
 # Do you want the program to run continuously until you stop it?
 run_non_stop = False             # True or False
 alternate_sortby = True         # True or False
 cycle_date_posted = True        # True or False
 stop_date_cycle_at_24hr = True  # True or False
+##
+
 
 # ----------------------------------------------  RESUME GENERATOR (Experimental)  ---------------------------------------------- #
 

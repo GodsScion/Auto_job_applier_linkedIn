@@ -413,7 +413,8 @@ def apply_to_jobs(searchTerms):
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(questions_list)
-                                    next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
+                                    try:    next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
+                                    except NoSuchElementException:  next_button = driver.find_element(By.XPATH, '//span[normalize-space(.)="Review"]')
                                     try: next_button.click()
                                     except ElementClickInterceptedException:    break   # Happens when it tries to click Next button in About Company photos section
                                     buffer(click_gap)

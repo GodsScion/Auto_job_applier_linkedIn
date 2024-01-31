@@ -250,14 +250,14 @@ def discard_job():
 
 
 # Apply to jobs function
-def apply_to_jobs(keywords):
+def apply_to_jobs(searchTerms):
     applied_jobs = get_applied_job_ids()
     rejected_jobs = set()
 
-    for keyword in keywords:
-        driver.get(f"https://www.linkedin.com/jobs/search/?keywords={keyword}")
+    for searchTerm in searchTerms:
+        driver.get(f"https://www.linkedin.com/jobs/search/?keywords={searchTerm}")
         print_lg("\n________________________________________________________________________________________________________________________\n")
-        print_lg(f'\n>>>> Now searching for "{keyword}" <<<<\n\n')
+        print_lg(f'\n>>>> Now searching for "{searchTerm}" <<<<\n\n')
 
         apply_filters()
 
@@ -404,6 +404,7 @@ def apply_to_jobs(keywords):
                                     next_counter += 1
                                     if next_counter >= 6: 
                                         if pause_at_failed_question:
+                                            screenshot(driver, job_id, "Needed manual intervention for failed question")
                                             alert("Couldn't answer one or more questions.\nPlease click \"Continue\" once done.\nDO NOT CLICK Next or Review button in LinkedIn.\n\n\n\n\nYou can turn off \"Pause at failed question\" setting in config.py", "Help Needed", "Continue")
                                             next_counter = 1
                                             continue
@@ -497,7 +498,7 @@ def run(total_runs):
     print_lg(f"Date and Time: {datetime.now()}")
     print_lg(f"Cycle number: {total_runs+1}")
     print_lg(f"Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'")
-    apply_to_jobs(keywords)
+    apply_to_jobs(searchTerms)
     print_lg("########################################################################################################################\n")
     print_lg("Sleeping for 10 min...")
     sleep(0)

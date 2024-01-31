@@ -38,7 +38,8 @@ username = "username@example.com"
 password = "examplepassword"
 
 # These Sentences are Searched in LinkedIn
-keywords = ["Software Engineer", "Software Developer", "Python Developer", "Junior Software Developer"] #, "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
+searchTerms = ["Software Engineer", "Software Developer", "Python Developer", "Junior Software Developer"] #, "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
+
 
 
 

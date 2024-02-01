@@ -12,11 +12,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 
 # Click Functions
-def wait_span_click(driver, x, time=5.0, click=True, scroll=True):
+def wait_span_click(driver, x, time=5.0, click=True, scroll=True, scrollTop = False):
     if x:
         try:
             button = WebDriverWait(driver,time).until(EC.presence_of_element_located((By.XPATH, '//span[normalize-space(.)="'+x+'"]')))
-            if scroll:  scroll_to_view(driver, button)
+            if scroll:  scroll_to_view(driver, button, scrollTop)
             if click:
                 button.click()
                 buffer(click_gap)

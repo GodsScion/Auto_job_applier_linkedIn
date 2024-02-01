@@ -497,9 +497,9 @@ def apply_to_jobs(search_terms):
                                 if questions_list: print_lg("Answered the following questions...", questions_list)
                                 errored = "nose"
                             finally:
-                                wait_span_click(driver, "Review", 2)
+                                wait_span_click(driver, "Review", 2, scrollTop=True)
                                 if errored != "stuck" and pause_before_submit: alert('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py',"Paused")
-                                if wait_span_click(driver, "Submit application", 2): 
+                                if wait_span_click(driver, "Submit application", 2, scrollTop=True): 
                                     date_applied = datetime.now()
                                     if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
                                 elif errored != "stuck" and pause_before_submit and "Yes" in confirm("You submitted the application, didn't you 😒?", "Failed to find Submit Application!", ["Yes", "No"]):

@@ -38,7 +38,7 @@ username = "username@example.com"
 password = "examplepassword"
 
 # These Sentences are Searched in LinkedIn
-search_terms = ["Software Engineer", "Software Developer", "Python Developer", "Junior Software Developer"] #, "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
+search_terms = ["Software Engineer", "Software Developer", "Python Developer", "Java Developer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
 # Do you want to randomize the search order for search_terms?
 randomize_search_order = True   # True of False
 
@@ -83,7 +83,7 @@ String_Preferences = ""
 Multiple_Select = []
 '''
 
-sort_by = "Most relevant"       # "Most recent", "Most relevant" or ("" to not select) 
+sort_by = "Most recent"       # "Most recent", "Most relevant" or ("" to not select) 
 date_posted = "Any time"        # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                     # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
@@ -93,7 +93,7 @@ experience_level = []           # (multiple select) "Internship", "Entry level",
 job_type = []                   # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
 on_site = []                    # (multiple select) "On-site", "Remote", "Hybrid"
 
-companies = ["Google"
+companies = [
 #     "7-eleven", "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)","Meta",
 #     "Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express", "Snap Inc",
 ]                  # (dynamic multiple select) "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", "Elevance Health", and so on... make sure the name you type in list exactly matches with the company name you're looking for, including capitals.
@@ -123,7 +123,7 @@ did_masters = True              # True or False
 
 ## Allow Manual Inputs
 # Should the tool pause before every submit application during easy apply to let you check the information?
-pause_before_submit = True     # True or False
+pause_before_submit = False     # True or False
 
 # Should the tool pause if it needs help in answering questions during easy apply?
 pause_at_failed_question = True # True or False

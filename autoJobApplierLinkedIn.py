@@ -22,7 +22,7 @@ from setup.config import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
-if use_resume_generator:    from resume_generator import is_logged_in_GPT ,login_GPT, open_resume_chat, create_custom_resume
+if use_resume_generator:    from resume_generator import is_logged_in_GPT, login_GPT, open_resume_chat, create_custom_resume
 
 
 

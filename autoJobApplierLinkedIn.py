@@ -459,90 +459,90 @@ def apply_to_jobs(search_terms):
                             print_lg("Unable to extract years of experience required!")
                         # print_lg(e)
 
-                    # Case 1: Easy Apply Button
-                    if wait_span_click(driver, "Easy Apply", 2):
-                        try: 
-                            try:
-                                errored = ""
-                                wait_span_click(driver, "Next", 1)
-                                resume = default_resume_path
-                                # if description != "Unknown":
-                                #     resume = create_custom_resume(description)
-                                wait_span_click(driver, "Next", 1)
-                                # driver.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
-                                resume = os.path.basename(resume)
-                                next_button = True
-                                questions_list = set()
-                                next_counter = 0
-                                while next_button:
-                                    next_counter += 1
-                                    if next_counter >= 6: 
-                                        if pause_at_failed_question:
-                                            screenshot(driver, job_id, "Needed manual intervention for failed question")
-                                            alert("Couldn't answer one or more questions.\nPlease click \"Continue\" once done.\nDO NOT CLICK Next or Review button in LinkedIn.\n\n\n\n\nYou can turn off \"Pause at failed question\" setting in config.py", "Help Needed", "Continue")
-                                            next_counter = 1
-                                            continue
-                                        if questions_list: print_lg("Stuck for one or some of the following questions...", questions_list)
-                                        screenshot_name = screenshot(driver, job_id, "Failed at questions")
-                                        errored = "stuck"
-                                        raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
-                                    questions_list = answer_questions(questions_list)
-                                    try:    next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
-                                    except NoSuchElementException:  next_button = driver.find_element(By.XPATH, '//span[normalize-space(.)="Review"]')
-                                    try: next_button.click()
-                                    except ElementClickInterceptedException:    break   # Happens when it tries to click Next button in About Company photos section
-                                    buffer(click_gap)
+                    # # Case 1: Easy Apply Button
+                    # if wait_span_click(driver, "Easy Apply", 2):
+                    #     try: 
+                    #         try:
+                    #             errored = ""
+                    #             wait_span_click(driver, "Next", 1)
+                    #             resume = default_resume_path
+                    #             # if description != "Unknown":
+                    #             #     resume = create_custom_resume(description)
+                    #             wait_span_click(driver, "Next", 1)
+                    #             # driver.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
+                    #             resume = os.path.basename(resume)
+                    #             next_button = True
+                    #             questions_list = set()
+                    #             next_counter = 0
+                    #             while next_button:
+                    #                 next_counter += 1
+                    #                 if next_counter >= 6: 
+                    #                     if pause_at_failed_question:
+                    #                         screenshot(driver, job_id, "Needed manual intervention for failed question")
+                    #                         alert("Couldn't answer one or more questions.\nPlease click \"Continue\" once done.\nDO NOT CLICK Next or Review button in LinkedIn.\n\n\n\n\nYou can turn off \"Pause at failed question\" setting in config.py", "Help Needed", "Continue")
+                    #                         next_counter = 1
+                    #                         continue
+                    #                     if questions_list: print_lg("Stuck for one or some of the following questions...", questions_list)
+                    #                     screenshot_name = screenshot(driver, job_id, "Failed at questions")
+                    #                     errored = "stuck"
+                    #                     raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
+                    #                 questions_list = answer_questions(questions_list)
+                    #                 try:    next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
+                    #                 except NoSuchElementException:  next_button = driver.find_element(By.XPATH, '//span[normalize-space(.)="Review"]')
+                    #                 try: next_button.click()
+                    #                 except ElementClickInterceptedException:    break   # Happens when it tries to click Next button in About Company photos section
+                    #                 buffer(click_gap)
 
-                            except NoSuchElementException:
-                                if questions_list: print_lg("Answered the following questions...", questions_list)
-                                errored = "nose"
-                            finally:
-                                wait_span_click(driver, "Review", 2, scrollTop=True)
-                                if errored != "stuck" and pause_before_submit: alert('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py',"Paused")
-                                if wait_span_click(driver, "Submit application", 2, scrollTop=True): 
-                                    date_applied = datetime.now()
-                                    if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
-                                elif errored != "stuck" and pause_before_submit and "Yes" in confirm("You submitted the application, didn't you 😒?", "Failed to find Submit Application!", ["Yes", "No"]):
-                                    date_applied = datetime.now()
-                                    wait_span_click(driver, "Done", 2)
-                                else:
-                                    print_lg("Since, Submit Application failed, discarding the job application...")
-                                    # if screenshot_name == "Not Available":  screenshot_name = screenshot(driver, job_id, "Failed to click Submit application")
-                                    # else:   screenshot_name = [screenshot_name, screenshot(driver, job_id, "Failed to click Submit application")]
-                                    if errored == "nose": raise Exception("Failed to click Submit application 😑")
+                    #         except NoSuchElementException:
+                    #             if questions_list: print_lg("Answered the following questions...", questions_list)
+                    #             errored = "nose"
+                    #         finally:
+                    #             wait_span_click(driver, "Review", 2, scrollTop=True)
+                    #             if errored != "stuck" and pause_before_submit: alert('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py',"Paused")
+                    #             if wait_span_click(driver, "Submit application", 2, scrollTop=True): 
+                    #                 date_applied = datetime.now()
+                    #                 if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
+                    #             elif errored != "stuck" and pause_before_submit and "Yes" in confirm("You submitted the application, didn't you 😒?", "Failed to find Submit Application!", ["Yes", "No"]):
+                    #                 date_applied = datetime.now()
+                    #                 wait_span_click(driver, "Done", 2)
+                    #             else:
+                    #                 print_lg("Since, Submit Application failed, discarding the job application...")
+                    #                 # if screenshot_name == "Not Available":  screenshot_name = screenshot(driver, job_id, "Failed to click Submit application")
+                    #                 # else:   screenshot_name = [screenshot_name, screenshot(driver, job_id, "Failed to click Submit application")]
+                    #                 if errored == "nose": raise Exception("Failed to click Submit application 😑")
 
 
-                        except Exception as e:
-                            print_lg("Failed to Easy apply!")
-                            # print_lg(e)
-                            critical_error_log("Somewhere in Easy Apply process",e)
-                            failed_job(job_id, job_link, resume, date_listed, "Problem in Easy Applying", e, application_link, screenshot_name)
-                            discard_job()
-                            continue
-                    else:
-                        # Case 2: Apply externally
-                        if easy_apply_only: 
-                            print_lg("Easy apply failed I guess!")
-                            if pagination_element != None: continue
-                        try:
-                            wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Apply") and not(span[contains(@class, "disabled")])]'))).click()
-                            windows = driver.window_handles
-                            driver.switch_to.window(windows[-1])
-                            application_link = driver.current_url
-                            print_lg('Got the external application link "{}"'.format(application_link))
-                            if close_tabs: driver.close()
-                            driver.switch_to.window(linkedIn_tab) 
-                        except Exception as e:
-                            # print_lg(e)
-                            print_lg("Failed to apply!")
-                            failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link, screenshot_name)
-                            continue
+                    #     except Exception as e:
+                    #         print_lg("Failed to Easy apply!")
+                    #         # print_lg(e)
+                    #         critical_error_log("Somewhere in Easy Apply process",e)
+                    #         failed_job(job_id, job_link, resume, date_listed, "Problem in Easy Applying", e, application_link, screenshot_name)
+                    #         discard_job()
+                    #         continue
+                    # else:
+                    #     # Case 2: Apply externally
+                    #     if easy_apply_only: 
+                    #         print_lg("Easy apply failed I guess!")
+                    #         if pagination_element != None: continue
+                    #     try:
+                    #         wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Apply") and not(span[contains(@class, "disabled")])]'))).click()
+                    #         windows = driver.window_handles
+                    #         driver.switch_to.window(windows[-1])
+                    #         application_link = driver.current_url
+                    #         print_lg('Got the external application link "{}"'.format(application_link))
+                    #         if close_tabs: driver.close()
+                    #         driver.switch_to.window(linkedIn_tab) 
+                    #     except Exception as e:
+                    #         # print_lg(e)
+                    #         print_lg("Failed to apply!")
+                    #         failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link, screenshot_name)
+                    #         continue
                     
-                    submitted_jobs(job_id, title, company, work_location, work_style, description, experience_required, skills, hr_name, hr_link, resume, reposted, date_listed, date_applied, job_link, application_link, questions_list, connect_request)
+                    # submitted_jobs(job_id, title, company, work_location, work_style, description, experience_required, skills, hr_name, hr_link, resume, reposted, date_listed, date_applied, job_link, application_link, questions_list, connect_request)
 
-                    print_lg(f'Successfully saved "{title} | {company}" job. Job ID: {job_id} info')
-                    current_count += 1
-                    applied_jobs.add(job_id)
+                    # print_lg(f'Successfully saved "{title} | {company}" job. Job ID: {job_id} info')
+                    # current_count += 1
+                    # applied_jobs.add(job_id)
 
                 # Switching to next page
                 if pagination_element == None:

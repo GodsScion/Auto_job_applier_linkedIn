@@ -21,7 +21,7 @@ click_gap = 0                   # Enter max allowed secs to wait approximately. 
 run_in_background = False       # True or False
 
 # Do you want scrolling to be smooth or instantaneous? (Can reduce performance if True)
-smooth_scroll = True            # True or False
+smooth_scroll = False           # True or False
 
 # If enabled (True), the program would keep your screen active and prevent PC from sleeping. Instead you could disable this feature (set it to false) and adjust your PC sleep settings to Never Sleep or a preferred time. 
 keep_screen_awake = False        # True or False
@@ -91,7 +91,7 @@ String_Preferences = ""
 Multiple_Select = []
 '''
 
-sort_by = "Most recent"       # "Most recent", "Most relevant" or ("" to not select) 
+sort_by = "Most relevant"       # "Most recent", "Most relevant" or ("" to not select) 
 date_posted = "Any time"        # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                     # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
@@ -121,10 +121,10 @@ fair_chance_employer = False    # True or False
 # >>>>>>>>>>> LinkedIn Settings <<<<<<<<<<<
 
 # Skip checking blacklist words for these companies... [Exceptions]
-blacklist_exceptions = ["Jobot", "Dice"]
+blacklist_exceptions = ["Jobot", "Dice"]    # (dynamic multiple search) or leave empty as []. Ex: ["Jobot", "Dice"]
 
 # Avoid applying to companies with these words in their description...
-blacklist_words = ["Staffing", "Recruiting"] # (dynamic multiple select) or leave empty as []
+blacklist_words = ["Staffing", "Recruiting"] # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting"]
 
 # Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
 current_experience = -1          # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)

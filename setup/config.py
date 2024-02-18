@@ -134,7 +134,7 @@ did_masters = True              # True or False
 pause_before_submit = False     # True or False
 
 # Should the tool pause if it needs help in answering questions during easy apply?
-pause_at_failed_question = False # True or False
+pause_at_failed_question = True # True or False
 ##
 
 # Keep the External Application tabs open?

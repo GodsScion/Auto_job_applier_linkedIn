@@ -248,8 +248,9 @@ def answer_questions(questions_list):
         label = label_org.lower()
         if 'your name' in label or 'full name' in label: answer = full_name
         if 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
-        if 'salary' in label or 'desired' in label or 'expected' in label: answer = desired_salary
+        if 'salary' in label or 'compensation' in label: answer = desired_salary
         if 'scale of 1-10' in label: answer = confidence_level
+        if 'city' in label or 'location' in label: answer = current_city
         text_input = question.find_element(By.CLASS_NAME, "artdeco-text-input--input")
         if not text_input.get_attribute("value"): text_input.send_keys(answer)
         questions_list.add((label_org, text_input.get_attribute("value"), "text"))

@@ -20,6 +20,9 @@ click_gap = 0                   # Enter max allowed secs to wait approximately. 
 # If you want to see Chrome running then set run_in_background as False. May reduce performance...
 run_in_background = False       # True or False
 
+# Do you want scrolling to be smooth or instantaneous? (Can reduce performance if True)
+smooth_scroll = False            # True or False
+
 # If enabled (True), the program would keep your screen active and prevent PC from sleeping. Instead you could disable this feature (set it to false) and adjust your PC sleep settings to Never Sleep or a preferred time. 
 keep_screen_awake = False        # True or False
 
@@ -70,6 +73,11 @@ confidence_level = "8"          # Any number between "1" to "10", put em in quot
 # How do you identify yourself? If left empty as "", tool will not answer the question. However, note that some companies make compulsory to be answered
 gender = "Male"                 # "Male", "Female", "Other", "Decline" or ""
 disability_status = "Decline"          # 
+
+current_city = ""
+
+desired_location = ""
+
 full_name = "Sai Vignesh Golla" # Your name in quotes
 
 
@@ -116,7 +124,7 @@ fair_chance_employer = False    # True or False
 blacklist_words = ["Staffing", "Recruiting"] # (dynamic multiple select) or leave empty as []
 
 # Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
-current_experience = 3          # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
+current_experience = -1          # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
 
 # Do you have a Masters degree in the field you're applying to? If yes and your current_experience is >= 2. The tool will apply to jobs containing the word 'master' in it's description regardless of experience required. (Usually most companies if mentioned say 4+ years OR Masters degree and 2+ years of experience)
 did_masters = True              # True or False
@@ -126,7 +134,7 @@ did_masters = True              # True or False
 pause_before_submit = False     # True or False
 
 # Should the tool pause if it needs help in answering questions during easy apply?
-pause_at_failed_question = True # True or False
+pause_at_failed_question = False # True or False
 ##
 
 # Keep the External Application tabs open?

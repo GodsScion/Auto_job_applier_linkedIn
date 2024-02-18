@@ -4,7 +4,7 @@ LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
 
 '''
 
-from setup.config import click_gap, run_in_background
+from setup.config import click_gap, smooth_scroll
 from modules.helpers import buffer, print_lg
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -65,8 +65,10 @@ def find_by_class(driver, class_name, time=5.0):
     return WebDriverWait(driver, time).until(EC.presence_of_element_located((By.CLASS_NAME, class_name)))
 
 # Scroll functions
-def scroll_to_view(driver, element, top = run_in_background, behavior = "smooth"):
-    return driver.execute_script('arguments[0].scrollIntoView({ behavior: "'+behavior+'" });', element) if top else driver.execute_script('arguments[0].scrollIntoView({ behavior: "'+behavior+'", block: "center"});', element)
+def scroll_to_view(driver, element, top = False, smooth_scroll = smooth_scroll):
+    behavior = "smooth" if smooth_scroll else "instant"
+    top = "start" if top else "center"
+    return driver.execute_script('arguments[0].scrollIntoView({block: "'+top+'", behavior: "'+behavior+'"});', element)
 
 # Enter input text functions
 def text_input_by_ID(driver, id, value, time=5.0):

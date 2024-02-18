@@ -31,6 +31,7 @@ def validate_config():
     if not isinstance(click_gap, int) and click_gap >= 0: raise Exception(f'Invalid input for click_gap. Expecting an int greater than or equal to 0, NOT "{click_gap}"!')
 
     validate_TorF(run_in_background, "run_in_background")
+    validate_TorF(smooth_scroll, "smooth_scroll")
 
     validate_TorF(close_tabs, "close_tabs")
 

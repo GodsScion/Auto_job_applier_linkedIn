@@ -21,6 +21,8 @@ This is a web scraping tool that automates the process of job applications on Li
 - Collects skills required (In Development)
 - Collects experience required and skips if not applicable to you, must be configured
 - Auto Filters jobs based on your experience and black list key words
+- Skips blacklisted jobs
+- You can add exceptions to blacklist key words
 - Only applies to filtered jobs
 - Auto selects next pages until it hits the quota you configured
 - Selects your default resume

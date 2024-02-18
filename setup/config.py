@@ -21,7 +21,7 @@ click_gap = 0                   # Enter max allowed secs to wait approximately. 
 run_in_background = False       # True or False
 
 # Do you want scrolling to be smooth or instantaneous? (Can reduce performance if True)
-smooth_scroll = False            # True or False
+smooth_scroll = True            # True or False
 
 # If enabled (True), the program would keep your screen active and prevent PC from sleeping. Instead you could disable this feature (set it to false) and adjust your PC sleep settings to Never Sleep or a preferred time. 
 keep_screen_awake = False        # True or False
@@ -119,6 +119,9 @@ fair_chance_employer = False    # True or False
 
 
 # >>>>>>>>>>> LinkedIn Settings <<<<<<<<<<<
+
+# Skip checking blacklist words for these companies... [Exceptions]
+blacklist_exceptions = ["Jobot", "Dice"]
 
 # Avoid applying to companies with these words in their description...
 blacklist_words = ["Staffing", "Recruiting"] # (dynamic multiple select) or leave empty as []

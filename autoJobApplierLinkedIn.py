@@ -180,10 +180,17 @@ def check_blacklist(rejected_jobs,job_id):
     scroll_to_view(driver, about_company_org)
     about_company_org = about_company_org.text
     about_company = about_company_org.lower()
-    for word in blacklist_words: 
-        if word.lower() in about_company: 
-            rejected_jobs.add(job_id)
-            raise ValueError(f'Found the word "{word}" in \n"{about_company_org}"')
+    skip_checking = False
+    for word in blacklist_exceptions:
+        if word.lower() in about_company:
+            print_lg(f'Found the word "{word}". So, skipped checking for blacklist words.')
+            skip_checking = True
+            break
+    if not skip_checking:
+        for word in blacklist_words: 
+            if word.lower() in about_company: 
+                rejected_jobs.add(job_id)
+                raise ValueError(f'Found the word "{word}" in \n"{about_company_org}"')
     buffer(1)
     scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card"))
     return rejected_jobs

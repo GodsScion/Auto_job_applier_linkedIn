@@ -67,8 +67,8 @@ def find_by_class(driver, class_name, time=5.0):
 # Scroll functions
 def scroll_to_view(driver, element, top = False, smooth_scroll = smooth_scroll):
     if top: return driver.execute_script('arguments[0].scrollIntoView();', element)
-    behavior = 'behavior: "smooth"' if smooth_scroll else ''
-    return driver.execute_script('arguments[0].scrollIntoView({block: "center", '+behavior+' });', element)
+    behavior = "smooth" if smooth_scroll else "instant"
+    return driver.execute_script('arguments[0].scrollIntoView({block: "center", behavior: "'+behavior+'" });', element)
 
 # Enter input text functions
 def text_input_by_ID(driver, id, value, time=5.0):

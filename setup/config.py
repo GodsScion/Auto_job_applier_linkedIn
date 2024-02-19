@@ -24,7 +24,7 @@ run_in_background = False       # True or False
 smooth_scroll = False           # True or False
 
 # If enabled (True), the program would keep your screen active and prevent PC from sleeping. Instead you could disable this feature (set it to false) and adjust your PC sleep settings to Never Sleep or a preferred time. 
-keep_screen_awake = False        # True or False
+keep_screen_awake = True        # True or False (Will temporarily deactivate when any application dialog boxes are present (Eg: Review Application, Help needed for a question..))
 
 # Run in undetected mode to bypass anti-bot protections (Preview Feature, unstable. Recommended to leave it as False)
 undetected_mode = False         # True or False
@@ -137,7 +137,7 @@ did_masters = True              # True or False
 pause_before_submit = False     # True or False
 
 # Should the tool pause if it needs help in answering questions during easy apply?
-pause_at_failed_question = True # True or False
+pause_at_failed_question = False # True or False
 ##
 
 # Keep the External Application tabs open?

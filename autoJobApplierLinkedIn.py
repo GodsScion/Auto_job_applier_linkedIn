@@ -271,6 +271,10 @@ def answer_questions(questions_list):
 
     try_xp(driver, "//button[contains(@aria-label, 'This is today')]")
 
+    # Collect important skills
+    # if 'do you have' in label and 'experience' in label and ' in ' in label -> Get word (skill) after ' in ' from label
+    # if 'how many years of expereince do you have in ' in label -> Get word (skill) after ' in '
+
     # Redundancy
 
     # # Fill any left out texts with years_of_experience

@@ -1,9 +1,14 @@
-
 '''
 Author:     Sai Vignesh Golla
 LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
 
+Copyright (C) 2024 Sai Vignesh Golla
+
+License:    GNU Affero General Public License
+GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
+
 '''
+
 
 ###################################################### CONFIGURE YOUR TOOLS HERE ######################################################
   

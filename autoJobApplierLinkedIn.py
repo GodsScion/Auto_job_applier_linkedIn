@@ -16,7 +16,8 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 import os
 import csv
 import re
-from pyautogui import press, alert, confirm
+import pyautogui
+pyautogui.FAILSAFE = False
 from random import choice, shuffle
 from datetime import datetime
 from modules.open_chrome import *
@@ -30,6 +31,12 @@ from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
 if use_resume_generator:    from resume_generator import is_logged_in_GPT, login_GPT, open_resume_chat, create_custom_resume
+
+
+if run_in_background == True:
+    pause_at_failed_question = False
+    pause_before_submit = False
+    run_non_stop = False
 
 
 
@@ -215,6 +222,13 @@ def extract_years_of_experience(text):
 
 
 # Function to answer the questions for Easy Apply
+def answer_common_questions(label, answer):
+    if ('hear' in label or 'come across' in label) and 'this' in label and ('job' in label or 'position' in label): answer = "LinkedIn"
+    return answer
+
+
+
+# Function to answer the questions for Easy Apply
 def answer_questions(questions_list):
     # Find all Select Questions
     select_buttons = driver.find_elements(By.XPATH, "//select")
@@ -224,6 +238,7 @@ def answer_questions(questions_list):
         except: pass
         answer = 'Yes'
         label = label_org.lower()
+        answer = answer_common_questions(label,answer)
         if 'gender' in label or 'sex' in label: answer = gender
         if 'disability' in label: answer = disability_status
         select = Select(select)
@@ -241,8 +256,9 @@ def answer_questions(questions_list):
     for question in all_radio_questions:
         label = question.find_elements(By.XPATH, './/span[@data-test-form-builder-radio-button-form-component__title]')
         label = label[0].find_element(By.CLASS_NAME, 'visually-hidden').text if len(label) > 0 else "Unknown"
-        label = label.lower()
         answer = 'Yes'
+        label = label.lower()
+        answer = answer_common_questions(label,answer)
         if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
         if 'sponsorship' in label or 'visa' in label: answer = require_visa
         try: question.find_element(By.XPATH, f".//label[normalize-space()='{answer}']").click()
@@ -260,7 +276,9 @@ def answer_questions(questions_list):
         except: continue
         answer = years_of_experience
         label = label_org.lower()
-        if 'your name' in label or 'full name' in label: answer = full_name
+        answer = answer_common_questions(label,answer)
+        if 'name' in label or 'signature' in label: answer = full_name  # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name
+        
         if 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
         if 'salary' in label or 'compensation' in label: answer = desired_salary
         if 'scale of 1-10' in label: answer = confidence_level
@@ -375,7 +393,7 @@ def apply_to_jobs(search_terms):
 
             
                 for job in job_listings:
-                    if keep_screen_awake: press('shiftright')
+                    if keep_screen_awake: pyautogui.press('shiftright')
                     if current_count >= switch_number: break
                     print_lg("\n-@-\n")
 
@@ -498,7 +516,7 @@ def apply_to_jobs(search_terms):
                                     if next_counter >= 6: 
                                         if pause_at_failed_question:
                                             screenshot(driver, job_id, "Needed manual intervention for failed question")
-                                            alert("Couldn't answer one or more questions.\nPlease click \"Continue\" once done.\nDO NOT CLICK Next or Review button in LinkedIn.\n\n\n\n\nYou can turn off \"Pause at failed question\" setting in config.py", "Help Needed", "Continue")
+                                            pyautogui.alert("Couldn't answer one or more questions.\nPlease click \"Continue\" once done.\nDO NOT CLICK Back, Next or Review button in LinkedIn.\n\n\n\n\nYou can turn off \"Pause at failed question\" setting in config.py", "Help Needed", "Continue")
                                             next_counter = 1
                                             continue
                                         if questions_list: print_lg("Stuck for one or some of the following questions...", questions_list)
@@ -506,22 +524,21 @@ def apply_to_jobs(search_terms):
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(questions_list)
-                                    try:    next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
-                                    except NoSuchElementException:  next_button = driver.find_element(By.XPATH, '//span[normalize-space(.)="Review"]')
+                                    try: next_button = driver.find_element(By.XPATH, '//span[normalize-space(.)="Review"]') 
+                                    except NoSuchElementException:  next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
                                     try: next_button.click()
-                                    except ElementClickInterceptedException:    break   # Happens when it tries to click Next button in About Company photos section
+                                    except ElementClickInterceptedException: break    # Happens when it tries to click Next button in About Company photos section
                                     buffer(click_gap)
 
-                            except NoSuchElementException:
-                                if questions_list: print_lg("Answered the following questions...", questions_list)
-                                errored = "nose"
+                            except NoSuchElementException: errored = "nose"
                             finally:
+                                if questions_list and errored != "stuck": print_lg("Answered the following questions...", questions_list)
                                 wait_span_click(driver, "Review", 2, scrollTop=True)
-                                if errored != "stuck" and pause_before_submit: alert('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py',"Paused")
+                                if errored != "stuck" and pause_before_submit: pyautogui.alert('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py',"Paused")
                                 if wait_span_click(driver, "Submit application", 2, scrollTop=True): 
                                     date_applied = datetime.now()
                                     if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
-                                elif errored != "stuck" and pause_before_submit and "Yes" in confirm("You submitted the application, didn't you 😒?", "Failed to find Submit Application!", ["Yes", "No"]):
+                                elif errored != "stuck" and pause_before_submit and "Yes" in pyautogui.confirm("You submitted the application, didn't you 😒?", "Failed to find Submit Application!", ["Yes", "No"]):
                                     date_applied = datetime.now()
                                     wait_span_click(driver, "Done", 2)
                                 else:
@@ -571,7 +588,7 @@ def apply_to_jobs(search_terms):
                     pagination_element.find_element(By.XPATH, f"//button[@aria-label='Page {current_page+1}']").click()
                     print_lg(f"\n>-> Now on Page {current_page+1} \n")
                 except NoSuchElementException:
-                    print_lg(f"Didn't find Page {current_page+1}. Probably at the end page of results!")
+                    print_lg(f"\n>-> Didn't find Page {current_page+1}. Probably at the end page of results!\n")
                     break
 
         except Exception as e:
@@ -643,7 +660,7 @@ def main():
     except NoSuchWindowException:   pass
     except Exception as e:
         critical_error_log("In Applier Main", e)
-        alert(e,alert_title)
+        pyautogui.alert(e,alert_title)
     finally:
         quote = choice([
             "You're one step closer than before.", 
@@ -660,7 +677,7 @@ def main():
             "The only limit to our realization of tomorrow will be our doubts of today. - Franklin D. Roosevelt"
             ])
         msg = f"{quote}\n\n\nBest regards,\nSai Vignesh Golla\nhttps://www.linkedin.com/in/saivigneshgolla/"
-        alert(msg, "Exiting..")
+        pyautogui.alert(msg, "Exiting..")
         print_lg(msg,"Closing the browser...")
         driver.quit()
 

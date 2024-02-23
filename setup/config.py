@@ -24,8 +24,8 @@ logs_folder_path = "logs/"
 # Set the maximum amount of time allowed to wait between each click in secs
 click_gap = 0                   # Enter max allowed secs to wait approximately. (Only Non Negative Integers like 0,1,2,3,....)
 
-# If you want to see Chrome running then set run_in_background as False. May reduce performance...
-run_in_background = False       # True or False
+# If you want to see Chrome running then set run_in_background as False (May reduce performance). 
+run_in_background = False       # True or False ,   If True, this will make pause_at_failed_question, pause_before_submit and run_in_background as False
 
 # Do you want scrolling to be smooth or instantaneous? (Can reduce performance if True)
 smooth_scroll = False           # True or False
@@ -98,7 +98,7 @@ String_Preferences = ""
 Multiple_Select = []
 '''
 
-sort_by = "Most relevant"       # "Most recent", "Most relevant" or ("" to not select) 
+sort_by = "Most recent"       # "Most recent", "Most relevant" or ("" to not select) 
 date_posted = "Any time"        # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                     # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
@@ -141,10 +141,10 @@ did_masters = True              # True or False
 
 ## Allow Manual Inputs
 # Should the tool pause before every submit application during easy apply to let you check the information?
-pause_before_submit = False     # True or False
+pause_before_submit = False     # True or False ,   Will be treated as False if run_in_background is True
 
 # Should the tool pause if it needs help in answering questions during easy apply?
-pause_at_failed_question = False # True or False
+pause_at_failed_question = True # True or False ,   Will be treated as False if run_in_background is True
 ##
 
 # Keep the External Application tabs open?
@@ -160,8 +160,8 @@ connect_hr = True               # True or False
 # What message do you want to send during connection request? (Max. 200 Characters)
 connect_request_message = ""    # Leave Empty to send connection request without personalized invitation (recommended to leave it empty, since you only get 10 per month without LinkedIn Premium*)
 
-# Do you want the program to run continuously until you stop it?
-run_non_stop = False             # True or False
+# Do you want the program to run continuously until you stop it? (Beta)
+run_non_stop = False             # True or False ,   Will be treated as False if run_in_background is True
 alternate_sortby = True         # True or False
 cycle_date_posted = True        # True or False
 stop_date_cycle_at_24hr = True  # True or False

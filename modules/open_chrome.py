@@ -25,10 +25,24 @@ try:
     # Set up WebDriver with Chrome Profile
     options = uc.ChromeOptions() if undetected_mode else Options()
     options.headless = run_in_background
+        
+    options.add_argument('--disable-gpu')
+
+    # set options to prevent Chrome from showing the "Chrome is being controlled by automated test software" notification
+    options.add_argument('--disable-logging')
+    options.add_argument('--disable-extensions')
+    options.add_argument('--disable-infobars')
+    options.add_argument('--disable-blink-features=AutomationControlled')
+
     profile_dir = find_default_profile_directory()
     if profile_dir: options.add_argument(f"--user-data-dir={profile_dir}")
     else: print_lg("Default profile directory not found. Using a new profile.")
-    driver = uc.Chrome(options=options) if undetected_mode else webdriver.Chrome(options=options)
+    if undetected_mode:
+        # try: 
+        #     driver = uc.Chrome(driver_executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe", options=options)
+        # except FileNotFoundError: 
+            driver = uc.Chrome(options=options)
+    else: webdriver.Chrome(options=options)
     driver.maximize_window()
     wait = WebDriverWait(driver, 5)
     actions = ActionChains(driver)
@@ -39,3 +53,4 @@ except Exception as e:
     from pyautogui import alert
     alert(msg, "Error in opening chrome")
     driver.quit()
+    

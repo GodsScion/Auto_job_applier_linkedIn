@@ -25,7 +25,9 @@ if %errorlevel% neq 0 (
 
 echo Setting up ChromeDriver installation...
 
-:: Step 1: Get the latest version information
+:: Use https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE to get version number directly Replace>>>>
+
+:: Step 1: Get the latest version information 
 powershell -Command "& { $response = Invoke-WebRequest -Uri 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json'; if ($response.StatusCode -ne 200) { exit 1 }; $response.Content | Out-File 'latest_versions_info.json' }"
 if %errorlevel% neq 0 ( 
     echo Please check your internet connection. See if any applications, firewalls, vpns, or devices are blocking the download.
@@ -38,6 +40,8 @@ for /f "delims=" %%a in ('powershell -Command "& {(Get-Content 'latest_versions_
     set "latest_version=%%~a"
 )
 
+:: <<<<<Replace
+
 :: Check if latest_version is not null or empty
 if not defined latest_version (
     echo FAILED to extract the latest version from the JSON file.
@@ -45,7 +49,7 @@ if not defined latest_version (
 )
 
 :: Construct the ChromeDriver URL
-set "chrome_driver_url=https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/!latest_version!/win64/chromedriver-win64.zip"
+set "chrome_driver_url=https://storage.googleapis.com/chrome-for-testing-public/!latest_version!/win64/chromedriver-win64.zip"
 
 echo Latest ChromeDriver version: !latest_version!.
 echo Downloading ChromeDriver from URL: '!chrome_driver_url!' ...

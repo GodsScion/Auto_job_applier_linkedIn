@@ -109,8 +109,8 @@ job_type = []                   # (multiple select) "Full-time", "Part-time", "C
 on_site = []                    # (multiple select) "On-site", "Remote", "Hybrid"
 
 companies = [
-#     "7-eleven", "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)","Meta",
-#     "Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express", "Snap Inc",
+     "7-eleven", "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)","Meta","Apple","Byte Dance","Netflix",
+     "Snowflake","Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express", "Snap Inc",
 ]                  # (dynamic multiple select) "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", "Elevance Health", and so on... make sure the name you type in list exactly matches with the company name you're looking for, including capitals.
 location = []                   # (dynamic multiple select)
 industry = []                   # (dynamic multiple select)

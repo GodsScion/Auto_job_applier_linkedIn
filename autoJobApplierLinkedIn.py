@@ -678,6 +678,7 @@ def main():
         msg = f"{quote}\n\n\nBest regards,\nSai Vignesh Golla\nhttps://www.linkedin.com/in/saivigneshgolla/"
         pyautogui.alert(msg, "Exiting..")
         print_lg(msg,"Closing the browser...")
-        driver.quit()
+        try: driver.quit()
+        except Exception as e: critical_error_log("When quitting...", e)
 
 main()

@@ -221,11 +221,10 @@ def extract_years_of_experience(text):
 
 
 
-# Function to answer the questions for Easy Apply
+# Function to answer common questions for Easy Apply
 def answer_common_questions(label, answer):
     if ('hear' in label or 'come across' in label) and 'this' in label and ('job' in label or 'position' in label): answer = "LinkedIn"
     return answer
-
 
 
 # Function to answer the questions for Easy Apply

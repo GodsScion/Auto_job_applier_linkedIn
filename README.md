@@ -41,7 +41,8 @@ This is a web scraping tool that automates the process of job applications on Li
 
 
 
-**Stealth features:**  (Vetoed with lack of undetected-chromedriver or stealth browsers 😭)
+**Stealth features 🥸🕵🏼‍♂️:**  
+- Undetected Chromedriver to bypass anti-bot scripts (Browser, Undetected ChromeDriver versions must be compatible) (Beta) {If problem occurs uninstall and install undetected chromedriver, update browser, selenium and chromedriver}
 - Click intervals can be randomized and increased to avoid suspicions
 - Smooth Scroll to view before click
 
@@ -50,17 +51,22 @@ This is a web scraping tool that automates the process of job applications on Li
 - Humanize and mouse movements for stealth 
 - Auto send personalized messages to HR that accept messages
 - Custom resume generator based on Skills required gathering (In Development)
-- Customize resume for every job using LLMs ChatGPT (In Development). (Halted because of undetected-chromedriver is broken, ChatGPT is protected from bots and scraping 😑, will probably implement api or utilize other LLMs)
+- Customize resume for every job using LLMs ChatGPT (In Development). (Halted decision pending, will probably implement api or utilize other LLMs or Web Scrape)
 
 **Currently Broken 🥲:** 
-- Undetected Chrome driver (Browser, Selenium version incompatible) (Hot patched, might work if compatible versions are installed)
 - All ChatGPT features (depends on Undetected Chrome driver):
     - ChatGPT Login 
     - ChatGPT resume chat window opener
   
 
 ## How to install
-
+* [Python 3](https://www.python.org/) or above. Visit https://www.python.org/downloads/ to download and install Python, or for windows you could visit Microsoft Store and search for "Python".
+* Install necessary [Undetected Chromedriver](https://pypi.org/project/undetected-chromedriver/), [PyAutoGUI](https://pypi.org/project/PyAutoGUI/) and [Setuptools](https://pypi.org/project/setuptools/) packages. After Python is installed, in a console or shell, use the [pip](https://pip.pypa.io/en/stable) command-line tool to install these 3 package. Please make sure Python is added to Path in System Environement Variables.
+  ```
+  pip install undetected-chromedriver pyautogui setuptools
+  ```
+* Download and install latest version of [Googe Chrome](https://www.google.com/chrome) in it's default location, visit https://www.google.com/chrome to download it's installer.
+* Download and install the appropriate Chrome Driver for Google Chrome and add it to path System Environment variables.
 
 ## Terms and Conditions
 

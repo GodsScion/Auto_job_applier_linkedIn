@@ -25,7 +25,7 @@ logs_folder_path = "logs/"
 click_gap = 0                   # Enter max allowed secs to wait approximately. (Only Non Negative Integers like 0,1,2,3,....)
 
 # If you want to see Chrome running then set run_in_background as False (May reduce performance). 
-run_in_background = False       # True or False ,   If True, this will make pause_at_failed_question, pause_before_submit and run_in_background as False
+run_in_background = True       # True or False ,   If True, this will make pause_at_failed_question, pause_before_submit and run_in_background as False
 
 # Do you want scrolling to be smooth or instantaneous? (Can reduce performance if True)
 smooth_scroll = False           # True or False
@@ -34,7 +34,7 @@ smooth_scroll = False           # True or False
 keep_screen_awake = True        # True or False (Will temporarily deactivate when any application dialog boxes are present (Eg: Review Application, Help needed for a question..))
 
 # Run in undetected mode to bypass anti-bot protections (Preview Feature, unstable. Recommended to leave it as False)
-undetected_mode = True         # True or False
+undetected_mode = False         # True or False
 
 # Use ChatGPT for resume building (Experimental Feature can break the application. Recommended to leave it as False) 
 use_resume_generator = False    # True or False ,   This feature may only work with 'undetected_mode' = True. As ChatGPT website is hosted by CloudFlare which is protected by Anti-bot protections!
@@ -102,7 +102,7 @@ sort_by = "Most recent"       # "Most recent", "Most relevant" or ("" to not sel
 date_posted = "Any time"        # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                     # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
-easy_apply_only = False         # True or False
+easy_apply_only = True         # True or False
 
 experience_level = []           # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
 job_type = []                   # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"

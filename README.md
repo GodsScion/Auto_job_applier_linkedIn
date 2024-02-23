@@ -46,7 +46,7 @@ This is a web scraping tool that automates the process of job applications on Li
 - Click intervals can be randomized and increased to avoid suspicions
 - Smooth Scroll to view before click
 
-**Upcoming Features or currently in development:**
+**Upcoming Features or currently in development 🚀🔧:**
 - Answer questions with help of chatGpt or other LLMs
 - Humanize and mouse movements for stealth 
 - Auto send personalized messages to HR that accept messages

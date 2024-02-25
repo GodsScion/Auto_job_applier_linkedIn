@@ -8,7 +8,7 @@ This is a web scraping tool that automates the process of job applications on Li
 
 ## Demo Video
 [![Auto Job Applier demo video](https://img.youtube.com/vi/vhK5Iv9iSQQ/maxresdefault.jpg)](https://youtu.be/vhK5Iv9iSQQ)
-
+Click on above image to watch the demo!!
 
 ## Feature List (I'm yet to complete the documentation, I'm adding in more features)
 

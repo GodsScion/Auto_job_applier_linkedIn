@@ -7,7 +7,7 @@
 This is a web scraping tool that automates the process of job applications on LinkedIn. It collects job listings information such as job titles, companies, URLs etc. from LinkedIn job search results. 
 
 ## Demo Video
-[![Auto Job Applier demo video](https://img.youtube.com/vi/vhK5Iv9iSQQ/maxresdefault.jpg)](https://youtu.be/vhK5Iv9iSQQ)
+[![Auto Job Applier demo video](https://github.com/GodsScion/Auto_job_applier_linkedIn/assets/100998531/429f7753-ebb0-499b-bc5e-5b4ee28c4f69)](https://youtu.be/vhK5Iv9iSQQ)
 Click on above image to watch the demo!!
 
 ## Feature List (I'm yet to complete the documentation, I'm adding in more features)

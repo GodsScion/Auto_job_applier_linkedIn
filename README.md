@@ -1,5 +1,5 @@
 # LinkedIn Auto Job Applier
-This is an web scraping bot that automates the process of job applications on LinkedIn. It customizes your resume based on the collected job listings information, such as job titles, description, companies, URLs etc. and answers any relevant questions and applies to the job. 
+This is an web scraping bot that automates the process of job applications on LinkedIn. It customizes your resume based on the collected job information, such as skills required, description, about company, etc. Answers all questions and applies to the job. 
 
 ## See it in Action
 [![Auto Job Applier demo video](https://github.com/GodsScion/Auto_job_applier_linkedIn/assets/100998531/429f7753-ebb0-499b-bc5e-5b4ee28c4f69)](https://youtu.be/vhK5Iv9iSQQ)

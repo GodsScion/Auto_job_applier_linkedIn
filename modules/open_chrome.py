@@ -42,6 +42,7 @@ try:
     actions = ActionChains(driver)
 except Exception as e:
     msg = "Seems like Google Chrome browser is already running or Chrome-driver is out dated. Close Chrome and run windows-setup.bat for windows or try your luck with setup.sh or update the Chrome-driver and then run this program! If error occurred when using undetected_mode uninstall and install undetected-chromedriver. (Open  terminal and use commands 'pip uninstall undetected-chromedriver' and 'pip install undetected-chromedriver' respectively.)"
+    if isinstance(e,TimeoutError): msg = "Couldn't download Chrome-driver. Set undetected_mode = False in config!"
     print_lg(msg)
     critical_error_log("In Opening Chrome", e)
     from pyautogui import alert

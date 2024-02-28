@@ -22,6 +22,7 @@ Click on above image to watch the demo!!
 - Collects experience required and skips if not applicable to you, must be configured
 - Auto Filters jobs based on your experience and black list key words
 - Skips blacklisted jobs
+- Can be configured to skip jobs requiring Security Clearance
 - You can add exceptions to blacklist key words
 - Only applies to filtered jobs
 - Auto selects next pages until it hits the quota you configured
@@ -61,11 +62,11 @@ Click on above image to watch the demo!!
 
 ## How to install
 * [Python 3](https://www.python.org/) or above. Visit https://www.python.org/downloads/ to download and install Python, or for windows you could visit Microsoft Store and search for "Python".
-* Install necessary [Undetected Chromedriver](https://pypi.org/project/undetected-chromedriver/), [PyAutoGUI](https://pypi.org/project/PyAutoGUI/) and [Setuptools](https://pypi.org/project/setuptools/) packages. After Python is installed, in a console or shell, use the [pip](https://pip.pypa.io/en/stable) command-line tool to install these 3 package. Please make sure Python is added to Path in System Environement Variables.
+* Install necessary [Undetected Chromedriver](https://pypi.org/project/undetected-chromedriver/), [PyAutoGUI](https://pypi.org/project/PyAutoGUI/) and [Setuptools](https://pypi.org/project/setuptools/) packages. After Python is installed, in a console or shell, use the [pip](https://pip.pypa.io/en/stable) command-line tool to install these 3 package. Please make sure Python is added to Path in System Environment Variables.
   ```
   pip install undetected-chromedriver pyautogui setuptools
   ```
-* Download and install latest version of [Googe Chrome](https://www.google.com/chrome) in it's default location, visit https://www.google.com/chrome to download it's installer.
+* Download and install latest version of [Google Chrome](https://www.google.com/chrome) in it's default location, visit https://www.google.com/chrome to download it's installer.
 * Download and install the appropriate [Chrome Driver](https://googlechromelabs.github.io/chrome-for-testing/) for Google Chrome and add it to path System Environment variables, visit https://googlechromelabs.github.io/chrome-for-testing/ to download.
 
 ## Disclaimer

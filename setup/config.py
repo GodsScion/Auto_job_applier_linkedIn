@@ -102,7 +102,7 @@ sort_by = "Most recent"       # "Most recent", "Most relevant" or ("" to not sel
 date_posted = "Any time"        # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                     # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
-easy_apply_only = True         # True or False
+easy_apply_only = False         # True or False
 
 experience_level = []           # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
 job_type = []                   # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
@@ -127,6 +127,7 @@ fair_chance_employer = False    # True or False
 
 # >>>>>>>>>>> LinkedIn Settings <<<<<<<<<<<
 
+## Skip irrelevant jobs
 # Skip checking blacklist words for these companies... [Exceptions]
 blacklist_exceptions = ["Jobot", "Dice"]    # (dynamic multiple search) or leave empty as []. Ex: ["Jobot", "Dice"]
 
@@ -138,6 +139,11 @@ current_experience = 4          # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
 
 # Do you have a Masters degree in the field you're applying to? If yes and your current_experience is >= 2. The tool will apply to jobs containing the word 'master' in it's description regardless of experience required. (Usually most companies if mentioned say 4+ years OR Masters degree and 2+ years of experience)
 did_masters = True              # True or False
+
+# Do you have an active Security Clearance?
+security_clearence = True       # True or False (True for Yes and False for No)
+##
+
 
 ## Allow Manual Inputs
 # Should the tool pause before every submit application during easy apply to let you check the information?

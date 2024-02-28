@@ -478,8 +478,13 @@ def apply_to_jobs(search_terms):
                     # Get job description
                     try:
                         description = find_by_class(driver, "jobs-box__html-content").text
-                        if did_masters and current_experience >= 2 and 'master' in description.lower():
+                        descriptionLow = description.lower()
+                        if security_clearence == False and ('security clearance' in descriptionLow or 'polygraph' in descriptionLow):
+                            print_lg(f'Skipping this job. Found "Security Clearence" or "Polygraph" in \n{description}')
+                            experience_required = "Skipped checking (Polygraph)"
+                        if did_masters and current_experience >= 2 and 'master' in descriptionLow:
                             print_lg(f'Skipped checking for minimum years of experience required cause found the word "master" in \n{description}')
+                            experience_required = "Skipped checking (Masters)"
                         else:
                             experience_required = extract_years_of_experience(description)
                             if current_experience > -1 and experience_required > current_experience:

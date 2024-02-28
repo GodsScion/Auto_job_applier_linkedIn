@@ -34,7 +34,7 @@ smooth_scroll = False           # True or False
 keep_screen_awake = True        # True or False (Will temporarily deactivate when any application dialog boxes are present (Eg: Review Application, Help needed for a question..))
 
 # Run in undetected mode to bypass anti-bot protections (Preview Feature, UNSTABLE. Recommended to leave it as False)
-undetected_mode = False         # True or False
+undetected_mode = True         # True or False
 
 # Use ChatGPT for resume building (Experimental Feature can break the application. Recommended to leave it as False) 
 use_resume_generator = False    # True or False ,   This feature may only work with 'undetected_mode' = True. As ChatGPT website is hosted by CloudFlare which is protected by Anti-bot protections!
@@ -150,7 +150,7 @@ security_clearence = True       # True or False (True for Yes and False for No)
 pause_before_submit = False     # True or False ,   Will be treated as False if run_in_background is True
 
 # Should the tool pause if it needs help in answering questions during easy apply?
-pause_at_failed_question = False # True or False ,   Will be treated as False if run_in_background is True
+pause_at_failed_question = True # True or False ,   Will be treated as False if run_in_background is True
 ##
 
 # Keep the External Application tabs open?

@@ -479,9 +479,29 @@ def apply_to_jobs(search_terms):
                     try:
                         description = find_by_class(driver, "jobs-box__html-content").text
                         descriptionLow = description.lower()
-                        if security_clearence == False and ('security clearance' in descriptionLow or 'polygraph' in descriptionLow):
+##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                        # import re
+
+                        # # Pre-compile regular expressions outside the function only once, pre compling once increase performance instead of compiling everytime the function is called!
+                        # pattern1 = re.compile(r'security clearance|polygraph|secret clearance') 
+
+                        # def skip_job(description, security_clearance):
+                        #     # Use find() method for substring search
+                        #     if not security_clearance and pattern1.search(description.lower()):
+                        #         print(f'Skipping this job. Found "Security Clearance" or "Polygraph" in:\n{description}')
+                        #         return True
+                        #     return False
+
+                        # # Example usage
+                        # description = "We are hiring for a position that requires a Top Secret security clearance."
+                        # security_clearance = False
+                        # skip_job(description, security_clearance)
+
+                        if security_clearance == False and ('polygraph' in descriptionLow or 'security clearance' in descriptionLow or 'secret clearance' in descriptionLow):
                             print_lg(f'Skipping this job. Found "Security Clearence" or "Polygraph" in \n{description}')
                             experience_required = "Skipped checking (Polygraph)"
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                         if did_masters and current_experience >= 2 and 'master' in descriptionLow:
                             print_lg(f'Skipped checking for minimum years of experience required cause found the word "master" in \n{description}')
                             experience_required = "Skipped checking (Masters)"

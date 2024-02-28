@@ -141,7 +141,7 @@ current_experience = 4          # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
 did_masters = True              # True or False
 
 # Do you have an active Security Clearance?
-security_clearence = True       # True or False (True for Yes and False for No)
+security_clearance = False       # True or False (True for Yes and False for No)
 ##
 
 

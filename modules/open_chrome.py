@@ -30,9 +30,11 @@ try:
     if profile_dir: options.add_argument(f"--user-data-dir={profile_dir}")
     else: print_lg("Default profile directory not found. Using a new profile.")
     if undetected_mode:
-        # try: 
-        #     driver = uc.Chrome(driver_executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe", options=options)
-        # except FileNotFoundError: 
+        try: 
+            driver = uc.Chrome(driver_executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe", options=options)
+        except (FileNotFoundError, PermissionError) as e: 
+            print_lg("(Undetected Mode) Got '{}' when using pre-installed ChromeDriver.".format(type(e).__name__)) 
+            print_lg("Downloading Chrome Driver... This will take some time")
             driver = uc.Chrome(options=options)
     else: driver = webdriver.Chrome(options=options)
     driver.maximize_window()

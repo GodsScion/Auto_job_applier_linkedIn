@@ -25,7 +25,7 @@ logs_folder_path = "logs/"
 click_gap = 0                   # Enter max allowed secs to wait approximately. (Only Non Negative Integers like 0,1,2,3,....)
 
 # If you want to see Chrome running then set run_in_background as False (May reduce performance). 
-run_in_background = True       # True or False ,   If True, this will make pause_at_failed_question, pause_before_submit and run_in_background as False
+run_in_background = False       # True or False ,   If True, this will make pause_at_failed_question, pause_before_submit and run_in_background as False
 
 # Do you want scrolling to be smooth or instantaneous? (Can reduce performance if True)
 smooth_scroll = False           # True or False
@@ -34,7 +34,7 @@ smooth_scroll = False           # True or False
 keep_screen_awake = True        # True or False (Will temporarily deactivate when any application dialog boxes are present (Eg: Review Application, Help needed for a question..))
 
 # Run in undetected mode to bypass anti-bot protections (Preview Feature, unstable. Recommended to leave it as False)
-undetected_mode = False         # True or False
+undetected_mode = True         # True or False
 
 # Use ChatGPT for resume building (Experimental Feature can break the application. Recommended to leave it as False) 
 use_resume_generator = False    # True or False ,   This feature may only work with 'undetected_mode' = True. As ChatGPT website is hosted by CloudFlare which is protected by Anti-bot protections!
@@ -48,7 +48,7 @@ username = "username@example.com"
 password = "examplepassword"
 
 # These Sentences are Searched in LinkedIn
-search_terms = ["Software Engineer", "Software Developer", "Python Developer", "Java Developer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
+search_terms = ["Software Engineer", "Software Developer", "Selenium Developer", "Python Developer", "Java Developer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Express Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
 # Do you want to randomize the search order for search_terms?
 randomize_search_order = True   # True of False
 
@@ -58,8 +58,8 @@ randomize_search_order = True   # True of False
 # Give an relative or absolute path of your default resume to be uploaded...
 default_resume_path = "all resumes/default/resume.pdf"      # (In Development)
 
-# What do you want to answer for years of experience you have?
-years_of_experience = '3'
+# What do you want to answer for years of experience you have? 
+years_of_experience = '4'       # Different from current_experience
 
 # Do you need visa sponsorship now or in future?
 require_visa = "No"             # "Yes" or "No"
@@ -79,9 +79,9 @@ confidence_level = "8"          # Any number between "1" to "10", put em in quot
 
 # How do you identify yourself? If left empty as "", tool will not answer the question. However, note that some companies make compulsory to be answered
 gender = "Male"                 # "Male", "Female", "Other", "Decline" or ""
-disability_status = "Decline"          # 
+disability_status = "Decline"   # 
 
-current_city = ""
+current_city = ""               # If left empty will fill in location of jobs location.
 
 desired_location = ""
 
@@ -102,15 +102,15 @@ sort_by = "Most recent"       # "Most recent", "Most relevant" or ("" to not sel
 date_posted = "Any time"        # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                     # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
-easy_apply_only = True         # True or False
+easy_apply_only = False         # True or False
 
 experience_level = []           # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
 job_type = []                   # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
 on_site = []                    # (multiple select) "On-site", "Remote", "Hybrid"
 
 companies = [
-     "7-eleven", "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)","Meta","Apple","Byte Dance","Netflix",
-     "Snowflake","Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express", "Snap Inc",
+     # "7-eleven", "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)","Meta","Apple","Byte Dance","Netflix",
+     # "Snowflake","Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express", "Snap Inc",
 ]                  # (dynamic multiple select) "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", "Elevance Health", and so on... make sure the name you type in list exactly matches with the company name you're looking for, including capitals.
 location = []                   # (dynamic multiple select)
 industry = []                   # (dynamic multiple select)
@@ -151,7 +151,7 @@ pause_at_failed_question = True # True or False ,   Will be treated as False if 
 close_tabs = False              # True or False
 
 # After how many number of applications should we keep switching? 
-switch_number = 30              # Only numbers greater than 25... Don't put in quotes
+switch_number = 50              # Only numbers greater than 25... Don't put in quotes
 
 ## Upcoming features (In Development)
 # Send connection requests to HR's
@@ -161,7 +161,7 @@ connect_hr = True               # True or False
 connect_request_message = ""    # Leave Empty to send connection request without personalized invitation (recommended to leave it empty, since you only get 10 per month without LinkedIn Premium*)
 
 # Do you want the program to run continuously until you stop it? (Beta)
-run_non_stop = False             # True or False ,   Will be treated as False if run_in_background is True
+run_non_stop = True             # True or False ,   Will be treated as False if run_in_background is True
 alternate_sortby = True         # True or False
 cycle_date_posted = True        # True or False
 stop_date_cycle_at_24hr = True  # True or False

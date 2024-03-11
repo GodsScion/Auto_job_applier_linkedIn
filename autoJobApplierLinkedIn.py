@@ -37,7 +37,7 @@ if run_in_background == True:
     pause_at_failed_question = False
     pause_before_submit = False
     run_non_stop = False
-
+tabs_count = 1
 
 
 #< Login Functions
@@ -313,23 +313,25 @@ def answer_questions(questions_list):
 
 # Function to open new tab and save external job application links
 def external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name):
+    global tabs_count
     if easy_apply_only: 
         print_lg("Easy apply failed I guess!")
-        if pagination_element != None: return True, application_link
+        if pagination_element != None: return True, application_link, tabs_count
     try:
         wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Apply") and not(span[contains(@class, "disabled")])]'))).click()
         windows = driver.window_handles
+        tabs_count = len(windows)
         driver.switch_to.window(windows[-1])
         application_link = driver.current_url
         print_lg('Got the external application link "{}"'.format(application_link))
         if close_tabs: driver.close()
         driver.switch_to.window(linkedIn_tab)
-        return False, application_link
+        return False, application_link, tabs_count
     except Exception as e:
         # print_lg(e)
         print_lg("Failed to apply!")
         failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link, screenshot_name)
-        return True, application_link
+        return True, application_link, tabs_count
 
 
 
@@ -583,7 +585,8 @@ def apply_to_jobs(search_terms):
                             continue
                     else:
                         # Case 2: Apply externally
-                        skip, application_link = external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name)
+                        global tabs_count
+                        skip, application_link, tabs_count = external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name)
                         if skip: continue
 
                     submitted_jobs(job_id, title, company, work_location, work_style, description, experience_required, skills, hr_name, hr_link, resume, reposted, date_listed, date_applied, job_link, application_link, questions_list, connect_request)
@@ -634,6 +637,8 @@ def main():
         if not os.path.exists(default_resume_path):   raise Exception('Your default resume "{}" is missing! Please update it\'s folder path in config.py or add a resume with exact name and path (check for spelling mistakes including cases).'.format(default_resume_path))
         
         # Login to LinkedIn
+        global tabs_count
+        tabs_count = len(driver.window_handles)
         driver.get("https://www.linkedin.com/login")
         if not is_logged_in_LN(): login_LN()
         global linkedIn_tab
@@ -691,6 +696,10 @@ def main():
         msg = f"{quote}\n\n\nBest regards,\nSai Vignesh Golla\nhttps://www.linkedin.com/in/saivigneshgolla/"
         pyautogui.alert(msg, "Exiting..")
         print_lg(msg,"Closing the browser...")
+        if tabs_count >= 10:
+            msg = "NOTE: IF YOU HAVE MORE THAN 10 TABS OPENED, PLEASE CLOSE OR BOOKMARK THEM!\n\nOr it's highly likely that application will just open browser and not do anything next time!" 
+            pyautogui.alert(msg,"Info")
+            print_lg("\n"+msg)
         try: driver.quit()
         except Exception as e: critical_error_log("When quitting...", e)
 

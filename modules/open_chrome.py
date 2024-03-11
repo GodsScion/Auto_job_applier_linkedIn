@@ -17,6 +17,7 @@ if undetected_mode:
 else: 
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
+    # from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from modules.helpers import find_default_profile_directory, critical_error_log, print_lg
@@ -24,19 +25,20 @@ from modules.helpers import find_default_profile_directory, critical_error_log, 
 try:
     # Set up WebDriver with Chrome Profile
     options = uc.ChromeOptions() if undetected_mode else Options()
-    options.headless = run_in_background
+    if run_in_background:   options.add_argument("--headless")
 
+    print_lg("IF YOU HAVE MORE THAN 10 TABS OPENED, PLEASE CLOSE OR BOOKMARK THEM! Or it's highly likely that application will just open browser and not do anything!")
     profile_dir = find_default_profile_directory()
     if profile_dir: options.add_argument(f"--user-data-dir={profile_dir}")
-    else: print_lg("Default profile directory not found. Using a new profile.")
+    else: print_lg("Default profile directory not found. Web history will not be saved!")
     if undetected_mode:
         # try: 
         #     driver = uc.Chrome(driver_executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe", options=options)
         # except (FileNotFoundError, PermissionError) as e: 
         #     print_lg("(Undetected Mode) Got '{}' when using pre-installed ChromeDriver.".format(type(e).__name__)) 
-            print_lg("Downloading Chrome Driver... This will take some time. Undetected mode requires download every run!")
+            print_lg("Downloading Chrome Driver... This may take some time. Undetected mode requires download every run!")
             driver = uc.Chrome(options=options)
-    else: driver = webdriver.Chrome(options=options)
+    else: driver = webdriver.Chrome(options=options) #, service=Service(executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe"))
     driver.maximize_window()
     wait = WebDriverWait(driver, 5)
     actions = ActionChains(driver)

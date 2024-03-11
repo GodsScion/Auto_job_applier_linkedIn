@@ -129,7 +129,7 @@ fair_chance_employer = False    # True or False
 
 ## Skip irrelevant jobs
 # Skip checking blacklist words for these companies... [Exceptions]
-blacklist_exceptions = ["Jobot", "Dice"]    # (dynamic multiple search) or leave empty as []. Ex: ["Jobot", "Dice"]
+blacklist_exceptions = ["Dice"]    # (dynamic multiple search) or leave empty as []. Ex: ["Jobot", "Dice"]
 
 # Avoid applying to companies with these words in their description...
 blacklist_words = ["Staffing", "Recruiting"] # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting"]

@@ -189,7 +189,7 @@ def get_job_main_details(job):
 
 
 # Function to check for Blacklisted words in About Company
-def check_blacklist(rejected_jobs,job_id):
+def check_blacklist(rejected_jobs,job_id,company,blacklisted_companies):
     about_company_org = find_by_class(driver, "jobs-company__box")
     scroll_to_view(driver, about_company_org)
     about_company_org = about_company_org.text
@@ -204,10 +204,11 @@ def check_blacklist(rejected_jobs,job_id):
         for word in blacklist_words: 
             if word.lower() in about_company: 
                 rejected_jobs.add(job_id)
+                blacklisted_companies.add(company)
                 raise ValueError(f'Found the word "{word}" in \n"{about_company_org}"')
-    buffer(1)
+    buffer(click_gap)
     scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card"))
-    return rejected_jobs
+    return rejected_jobs, blacklisted_companies
 
 
 
@@ -310,8 +311,25 @@ def answer_questions(questions_list):
 
 
 
-
-
+# Function to open new tab and save external job application links
+def external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name):
+    if easy_apply_only: 
+        print_lg("Easy apply failed I guess!")
+        if pagination_element != None: return True, application_link
+    try:
+        wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Apply") and not(span[contains(@class, "disabled")])]'))).click()
+        windows = driver.window_handles
+        driver.switch_to.window(windows[-1])
+        application_link = driver.current_url
+        print_lg('Got the external application link "{}"'.format(application_link))
+        if close_tabs: driver.close()
+        driver.switch_to.window(linkedIn_tab)
+        return False, application_link
+    except Exception as e:
+        # print_lg(e)
+        print_lg("Failed to apply!")
+        failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link, screenshot_name)
+        return True, application_link
 
 
 
@@ -369,6 +387,7 @@ def discard_job():
 def apply_to_jobs(search_terms):
     applied_jobs = get_applied_job_ids()
     rejected_jobs = set()
+    blacklisted_companies = set()
 
     if randomize_search_order:  shuffle(search_terms)
     for searchTerm in search_terms:
@@ -399,7 +418,10 @@ def apply_to_jobs(search_terms):
                     job_id,title,company,work_location,work_style = get_job_main_details(job)
                     
                     # Skip if previously rejected due to blacklist or already applied
-                    if job_id in rejected_jobs: 
+                    if company in blacklisted_companies:
+                        print_lg(f'Skipping "{title} | {company}" job (Blacklisted Company). Job ID: {job_id}!')
+                        continue
+                    elif job_id in rejected_jobs: 
                         print_lg(f'Skipping previously rejected "{title} | {company}" job. Job ID: {job_id}!')
                         continue
                     try:
@@ -425,7 +447,7 @@ def apply_to_jobs(search_terms):
                     screenshot_name = "Not Available"
 
                     try:
-                        rejected_jobs = check_blacklist(rejected_jobs,job_id)
+                        rejected_jobs, blacklisted_companies = check_blacklist(rejected_jobs,job_id,company,blacklisted_companies)
                     except ValueError as e:
                         print_lg('Skipping this job.', e)
                         failed_job(job_id, job_link, resume, date_listed, "Found Blacklisted words in About Company", e, "Skipped", screenshot_name)
@@ -479,29 +501,9 @@ def apply_to_jobs(search_terms):
                     try:
                         description = find_by_class(driver, "jobs-box__html-content").text
                         descriptionLow = description.lower()
-##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                        # import re
-
-                        # # Pre-compile regular expressions outside the function only once, pre compling once increase performance instead of compiling everytime the function is called!
-                        # pattern1 = re.compile(r'security clearance|polygraph|secret clearance') 
-
-                        # def skip_job(description, security_clearance):
-                        #     # Use find() method for substring search
-                        #     if not security_clearance and pattern1.search(description.lower()):
-                        #         print(f'Skipping this job. Found "Security Clearance" or "Polygraph" in:\n{description}')
-                        #         return True
-                        #     return False
-
-                        # # Example usage
-                        # description = "We are hiring for a position that requires a Top Secret security clearance."
-                        # security_clearance = False
-                        # skip_job(description, security_clearance)
-
                         if security_clearance == False and ('polygraph' in descriptionLow or 'security clearance' in descriptionLow or 'secret clearance' in descriptionLow):
                             print_lg(f'Skipping this job. Found "Security Clearence" or "Polygraph" in \n{description}')
                             experience_required = "Skipped checking (Polygraph)"
-
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                         if did_masters and current_experience >= 2 and 'master' in descriptionLow:
                             print_lg(f'Skipped checking for minimum years of experience required cause found the word "master" in \n{description}')
                             experience_required = "Skipped checking (Masters)"
@@ -581,23 +583,9 @@ def apply_to_jobs(search_terms):
                             continue
                     else:
                         # Case 2: Apply externally
-                        if easy_apply_only: 
-                            print_lg("Easy apply failed I guess!")
-                            if pagination_element != None: continue
-                        try:
-                            wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(span, "Apply") and not(span[contains(@class, "disabled")])]'))).click()
-                            windows = driver.window_handles
-                            driver.switch_to.window(windows[-1])
-                            application_link = driver.current_url
-                            print_lg('Got the external application link "{}"'.format(application_link))
-                            if close_tabs: driver.close()
-                            driver.switch_to.window(linkedIn_tab) 
-                        except Exception as e:
-                            # print_lg(e)
-                            print_lg("Failed to apply!")
-                            failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link, screenshot_name)
-                            continue
-                    
+                        skip, application_link = external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name)
+                        if skip: continue
+
                     submitted_jobs(job_id, title, company, work_location, work_style, description, experience_required, skills, hr_name, hr_link, resume, reposted, date_listed, date_applied, job_link, application_link, questions_list, connect_request)
 
                     print_lg(f'Successfully saved "{title} | {company}" job. Job ID: {job_id} info')

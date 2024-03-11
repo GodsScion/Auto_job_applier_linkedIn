@@ -34,7 +34,7 @@ try:
         #     driver = uc.Chrome(driver_executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe", options=options)
         # except (FileNotFoundError, PermissionError) as e: 
         #     print_lg("(Undetected Mode) Got '{}' when using pre-installed ChromeDriver.".format(type(e).__name__)) 
-            print_lg("Downloading Chrome Driver... This will take some time")
+            print_lg("Downloading Chrome Driver... This will take some time. Undetected mode requires download every run!")
             driver = uc.Chrome(options=options)
     else: driver = webdriver.Chrome(options=options)
     driver.maximize_window()
@@ -47,5 +47,6 @@ except Exception as e:
     critical_error_log("In Opening Chrome", e)
     from pyautogui import alert
     alert(msg, "Error in opening chrome")
-    driver.quit()
+    try: driver.quit()
+    except NameError: exit()
     

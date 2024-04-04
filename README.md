@@ -96,9 +96,7 @@ Thank you for using the job application tool! Your support means everything to m
 
 As you continue your job search, I hope this tool has provided you with valuable assistance and streamlined your efforts.
 
-Sharing is caring! If you found this tool helpful, consider sharing it with your peers and network. By doing so, you can empower others in their job hunt, just as you've been empowered.
-
-To continue improving and maintaining this tool, I rely on the support of users like you. If you believe in its mission and want to contribute, you can support me on <PATREON_LINK>. Every contribution, big or small, makes a significant impact!
+To continue improving and maintaining this tool, I rely on the support of users like you. If you believe in its mission and want to contribute, you can support me by sharing https://www.linkedin.com/posts/saivigneshgolla_jobsearch-jobapplication-careerdevelopment-activity-7166416367628341249-WE_8 with your peers and network. By doing so, you can empower others in their job hunt, just as you've been empowered.. Every contribution, big or small, makes a significant impact!
 
 As an independent developer, I pour my heart and soul into creating tools like this, driven by the genuine desire to make a positive impact. Your support, whether through donations or simply spreading the word, means the world to me and helps keep this project alive and thriving.
 

@@ -6,7 +6,7 @@ This is an web scraping bot that automates the process of job applications on Li
 Click on above image to watch the demo or use this link https://youtu.be/gMbB1fWZDHw
 
 
-## Feature List (I'm yet to complete the documentation, I'm adding in more features)
+## Feature List (I'm yet to complete the documentation, I'm adding in more features, still in development)
 
 **General Features:**
 

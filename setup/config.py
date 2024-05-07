@@ -81,7 +81,7 @@ confidence_level = "8"          # Any number between "1" to "10", put em in quot
 gender = "Male"                 # "Male", "Female", "Other", "Decline" or ""
 disability_status = "Decline"   # 
 
-current_city = "Los Angeles"               # If left empty will fill in location of jobs location.
+current_city = ""               # If left empty will fill in location of jobs location.
 
 desired_location = ""
 

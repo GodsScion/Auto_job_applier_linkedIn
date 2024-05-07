@@ -207,8 +207,9 @@ def check_blacklist(rejected_jobs,job_id,company,blacklisted_companies):
                 blacklisted_companies.add(company)
                 raise ValueError(f'Found the word "{word}" in \n"{about_company_org}"')
     buffer(click_gap)
-    scroll_to_view(driver, find_by_class(driver, "jobs-unified-top-card"))
-    return rejected_jobs, blacklisted_companies
+    jobs_top_card = try_find_by_classes(driver, ["job-details-jobs-unified-top-card__primary-description-container","job-details-jobs-unified-top-card__primary-description","jobs-unified-top-card__primary-description"])
+    scroll_to_view(driver, jobs_top_card)
+    return rejected_jobs, blacklisted_companies, jobs_top_card
 
 
 
@@ -229,7 +230,7 @@ def answer_common_questions(label, answer):
 
 
 # Function to answer the questions for Easy Apply
-def answer_questions(questions_list):
+def answer_questions(questions_list, work_location):
     # Find all Select Questions
     select_buttons = driver.find_elements(By.XPATH, "//select")
     for select in select_buttons:
@@ -282,7 +283,8 @@ def answer_questions(questions_list):
         if 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
         if 'salary' in label or 'compensation' in label: answer = desired_salary
         if 'scale of 1-10' in label: answer = confidence_level
-        if 'city' in label or 'location' in label: answer = current_city
+        if 'city' in label or 'location' in label: 
+            answer = current_city if current_city.strip() else work_location
         text_input = question.find_element(By.CLASS_NAME, "artdeco-text-input--input")
         if not text_input.get_attribute("value"): text_input.send_keys(answer)
         questions_list.add((label_org, text_input.get_attribute("value"), "text"))
@@ -291,11 +293,11 @@ def answer_questions(questions_list):
     form_element = driver.find_element(By.CLASS_NAME, "jobs-easy-apply-form-element")
     questions = form_element.find_elements(By.CLASS_NAME, "relative")
     for question in questions:
-        label = question.find_element(By.XPATH, "//label[@for]").find_element(By.CLASS_NAME, "visually-hidden").text
+        label = question.find_element(By.XPATH, "//label[@for]").find_element(By.CLASS_NAME, "visually-hidden").text.lower()
         if 'city' in label or 'location' in label:
             if current_city.strip() == "":
                 # Logic to get job location, if not known enter united states as default <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                answer = "united states"
+                answer = work_location
             else:
                 answer = current_city
             text_input = question.find_element(By.XPATH, "//input[@type='text']")
@@ -469,7 +471,7 @@ def apply_to_jobs(search_terms):
                     screenshot_name = "Not Available"
 
                     try:
-                        rejected_jobs, blacklisted_companies = check_blacklist(rejected_jobs,job_id,company,blacklisted_companies)
+                        rejected_jobs, blacklisted_companies, jobs_top_card = check_blacklist(rejected_jobs,job_id,company,blacklisted_companies)
                     except ValueError as e:
                         print_lg('Skipping this job.', e)
                         failed_job(job_id, job_link, resume, date_listed, "Found Blacklisted words in About Company", e, "Skipped", screenshot_name)
@@ -510,7 +512,6 @@ def apply_to_jobs(search_terms):
                     try:
                         # try: time_posted_text = find_by_class(driver, "jobs-unified-top-card__posted-date", 2).text
                         # except: 
-                        jobs_top_card = try_find_by_classes(driver, ["job-details-jobs-unified-top-card__primary-description-container","job-details-jobs-unified-top-card__primary-description","jobs-unified-top-card__primary-description"])
                         time_posted_text = jobs_top_card.find_element(By.XPATH, './/span[contains(normalize-space(), "ago")]').text
                         if time_posted_text.__contains__("Reposted"):
                             reposted = True
@@ -571,7 +572,7 @@ def apply_to_jobs(search_terms):
                                         screenshot_name = screenshot(driver, job_id, "Failed at questions")
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
-                                    questions_list = answer_questions(questions_list)
+                                    questions_list = answer_questions(questions_list, work_location)
                                     try: next_button = driver.find_element(By.XPATH, '//span[normalize-space(.)="Review"]') 
                                     except NoSuchElementException:  next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
                                     try: next_button.click()

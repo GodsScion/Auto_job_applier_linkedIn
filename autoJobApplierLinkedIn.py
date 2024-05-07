@@ -249,6 +249,7 @@ def answer_questions(questions_list, work_location):
             select.select_by_visible_text(answer)
         except NoSuchElementException as e:
             print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
+            select.select_by_index(random.randint(1, len(select.options)-1))            
         questions_list.add((label_org, select.first_selected_option.text, "select")) # <<<<<<<<<<<<<<<<<<
 
 

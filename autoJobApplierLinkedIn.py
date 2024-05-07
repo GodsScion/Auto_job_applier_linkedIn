@@ -287,6 +287,26 @@ def answer_questions(questions_list):
         if not text_input.get_attribute("value"): text_input.send_keys(answer)
         questions_list.add((label_org, text_input.get_attribute("value"), "text"))
 
+    # New logic to answering city
+    form_element = driver.find_element(By.CLASS_NAME, "jobs-easy-apply-form-element")
+    questions = form_element.find_elements(By.CLASS_NAME, "relative")
+    for question in questions:
+        label = question.find_element(By.XPATH, "//label[@for]").find_element(By.CLASS_NAME, "visually-hidden").text
+        if 'city' in label or 'location' in label:
+            if current_city.strip() == "":
+                # Logic to get job location, if not known enter united states as default <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                answer = "united states"
+            else:
+                answer = current_city
+            text_input = question.find_element(By.XPATH, "//input[@type='text']")
+            if not text_input.get_attribute("value"): 
+                text_input.send_keys(answer)
+                sleep(2)
+                actions.send_keys(Keys.ARROW_DOWN)
+                actions.send_keys(Keys.ENTER).perform()
+            questions_list.add((label, text_input.get_attribute("value"), "text"))
+
+
     try_xp(driver, "//button[contains(@aria-label, 'This is today')]")
 
     # Collect important skills

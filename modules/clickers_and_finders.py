@@ -89,7 +89,7 @@ def try_xp(driver, xpath, click=True):
             driver.find_element(By.XPATH, xpath).click()
             return True
         else:
-            return driver.find_element(By.XPATH, xpath).click()
+            return driver.find_element(By.XPATH, xpath)
     except: return False
 
 def try_linkText(driver, linkText):

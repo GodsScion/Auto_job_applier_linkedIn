@@ -49,6 +49,10 @@ password = "examplepassword"
 
 # These Sentences are Searched in LinkedIn
 search_terms = ["Software Engineer", "Software Developer", "Selenium Developer", "Python Developer", "Java Developer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Express Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
+
+# Search location, this will be filled in "City, state, or zip code" search box. Some valid examples: "United States", "India", "Chicago, Illinois, United States", "90001, Los Angeles, California, United States", "Bengaluru, Karnataka, India", etc.
+search_location = "Chicago, Illinois, United States" # If left empty as "", tool will leave it blank.
+
 # Do you want to randomize the search order for search_terms?
 randomize_search_order = True   # True of False
 
@@ -112,7 +116,7 @@ companies = [
      # "7-eleven", "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)","Meta","Apple","Byte Dance","Netflix",
      # "Snowflake","Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express", "Snap Inc",
 ]                  # (dynamic multiple select) "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", "Elevance Health", and so on... make sure the name you type in list exactly matches with the company name you're looking for, including capitals.
-location = []                   # (dynamic multiple select)
+location = ["Chicago"]                   # (dynamic multiple select)
 industry = []                   # (dynamic multiple select)
 job_function = []               # (dynamic multiple select)
 job_titles = []                 # (dynamic multiple select)

@@ -284,8 +284,8 @@ def answer_questions(questions_list, work_location):
         if 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
         if 'salary' in label or 'compensation' in label: answer = desired_salary
         if 'scale of 1-10' in label: answer = confidence_level
-        if 'city' in label or 'location' in label: 
-            answer = current_city if current_city.strip() else work_location
+        if 'city' in label or 'location' in label:
+            answer = current_city if current_city else work_location
         text_input = question.find_element(By.CLASS_NAME, "artdeco-text-input--input")
         if not text_input.get_attribute("value"): text_input.send_keys(answer)
         questions_list.add((label_org, text_input.get_attribute("value"), "text"))
@@ -296,11 +296,7 @@ def answer_questions(questions_list, work_location):
     for question in questions:
         label = question.find_element(By.XPATH, "//label[@for]").find_element(By.CLASS_NAME, "visually-hidden").text.lower()
         if 'city' in label or 'location' in label:
-            if current_city.strip() == "":
-                # Logic to get job location, if not known enter united states as default <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                answer = work_location
-            else:
-                answer = current_city
+            answer = current_city if current_city else work_location
             text_input = question.find_element(By.XPATH, "//input[@type='text']")
             if not text_input.get_attribute("value"): 
                 text_input.send_keys(answer)
@@ -413,12 +409,22 @@ def apply_to_jobs(search_terms):
     applied_jobs = get_applied_job_ids()
     rejected_jobs = set()
     blacklisted_companies = set()
+    global current_city
+    current_city = current_city.strip()
 
     if randomize_search_order:  shuffle(search_terms)
     for searchTerm in search_terms:
         driver.get(f"https://www.linkedin.com/jobs/search/?keywords={searchTerm}")
         print_lg("\n________________________________________________________________________________________________________________________\n")
         print_lg(f'\n>>>> Now searching for "{searchTerm}" <<<<\n\n')
+
+        if search_location.trim():
+            print_lg(f'Setting search location as: "{search_location.trim()}"')
+            search_location_ele = try_xp(driver, "//input[@aria-label='City, state, or zip code'and not(@disabled)]", False) #  and not(@aria-hidden='true')]")
+            search_location_ele.clear()
+            search_location_ele.send_keys(search_location.trim())
+            sleep(2)
+            actions.send_keys(Keys.ENTER).perform()
 
         apply_filters()
 
@@ -513,7 +519,7 @@ def apply_to_jobs(search_terms):
                     try:
                         # try: time_posted_text = find_by_class(driver, "jobs-unified-top-card__posted-date", 2).text
                         # except: 
-                        time_posted_text = jobs_top_card.find_element(By.XPATH, './/span[contains(normalize-space(), "ago")]').text
+                        time_posted_text = jobs_top_card.find_element(By.XPATH, './/span[contains(normalize-space(), " ago")]').text
                         if time_posted_text.__contains__("Reposted"):
                             reposted = True
                             time_posted_text = time_posted_text.replace("Reposted", "")

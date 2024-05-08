@@ -51,7 +51,7 @@ password = "examplepassword"
 search_terms = ["Software Engineer", "Software Developer", "Selenium Developer", "Python Developer", "Java Developer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Express Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
 
 # Search location, this will be filled in "City, state, or zip code" search box. Some valid examples: "United States", "India", "Chicago, Illinois, United States", "90001, Los Angeles, California, United States", "Bengaluru, Karnataka, India", etc.
-search_location = "Chicago, Illinois, United States" # If left empty as "", tool will leave it blank.
+search_location = "" # If left empty as "", tool will leave it blank.
 
 # Do you want to randomize the search order for search_terms?
 randomize_search_order = True   # True of False

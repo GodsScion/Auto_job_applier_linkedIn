@@ -116,7 +116,7 @@ companies = [
      # "7-eleven", "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)","Meta","Apple","Byte Dance","Netflix",
      # "Snowflake","Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express", "Snap Inc",
 ]                  # (dynamic multiple select) "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", "Elevance Health", and so on... make sure the name you type in list exactly matches with the company name you're looking for, including capitals.
-location = ["Chicago"]                   # (dynamic multiple select)
+location = []                   # (dynamic multiple select)
 industry = []                   # (dynamic multiple select)
 job_function = []               # (dynamic multiple select)
 job_titles = []                 # (dynamic multiple select)

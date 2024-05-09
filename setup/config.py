@@ -27,6 +27,12 @@ click_gap = 0                   # Enter max allowed secs to wait approximately. 
 # If you want to see Chrome running then set run_in_background as False (May reduce performance). 
 run_in_background = False       # True or False ,   If True, this will make pause_at_failed_question, pause_before_submit and run_in_background as False
 
+# If you want to disable extensions then set disable_extensions as True (Better for performance)
+disable_extensions = True       # True or False
+
+# Run in safe mode. Set this true if chrome is taking too long to open. This will open chrome in guest profile!
+safe_mode = False               # True or False
+
 # Do you want scrolling to be smooth or instantaneous? (Can reduce performance if True)
 smooth_scroll = False           # True or False
 
@@ -158,7 +164,7 @@ pause_at_failed_question = True # True or False ,   Will be treated as False if 
 ##
 
 # Keep the External Application tabs open?
-close_tabs = False              # True or False
+close_tabs = True               # True or False
 
 # After how many number of applications should we keep switching? 
 switch_number = 50              # Only numbers greater than 25... Don't put in quotes

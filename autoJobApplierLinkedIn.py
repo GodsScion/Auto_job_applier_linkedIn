@@ -18,7 +18,7 @@ import csv
 import re
 import pyautogui
 pyautogui.FAILSAFE = False
-from random import choice, shuffle
+from random import choice, shuffle, randint
 from datetime import datetime
 from modules.open_chrome import *
 from selenium.webdriver.common.by import By
@@ -231,81 +231,81 @@ def answer_common_questions(label, answer):
 
 # Function to answer the questions for Easy Apply
 def answer_questions(questions_list, work_location):
-    # Find all Select Questions
-    select_buttons = driver.find_elements(By.XPATH, "//select")
-    for select in select_buttons:
-        label_org = "Unknown"
-        try: label_org = driver.find_element(By.XPATH, f"//label[@for='{select.get_attribute('id')}']").find_element(By.CLASS_NAME, "visually-hidden").text
-        except: pass
-        answer = 'Yes'
-        label = label_org.lower()
-        answer = answer_common_questions(label,answer)
-        if 'gender' in label or 'sex' in label: answer = gender
-        if 'disability' in label: answer = disability_status
-        select = Select(select)
-        selected_option = select.first_selected_option.text
-        if selected_option != "Select an option": continue
-        try:
-            select.select_by_visible_text(answer)
-        except NoSuchElementException as e:
-            print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
-            select.select_by_index(random.randint(1, len(select.options)-1))            
-        questions_list.add((label_org, select.first_selected_option.text, "select")) # <<<<<<<<<<<<<<<<<<
+    # Get all questions from the page
+    all_questions = driver.find_elements(By.CLASS_NAME, "jobs-easy-apply-form-element")
 
+    for Question in all_questions:
 
-    # Find all radio questions
-    all_radio_questions = driver.find_elements(By.XPATH, '//fieldset[@data-test-form-builder-radio-button-form-component="true"]')
-    for question in all_radio_questions:
-        label = question.find_elements(By.XPATH, './/span[@data-test-form-builder-radio-button-form-component__title]')
-        label = label[0].find_element(By.CLASS_NAME, 'visually-hidden').text if len(label) > 0 else "Unknown"
-        answer = 'Yes'
-        label = label.lower()
-        answer = answer_common_questions(label,answer)
-        if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
-        if 'sponsorship' in label or 'visa' in label: answer = require_visa
-        try: question.find_element(By.XPATH, f".//label[normalize-space()='{answer}']").click()
-        except:
-            random = question.find_element(By.XPATH, ".//label[@data-test-text-selectable-option__label]")
-            answer = random.text
-            random.click()
-        questions_list.add((label, answer, "radio"))
-    
-    # Find all text questions and answer them
-    all_text_questions = driver.find_elements(By.CLASS_NAME, "artdeco-text-input--container")
-    for question in all_text_questions:
-        label_org = "Unknown"
-        try: label_org = question.find_element(By.CLASS_NAME, "artdeco-text-input--label").text
-        except: continue
-        answer = years_of_experience
-        label = label_org.lower()
-        answer = answer_common_questions(label,answer)
-        if 'name' in label or 'signature' in label: answer = full_name  # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name
+        # Check if it's a select Question
+        select = try_xp(Question, "//select", False)
+        if select:
+            label_org = "Unknown"
+            label = try_xp(Question, f"//label[@for='{select.get_attribute('id')}']")
+            try: label_org = try_find_by_classes(label_org, False,  ["visually-hidden"]).text
+            except: pass
+            answer = 'Yes'
+            label = label_org.lower()
+            answer = answer_common_questions(label,answer)
+            if 'gender' in label or 'sex' in label: answer = gender
+            if 'disability' in label: answer = disability_status
+            select = Select(select)
+            selected_option = select.first_selected_option.text
+            if selected_option != "Select an option": continue
+            try:
+                select.select_by_visible_text(answer)
+            except NoSuchElementException as e:
+                print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
+                select.select_by_index(randint(1, len(select.options)-1))            
+            questions_list.add((label_org, select.first_selected_option.text, "select")) # <<<<<<<<<<<<<<<<<<
+            continue
         
-        if 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
-        if 'salary' in label or 'compensation' in label: answer = desired_salary
-        if 'scale of 1-10' in label: answer = confidence_level
-        if 'city' in label or 'location' in label:
-            answer = current_city if current_city else work_location
-        text_input = question.find_element(By.CLASS_NAME, "artdeco-text-input--input")
-        if not text_input.get_attribute("value"): text_input.send_keys(answer)
-        questions_list.add((label_org, text_input.get_attribute("value"), "text"))
+        # Check if it's a radio Question
+        radio = try_xp(Question, '//fieldset[@data-test-form-builder-radio-button-form-component="true"]', False)
+        if radio:
+            label = try_xp(radio, './/span[@data-test-form-builder-radio-button-form-component__title]', False)
+            label = try_find_by_classes(label, ['visually-hidden']).text
+            label = label if len(label) > 0 else "Unknown"
+            answer = 'Yes'
+            label = label.lower()
+            answer = answer_common_questions(label,answer)
+            if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
+            if 'sponsorship' in label or 'visa' in label: answer = require_visa
+            if not try_xp(radio, f".//label[normalize-space()='{answer}']"):
+                first_radio = Question.find_element(By.XPATH, ".//label[@data-test-text-selectable-option__label]")
+                answer = first_radio.text
+                first_radio.click()
+            questions_list.add((label, answer, "radio"))
+            continue
+        
+        # Check if it's a text question
+        text = try_xp(Question, "//input[@type='text']", False)
+        if text: 
+            do_actions = False
+            label = try_xp(Question, ".//label[@for]", False)
+            try: 
+                label = try_find_by_classes(label, ['visually-hidden']).text
+                do_actions = True
+            except: label = label.text
+            label_org = label if label else "Unknown"
+            answer = years_of_experience
+            label = label_org.lower()
 
-    # New logic to answering city
-    form_element = driver.find_element(By.CLASS_NAME, "jobs-easy-apply-form-element")
-    questions = form_element.find_elements(By.CLASS_NAME, "relative")
-    for question in questions:
-        label = question.find_element(By.XPATH, "//label[@for]").find_element(By.CLASS_NAME, "visually-hidden").text.lower()
-        if 'city' in label or 'location' in label:
-            answer = current_city if current_city else work_location
-            text_input = question.find_element(By.XPATH, "//input[@type='text']")
-            if not text_input.get_attribute("value"): 
-                text_input.send_keys(answer)
-                sleep(2)
-                actions.send_keys(Keys.ARROW_DOWN)
-                actions.send_keys(Keys.ENTER).perform()
-            questions_list.add((label, text_input.get_attribute("value"), "text"))
+            if not text.get_attribute("value"):
+                answer = answer_common_questions(label,answer)
+                if 'name' in label or 'signature' in label: answer = full_name  # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name
+                if 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
+                if 'salary' in label or 'compensation' in label: answer = desired_salary
+                if 'scale of 1-10' in label: answer = confidence_level
+                if 'city' in label or 'location' in label: answer = current_city if current_city else work_location
+            
+                text.send_keys(answer)
+                if do_actions:
+                    sleep(2)
+                    actions.send_keys(Keys.ARROW_DOWN)
+                    actions.send_keys(Keys.ENTER).perform()
+            questions_list.add((label, text.get_attribute("value"), "text"))
 
-
+    # Select todays date
     try_xp(driver, "//button[contains(@aria-label, 'This is today')]")
 
     # Collect important skills

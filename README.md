@@ -13,6 +13,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - Opens browser with default logged in google account (Yet to test with browsers having multiple profiles)
 - **Auto Login**: If configured or already saved in browser (not saved passwords)
 - Apply filters (Salary, Companies, Experience Level,... ) Must config
+- Region specific searches
 - Opens job search and searches key words
 - Easy applies
 - Auto Answers questions answered in config

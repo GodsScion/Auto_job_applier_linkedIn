@@ -235,20 +235,19 @@ def answer_questions(questions_list, work_location):
     all_questions = driver.find_elements(By.CLASS_NAME, "jobs-easy-apply-form-element")
 
     for Question in all_questions:
-        prev_answer = ""
         # Check if it's a select Question
         select = try_xp(Question, "//select", False)
         if select:
-            label = try_xp(Question, "//label", False)
-            label_org = try_xp(label, "//span", False)
+            label = Question.find_element(By.TAG_NAME, "label")
+            label_org = label.find_element(By.TAG_NAME, "span")
             label_org = label_org.text if label_org else "Unknown"
             answer = 'Yes'
             label = label_org.lower()
             select = Select(select)
             selected_option = select.first_selected_option.text
             options = "".join([f'# "{option.text}",' for option in select.options])
-            if selected_option != "Select an option": prev_answer = selected_option
-            else:
+            prev_answer = selected_option
+            if overwrite_previous_answers or selected_option == "Select an option":
                 answer = answer_common_questions(label,answer)
                 if 'gender' in label or 'sex' in label: answer = gender
                 if 'disability' in label: answer = disability_status
@@ -262,26 +261,28 @@ def answer_questions(questions_list, work_location):
         # Check if it's a radio Question
         radio = try_xp(Question, '//fieldset[@data-test-form-builder-radio-button-form-component="true"]', False)
         if radio:
+            prev_answer = None
             label = try_xp(radio, './/span[@data-test-form-builder-radio-button-form-component__title]', False)
             label = try_find_by_classes(label, ['visually-hidden']).text
-            label_org = label if len(label) > 0 else "Unknown"
+            label_org = label if label else "Unknown"
             answer = 'Yes'
             label = label_org.lower()
 
+            label_org = label_org + " [ "
             options = radio.find_elements(By.TAG_NAME, 'input')
             
             for option in options:
-                if option.isSelected()
+                label_org =  f'{label_org} # "{option.get_attribute("value")}",'
+                if option.isSelected(): prev_answer = option.get_attribute("value")
 
-
-            answer = answer_common_questions(label,answer)
-            if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
-            if 'sponsorship' in label or 'visa' in label: answer = require_visa
-            if not try_xp(radio, f".//label[normalize-space()='{answer}']"):
-                first_radio = Question.find_element(By.XPATH, ".//label[@data-test-text-selectable-option__label]")
-                answer = first_radio.text
-                first_radio.click()
-            questions_list.add((label_org, answer, "radio"))
+            if overwrite_previous_answers or prev_answer is None:
+                answer = answer_common_questions(label,answer)
+                if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
+                if 'sponsorship' in label or 'visa' in label: answer = require_visa
+                if not try_xp(radio, f".//label[normalize-space()='{answer}']"):
+                    answer = options[0].get_attribute("value")
+                    options[0].click()
+            questions_list.add((label_org, answer, "radio", prev_answer))
             continue
         
         # Check if it's a text question
@@ -289,28 +290,28 @@ def answer_questions(questions_list, work_location):
         if text: 
             do_actions = False
             label = try_xp(Question, ".//label[@for]", False)
-            try: 
-                label = try_find_by_classes(label, ['visually-hidden']).text
-                do_actions = True
+            try: label = label.find_element(By.CLASS_NAME,'visually-hidden').text
             except: label = label.text
             label_org = label if label else "Unknown"
             answer = years_of_experience
             label = label_org.lower()
 
-            if not text.get_attribute("value"):
+            prev_answer = text.get_attribute("value")
+            if not prev_answer or overwrite_previous_answers:
                 answer = answer_common_questions(label,answer)
                 if 'name' in label or 'signature' in label: answer = full_name  # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name
                 if 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
                 if 'salary' in label or 'compensation' in label: answer = desired_salary
                 if 'scale of 1-10' in label: answer = confidence_level
-                if 'city' in label or 'location' in label: answer = current_city if current_city else work_location
-            
+                if 'city' in label or 'location' in label: 
+                    answer = current_city if current_city else work_location
+                    do_actions = True            
                 text.send_keys(answer)
                 if do_actions:
                     sleep(2)
                     actions.send_keys(Keys.ARROW_DOWN)
                     actions.send_keys(Keys.ENTER).perform()
-            questions_list.add((label, text.get_attribute("value"), "text"))
+            questions_list.add((label, text.get_attribute("value"), "text", prev_answer))
 
     # Select todays date
     try_xp(driver, "//button[contains(@aria-label, 'This is today')]")

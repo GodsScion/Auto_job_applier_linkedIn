@@ -235,28 +235,28 @@ def answer_questions(questions_list, work_location):
     all_questions = driver.find_elements(By.CLASS_NAME, "jobs-easy-apply-form-element")
 
     for Question in all_questions:
-
+        prev_answer = ""
         # Check if it's a select Question
         select = try_xp(Question, "//select", False)
         if select:
-            label_org = "Unknown"
-            label = try_xp(Question, f"//label[@for='{select.get_attribute('id')}']")
-            try: label_org = try_find_by_classes(label_org, False,  ["visually-hidden"]).text
-            except: pass
+            label = try_xp(Question, "//label", False)
+            label_org = try_xp(label, "//span", False)
+            label_org = label_org.text if label_org else "Unknown"
             answer = 'Yes'
             label = label_org.lower()
-            answer = answer_common_questions(label,answer)
-            if 'gender' in label or 'sex' in label: answer = gender
-            if 'disability' in label: answer = disability_status
             select = Select(select)
             selected_option = select.first_selected_option.text
-            if selected_option != "Select an option": continue
-            try:
-                select.select_by_visible_text(answer)
-            except NoSuchElementException as e:
-                print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
-                select.select_by_index(randint(1, len(select.options)-1))            
-            questions_list.add((label_org, select.first_selected_option.text, "select")) # <<<<<<<<<<<<<<<<<<
+            options = "".join([f'# "{option.text}",' for option in select.options])
+            if selected_option != "Select an option": prev_answer = selected_option
+            else:
+                answer = answer_common_questions(label,answer)
+                if 'gender' in label or 'sex' in label: answer = gender
+                if 'disability' in label: answer = disability_status
+                try: select.select_by_visible_text(answer)
+                except NoSuchElementException as e:
+                    print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
+                    select.select_by_index(randint(1, len(select.options)-1))            
+            questions_list.add((f'{label_org} [ {options} ]', select.first_selected_option.text, "select", prev_answer)) # <<<<<<<<<<<<<<<<<<
             continue
         
         # Check if it's a radio Question
@@ -264,9 +264,16 @@ def answer_questions(questions_list, work_location):
         if radio:
             label = try_xp(radio, './/span[@data-test-form-builder-radio-button-form-component__title]', False)
             label = try_find_by_classes(label, ['visually-hidden']).text
-            label = label if len(label) > 0 else "Unknown"
+            label_org = label if len(label) > 0 else "Unknown"
             answer = 'Yes'
-            label = label.lower()
+            label = label_org.lower()
+
+            options = radio.find_elements(By.TAG_NAME, 'input')
+            
+            for option in options:
+                if option.isSelected()
+
+
             answer = answer_common_questions(label,answer)
             if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
             if 'sponsorship' in label or 'visa' in label: answer = require_visa
@@ -274,7 +281,7 @@ def answer_questions(questions_list, work_location):
                 first_radio = Question.find_element(By.XPATH, ".//label[@data-test-text-selectable-option__label]")
                 answer = first_radio.text
                 first_radio.click()
-            questions_list.add((label, answer, "radio"))
+            questions_list.add((label_org, answer, "radio"))
             continue
         
         # Check if it's a text question

@@ -134,6 +134,7 @@ With heartfelt appreciation, <br>
 - Tool will now save previous answer of a question.
 - Tool will now collect all available options for a Radio type or Select type question.
 - Major update in answering logic for Easy Apply Application questions.
+- Added Safe mode option for quick stable launches `safe_mode`.
 
 ### May 04, 2024
 - Added option to fill in "City, state, or zip code" search box `search_location`.

@@ -7,17 +7,20 @@ This is an web scraping bot that automates the process of job applications on Li
 Click on above image to watch the demo or use this link https://youtu.be/gMbB1fWZDHw
 
 ## ✨ Content
-- [How to install ](#how-to-install)
-- [Feature List](#feature-list)
-  - [General Features](#general-features)
-  - [Stealth features](#stealth-features-%EF%B8%8F)
-  - [Upcoming Features](#upcoming-features-or-currently-in-development-)
+- [Introduction](#linkedin-auto-job-applier-)
+- [Demo Video](#%EF%B8%8F-see-it-in-action)
+- [Index](#-content)
+- [How to install](#%EF%B8%8F-how-to-install)
+- [Feature List](#-feature-list)
+  - [General Features](#general-features-)
+  - [Stealth features](#stealth-features-)
+  - [Upcoming Features](#upcoming-features-or-currently-in-development-%EF%B8%8F)
   - [Currently Broken](#currently-broken-)
-- [Disclaimer](#disclaimer)
-- [Terms and Conditions](#terms-and-conditions)
-- [Request for your Support ❤️](#a-heartfelt-letter-to-you)
-- [Update History](#update-history)
-- [License](#license)
+- [Disclaimer](#-disclaimer)
+- [Terms and Conditions](#%EF%B8%8F-terms-and-conditions)
+- [A letter for YOU ❤️](#%EF%B8%8F-a-heartfelt-letter-to-you-%EF%B8%8F)
+- [Update History](#%EF%B8%8F-update-history)
+- [License](#%EF%B8%8F-license)
 
 
 ## ⚙️ How to install
@@ -110,7 +113,7 @@ Please consider the following:
 This program utilizes the Chrome Driver for web scraping. Please review and comply with the terms and conditions specified for [Chrome Driver](https://chromedriver.chromium.org/home).
 
 ## ✉️ A Heartfelt letter to you ❤️...
-My Dear Ladies and Gentle Men,
+My Dear User,
 
 Thank you for using the job application tool! Your support means everything to me. 
 

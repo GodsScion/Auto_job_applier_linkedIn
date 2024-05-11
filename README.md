@@ -9,15 +9,15 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 ## Content
 - [How to install ](#how-to-install)
 - [Feature List](#feature-list)
-  - [General Features 🚀](#general-features)
-  - [Stealth features 🥸](#stealth-features-%EF%B8%8F)
-  - [Upcoming Features 🛠️](#upcoming-features-or-currently-in-development-)
-  - [Currently Broken 🥲](#currently-broken-)
-- [Disclaimer 😅](#disclaimer)
-- [Terms and Conditions 🏛️](#terms-and-conditions)
+  - [General Features](#general-features)
+  - [Stealth features](#stealth-features-%EF%B8%8F)
+  - [Upcoming Features](#upcoming-features-or-currently-in-development-)
+  - [Currently Broken](#currently-broken-)
+- [Disclaimer](#disclaimer)
+- [Terms and Conditions](#terms-and-conditions)
 - [Request for your Support ❤️](#a-heartfelt-letter-to-you)
 - [Update History](#update-history)
-- [License ⚖️](#license)
+- [License](#license)
 
 
 ## How to install
@@ -88,12 +88,12 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
     - ChatGPT resume chat window opener
 
 
-## Disclaimer 📜
+## 📜 Disclaimer
 
 **This program is for educational purposes only. By downloading, using, copying, replicating, or interacting with this program or its code, you acknowledge and agree to abide by all the Terms, Conditions, Policies, and Licenses mentioned, which are subject to modification without prior notice. It is your responsibility to stay informed of any changes or updates. For the latest Terms & Conditions, Licenses, or Policies, please refer to [Auto Job Applier](https://github.com/GodsScion/Auto_job_applier_linkedIn). Additionally, kindly adhere to and comply with LinkedIn's terms of service and policies pertaining to web scraping. Usage is at your own risk. The creators and contributors of this program emphasize that they bear no responsibility or liability for any misuse, damages, or legal consequences resulting from its usage.**
 
 
-## Terms and Conditions 🏛️
+## 🏛️ Terms and Conditions
 
 Please consider the following:
 
@@ -109,7 +109,7 @@ Please consider the following:
 
 This program utilizes the Chrome Driver for web scraping. Please review and comply with the terms and conditions specified for [Chrome Driver](https://chromedriver.chromium.org/home).
 
-## A Heartfelt letter to you...
+## ✉️ A Heartfelt letter to you ❤️...
 My Dear Ladies and Gentle Men,
 
 Thank you for using the job application tool! Your support means everything to me. 
@@ -134,7 +134,7 @@ You can connect and reach me out at:
 2. Email     :  saivigneshgolla@outlook.com
 
 
-## Update History 🗓️:
+## 🗓️ Update History:
 ### May 05, 2024
 - For questions similar to "What is your current location?", City posted in Job description will be posted as the answer if `current_city` is left empty in the configuration.
 - Added option to over write previously saved answers for a question `overwrite_previous_answers`.
@@ -146,7 +146,7 @@ You can connect and reach me out at:
 - Added option to fill in "City, state, or zip code" search box `search_location`.
 - Bug fixes in answering City or location question.
 
-## License ⚖️
+## ⚖️ License
 
 Copyright (C) 2024 Sai Vignesh Golla  <saivigneshgolla@outlook.com>
 

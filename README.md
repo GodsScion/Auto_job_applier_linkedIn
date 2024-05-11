@@ -89,6 +89,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - All ChatGPT features (depends on Undetected Chrome driver):
     - ChatGPT Login 
     - ChatGPT resume chat window opener
+      
 
 
 

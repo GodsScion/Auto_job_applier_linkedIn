@@ -10,7 +10,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - [How to install](#how-to-install)
 - [Feature List](#feature-list)
   - [General Features](#general-features)
-  - [Stealh Features](#stealth-features)
+  - [Stealth features 🥸🕵🏼‍♂️](#stealth-features-%EF%B8%8F)
 - [Disclaimer](#disclaimer)
 
 

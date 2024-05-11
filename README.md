@@ -6,6 +6,10 @@ This is an web scraping bot that automates the process of job applications on Li
 [![Auto Job Applier demo video](https://github.com/GodsScion/Auto_job_applier_linkedIn/assets/100998531/429f7753-ebb0-499b-bc5e-5b4ee28c4f69)](https://youtu.be/gMbB1fWZDHw)
 Click on above image to watch the demo or use this link https://youtu.be/gMbB1fWZDHw
 
+## Content
+- [How to install]([How_to_install](https://github.com/GodsScion/Auto_job_applier_linkedIn/edit/main/README.md#how-to-install))
+- [Disclaimer](https://github.com/GodsScion/Auto_job_applier_linkedIn/edit/main/README.md#disclaimer)
+
 
 ## How to install
 * [Python 3](https://www.python.org/) or above. Visit https://www.python.org/downloads/ to download and install Python, or for windows you could visit Microsoft Store and search for "Python".

@@ -51,7 +51,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 
 **Upcoming Features or currently in development 🚀🔧:**
 - Answer questions with help of chatGpt or other LLMs
-- Humanize and mouse movements for stealth 
+- Humanize clicks and mouse movements for stealth 
 - Auto send personalized messages to HR that accept messages
 - Custom resume generator based on Skills required gathering (In Development)
 - Customize resume for every job using LLMs ChatGPT (In Development). (Halted decision pending, will probably implement api or utilize other LLMs or Web Scrape)

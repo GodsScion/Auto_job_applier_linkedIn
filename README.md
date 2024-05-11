@@ -8,6 +8,8 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 
 ## Content
 - [How to install](#how-to-install)
+- [Feature List](#feature-list)
+  - [General Features](#general-features)
 - [Disclaimer](#disclaimer)
 
 
@@ -21,8 +23,8 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 * Download and install the appropriate [Chrome Driver](https://googlechromelabs.github.io/chrome-for-testing/) for Google Chrome and add it to path System Environment variables, visit https://googlechromelabs.github.io/chrome-for-testing/ to download.
 
 
-## Feature List (I'm yet to complete the documentation, I'm adding in more features, still in development)
-
+## Feature List
+(I'm yet to complete the documentation, I'm adding in more features, still in development)
 **General Features:**
 
 - Opens browser with default logged in google account (Yet to test with browsers having multiple profiles)

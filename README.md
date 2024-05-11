@@ -1,9 +1,20 @@
 # LinkedIn Auto Job Applier
 This is an web scraping bot that automates the process of job applications on LinkedIn. It customizes your resume based on the collected job information, such as skills required, description, about company, etc. Answers all questions and applies to the job. 
 
+
 ## See it in Action
 [![Auto Job Applier demo video](https://github.com/GodsScion/Auto_job_applier_linkedIn/assets/100998531/429f7753-ebb0-499b-bc5e-5b4ee28c4f69)](https://youtu.be/gMbB1fWZDHw)
 Click on above image to watch the demo or use this link https://youtu.be/gMbB1fWZDHw
+
+
+## How to install
+* [Python 3](https://www.python.org/) or above. Visit https://www.python.org/downloads/ to download and install Python, or for windows you could visit Microsoft Store and search for "Python".
+* Install necessary [Undetected Chromedriver](https://pypi.org/project/undetected-chromedriver/), [PyAutoGUI](https://pypi.org/project/PyAutoGUI/) and [Setuptools](https://pypi.org/project/setuptools/) packages. After Python is installed, in a console or shell, use the [pip](https://pip.pypa.io/en/stable) command-line tool to install these 3 package. Please make sure Python is added to Path in System Environment Variables.
+  ```
+  pip install undetected-chromedriver pyautogui setuptools
+  ```
+* Download and install latest version of [Google Chrome](https://www.google.com/chrome) in it's default location, visit https://www.google.com/chrome to download it's installer.
+* Download and install the appropriate [Chrome Driver](https://googlechromelabs.github.io/chrome-for-testing/) for Google Chrome and add it to path System Environment variables, visit https://googlechromelabs.github.io/chrome-for-testing/ to download.
 
 
 ## Feature List (I'm yet to complete the documentation, I'm adding in more features, still in development)
@@ -60,20 +71,12 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - All ChatGPT features (depends on Undetected Chrome driver):
     - ChatGPT Login 
     - ChatGPT resume chat window opener
-  
 
-## How to install
-* [Python 3](https://www.python.org/) or above. Visit https://www.python.org/downloads/ to download and install Python, or for windows you could visit Microsoft Store and search for "Python".
-* Install necessary [Undetected Chromedriver](https://pypi.org/project/undetected-chromedriver/), [PyAutoGUI](https://pypi.org/project/PyAutoGUI/) and [Setuptools](https://pypi.org/project/setuptools/) packages. After Python is installed, in a console or shell, use the [pip](https://pip.pypa.io/en/stable) command-line tool to install these 3 package. Please make sure Python is added to Path in System Environment Variables.
-  ```
-  pip install undetected-chromedriver pyautogui setuptools
-  ```
-* Download and install latest version of [Google Chrome](https://www.google.com/chrome) in it's default location, visit https://www.google.com/chrome to download it's installer.
-* Download and install the appropriate [Chrome Driver](https://googlechromelabs.github.io/chrome-for-testing/) for Google Chrome and add it to path System Environment variables, visit https://googlechromelabs.github.io/chrome-for-testing/ to download.
 
 ## Disclaimer
 
 **This program is for educational purposes only. By downloading, using, copying, replicating, or interacting with this program or its code, you acknowledge and agree to abide by all the Terms, Conditions, Policies, and Licenses mentioned, which are subject to modification without prior notice. It is your responsibility to stay informed of any changes or updates. For the latest Terms & Conditions, Licenses, or Policies, please refer to [Auto Job Applier](https://github.com/GodsScion/Auto_job_applier_linkedIn). Additionally, kindly adhere to and comply with LinkedIn's terms of service and policies pertaining to web scraping. Usage is at your own risk. The creators and contributors of this program emphasize that they bear no responsibility or liability for any misuse, damages, or legal consequences resulting from its usage.**
+
 
 ## Terms and Conditions
 
@@ -115,6 +118,18 @@ You can connect and reach me out at:
 1. LinkedIn  :  https://www.linkedin.com/in/saivigneshgolla/
 2. Email     :  saivigneshgolla@outlook.com
 
+
+## Update Notes:
+### May 05, 2024
+- For questions similar to "What is your current location?", City posted in Job description will be posted as the answer if `current_city` is left empty in the configuration.
+- Added option to over write previously saved answers for a question `overwrite_previous_answers`.
+- Tool will now save previous answer of a question.
+- Tool will now collect all available options for a Radio type or Select type question.
+- Major update in answering logic for Easy Apply Application questions.
+
+### May 04, 2024
+- Added option to fill in "City, state, or zip code" search box `search_location`.
+- Bug fixes in answering City or location question.
 
 ## License
 

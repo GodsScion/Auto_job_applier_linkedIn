@@ -30,7 +30,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 * Download and install the appropriate [Chrome Driver](https://googlechromelabs.github.io/chrome-for-testing/) for Google Chrome and add it to path System Environment variables, visit https://googlechromelabs.github.io/chrome-for-testing/ to download.
 
 
-## Feature List
+## 🤩 Feature List
 (I'm yet to complete the documentation, I'm adding in more features, still in development)
 
 
@@ -70,19 +70,19 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 
 
 
-#### Stealth features 🥸:  
+#### Stealth features 🥸🤫:  
 - Undetected Chromedriver to bypass anti-bot scripts (Browser, Undetected ChromeDriver versions must be compatible) (Beta) {If problem occurs uninstall and install undetected chromedriver, update browser, selenium and chromedriver}
 - Click intervals can be randomized and increased to avoid suspicions
 - Smooth Scrolls the elements into view before click
 
-#### Upcoming Features or currently in development 🛠️:
+#### Upcoming Features or currently in development 🤖🛠️:
 - Answer questions with help of chatGpt or other LLMs
 - Humanize clicks and mouse movements for stealth 
 - Auto send personalized messages to HR that accept messages
 - Custom resume generator based on Skills required gathering (In Development)
 - Customize resume for every job using LLMs ChatGPT (In Development). (Halted decision pending, will probably implement api or utilize other LLMs or Web Scrape)
 
-#### Currently Broken 🥲: 
+#### Currently Broken 🥲😭: 
 - All ChatGPT features (depends on Undetected Chrome driver):
     - ChatGPT Login 
     - ChatGPT resume chat window opener

@@ -6,6 +6,7 @@ This is an web scraping bot that automates the process of job applications on Li
 [![Auto Job Applier demo video](https://github.com/GodsScion/Auto_job_applier_linkedIn/assets/100998531/429f7753-ebb0-499b-bc5e-5b4ee28c4f69)](https://youtu.be/gMbB1fWZDHw)
 Click on above image to watch the demo or use this link https://youtu.be/gMbB1fWZDHw
 
+
 ## ✨ Content
 - [Introduction](#linkedin-auto-job-applier-)
 - [Demo Video](#%EF%B8%8F-see-it-in-action)
@@ -35,7 +36,6 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 
 ## 🤩 Feature List
 (I'm yet to complete the documentation, I'm adding in more features, still in development)
-
 
 #### General Features 🚀:
 
@@ -139,6 +139,7 @@ With heartfelt appreciation, <br>
 - Added option to fill in "City, state, or zip code" search box `search_location`.
 - Bug fixes in answering City or location question.
 
+<br>
 
 ## 📜 Disclaimer
 
@@ -160,7 +161,6 @@ Please consider the following:
 ### Chrome Driver
 
 This program utilizes the Chrome Driver for web scraping. Please review and comply with the terms and conditions specified for [Chrome Driver](https://chromedriver.chromium.org/home).
-
 
 
 ## ⚖️ License

@@ -16,10 +16,10 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
   - [Stealth features](#stealth-features-)
   - [Upcoming Features](#upcoming-features-or-currently-in-development-%EF%B8%8F)
   - [Currently Broken](#currently-broken-)
+- [My letter for YOU ❤️](#%EF%B8%8F-a-heartfelt-letter-to-you-%EF%B8%8F)
+- [Update History](#%EF%B8%8F-update-history)
 - [Disclaimer](#-disclaimer)
 - [Terms and Conditions](#%EF%B8%8F-terms-and-conditions)
-- [A letter for YOU ❤️](#%EF%B8%8F-a-heartfelt-letter-to-you-%EF%B8%8F)
-- [Update History](#%EF%B8%8F-update-history)
 - [License](#%EF%B8%8F-license)
 
 
@@ -91,28 +91,9 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
     - ChatGPT resume chat window opener
 
 
-## 📜 Disclaimer
 
-**This program is for educational purposes only. By downloading, using, copying, replicating, or interacting with this program or its code, you acknowledge and agree to abide by all the Terms, Conditions, Policies, and Licenses mentioned, which are subject to modification without prior notice. It is your responsibility to stay informed of any changes or updates. For the latest Terms & Conditions, Licenses, or Policies, please refer to [Auto Job Applier](https://github.com/GodsScion/Auto_job_applier_linkedIn). Additionally, kindly adhere to and comply with LinkedIn's terms of service and policies pertaining to web scraping. Usage is at your own risk. The creators and contributors of this program emphasize that they bear no responsibility or liability for any misuse, damages, or legal consequences resulting from its usage.**
+## ✉️ My Heartfelt letter to you ❤️...
 
-
-## 🏛️ Terms and Conditions
-
-Please consider the following:
-
-- **LinkedIn Policies**: LinkedIn has specific policies regarding web scraping and data collection. It is your responsibility to review and comply with these policies before engaging, interacting, or undertaking any actions with this program. Be aware of the limitations and restrictions imposed by LinkedIn to avoid any potential violation(s).
-
-- **No Warranties or Guarantees**: This program is provided as-is, without any warranties or guarantees of any kind. The accuracy, reliability, and effectiveness of the program cannot be guaranteed. Use it at your own risk.
-
-- **Disclaimer of Liability**: The creators and contributors of this program shall not be held responsible or liable for any damages or consequences arising from the direct or indirect use, interaction, or actions performed with this program. This includes but is not limited to any legal issues, loss of data, or other damages incurred.
-
-- **Use at Your Own Risk**: It is important to exercise caution and ensure that your usage, interactions, and actions with this program comply with the applicable laws and regulations. Understand the potential risks and consequences associated with web scraping and data collection activities.
-
-### Chrome Driver
-
-This program utilizes the Chrome Driver for web scraping. Please review and comply with the terms and conditions specified for [Chrome Driver](https://chromedriver.chromium.org/home).
-
-## ✉️ A Heartfelt letter to you ❤️...
 My Dear User,
 
 Thank you for using the job application tool! Your support means everything to me. 
@@ -148,6 +129,30 @@ You can connect and reach me out at:
 ### May 04, 2024
 - Added option to fill in "City, state, or zip code" search box `search_location`.
 - Bug fixes in answering City or location question.
+
+
+## 📜 Disclaimer
+
+**This program is for educational purposes only. By downloading, using, copying, replicating, or interacting with this program or its code, you acknowledge and agree to abide by all the Terms, Conditions, Policies, and Licenses mentioned, which are subject to modification without prior notice. The responsibility of staying informed of any changes or updates bears upon the interactors and users. For the latest Terms & Conditions, Licenses, or Policies, please refer to [Auto Job Applier](https://github.com/GodsScion/Auto_job_applier_linkedIn). Additionally, kindly adhere to and comply with LinkedIn's terms of service and policies pertaining to web scraping. Usage is at your own risk. The creators and contributors of this program emphasize that they bear no responsibility or liability for any misuse, damages, or legal consequences resulting from its usage.**
+
+
+## 🏛️ Terms and Conditions
+
+Please consider the following:
+
+- **LinkedIn Policies**: LinkedIn has specific policies regarding web scraping and data collection. The responsibility to review and comply with these policies before engaging, interacting, or undertaking any actions with this program bears upon yourself. Be aware of the limitations and restrictions imposed by LinkedIn to avoid any potential violation(s).
+
+- **No Warranties or Guarantees**: This program is provided as-is, without any warranties or guarantees of any kind. The accuracy, reliability, and effectiveness of the program cannot be guaranteed. Use it at your own risk.
+
+- **Disclaimer of Liability**: The creators and contributors of this program shall not be held responsible or liable for any damages or consequences arising from the direct or indirect use, interaction, or actions performed with this program. This includes but is not limited to any legal issues, loss of data, or other damages incurred.
+
+- **Use at Your Own Risk**: It is important to exercise caution and ensure that your usage, interactions, and actions with this program comply with the applicable laws and regulations. Understand the potential risks and consequences associated with web scraping and data collection activities.
+
+### Chrome Driver
+
+This program utilizes the Chrome Driver for web scraping. Please review and comply with the terms and conditions specified for [Chrome Driver](https://chromedriver.chromium.org/home).
+
+
 
 ## ⚖️ License
 

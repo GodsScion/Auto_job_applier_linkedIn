@@ -7,13 +7,17 @@ This is an web scraping bot that automates the process of job applications on Li
 Click on above image to watch the demo or use this link https://youtu.be/gMbB1fWZDHw
 
 ## Content
-- [How to install](#how-to-install)
+- [How to install ](#how-to-install)
 - [Feature List](#feature-list)
-  - [General Features](#general-features)
-  - [Stealth features 🥸🕵🏼‍♂️](#stealth-features-%EF%B8%8F)
-  - [Upcoming Features or currently in development 🚀🔧](#upcoming-features-or-currently-in-development-)
-  - [Currently Broken](#currently-broken-)
-- [Disclaimer](#disclaimer)
+  - [General Features 🚀](#general-features)
+  - [Stealth features 🥸](#stealth-features-%EF%B8%8F)
+  - [Upcoming Features 🛠️](#upcoming-features-or-currently-in-development-)
+  - [Currently Broken 🥲](#currently-broken-)
+- [Disclaimer 😅](#disclaimer)
+- [Terms and Conditions 🏛️](#terms-and-conditions)
+- [Request for your Support ❤️](#a-heartfelt-letter-to-you)
+- [Update History](#update-history)
+- [License ⚖️](#license)
 
 
 ## How to install
@@ -130,7 +134,7 @@ You can connect and reach me out at:
 2. Email     :  saivigneshgolla@outlook.com
 
 
-## Update Notes:
+## Update History:
 ### May 05, 2024
 - For questions similar to "What is your current location?", City posted in Job description will be posted as the answer if `current_city` is left empty in the configuration.
 - Added option to over write previously saved answers for a question `overwrite_previous_answers`.

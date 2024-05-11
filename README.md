@@ -7,8 +7,8 @@ This is an web scraping bot that automates the process of job applications on Li
 Click on above image to watch the demo or use this link https://youtu.be/gMbB1fWZDHw
 
 ## Content
-- [How to install]([How_to_install](https://github.com/GodsScion/Auto_job_applier_linkedIn/edit/main/README.md#how-to-install))
-- [Disclaimer](https://github.com/GodsScion/Auto_job_applier_linkedIn/edit/main/README.md#disclaimer)
+- [How to install](#how-to-install)
+- [Disclaimer](#disclaimer)
 
 
 ## How to install

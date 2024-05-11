@@ -90,6 +90,8 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
     - ChatGPT Login 
     - ChatGPT resume chat window opener
       
+[back to index](#-content)
+
 <br>
 
 
@@ -140,6 +142,9 @@ With heartfelt appreciation, <br>
 - Added option to fill in "City, state, or zip code" search box `search_location`.
 - Bug fixes in answering City or location question.
 
+
+[back to index](#-content)
+
 <br>
 
 ## 📜 Disclaimer
@@ -173,3 +178,10 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 See [AGPLv3 LICENSE](LICENSE) for more info.
+
+
+<br>
+
+---
+
+[back to the top](#linkedin-auto-job-applier-)

@@ -16,7 +16,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
   - [Stealth features](#stealth-features-)
   - [Upcoming Features](#upcoming-features-or-currently-in-development-%EF%B8%8F)
   - [Currently Broken](#currently-broken-)
-- [My letter for YOU ❤️](#%EF%B8%8F-a-heartfelt-letter-to-you-%EF%B8%8F)
+- [My letter for YOU ❤️](#%EF%B8%8F-my-heartfelt-letter-to-you-%EF%B8%8F)
 - [Update History](#%EF%B8%8F-update-history)
 - [Disclaimer](#-disclaimer)
 - [Terms and Conditions](#%EF%B8%8F-terms-and-conditions)
@@ -93,7 +93,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 
 
 
-## ✉️ My Heartfelt letter to you ❤️...
+# ✉️ My Heartfelt letter to you ❤️...
 
 My Dear User,
 

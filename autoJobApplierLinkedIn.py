@@ -236,7 +236,7 @@ def answer_questions(questions_list, work_location):
 
     for Question in all_questions:
         # Check if it's a select Question
-        select = try_xp(Question, "//select", False)
+        select = try_xp(Question, ".//select", False)
         if select:
             label = Question.find_element(By.TAG_NAME, "label")
             label_org = label.find_element(By.TAG_NAME, "span")
@@ -245,7 +245,7 @@ def answer_questions(questions_list, work_location):
             label = label_org.lower()
             select = Select(select)
             selected_option = select.first_selected_option.text
-            options = "".join([f'# "{option.text}",' for option in select.options])
+            options = "".join([f' "{option.text}",' for option in select.options]) if label != "phone country code" else '"List of phone country codes"'
             prev_answer = selected_option
             if overwrite_previous_answers or selected_option == "Select an option":
                 answer = answer_common_questions(label,answer)
@@ -259,7 +259,7 @@ def answer_questions(questions_list, work_location):
             continue
         
         # Check if it's a radio Question
-        radio = try_xp(Question, '//fieldset[@data-test-form-builder-radio-button-form-component="true"]', False)
+        radio = try_xp(Question, './/fieldset[@data-test-form-builder-radio-button-form-component="true"]', False)
         if radio:
             prev_answer = None
             label = try_xp(radio, './/span[@data-test-form-builder-radio-button-form-component__title]', False)
@@ -272,8 +272,8 @@ def answer_questions(questions_list, work_location):
             options = radio.find_elements(By.TAG_NAME, 'input')
             
             for option in options:
-                label_org =  f'{label_org} # "{option.get_attribute("value")}",'
-                if option.isSelected(): prev_answer = option.get_attribute("value")
+                label_org =  f'{label_org} "{option.get_attribute("value")}",'
+                if option.is_selected(): prev_answer = option.get_attribute("value")
 
             if overwrite_previous_answers or prev_answer is None:
                 answer = answer_common_questions(label,answer)
@@ -282,11 +282,12 @@ def answer_questions(questions_list, work_location):
                 if not try_xp(radio, f".//label[normalize-space()='{answer}']"):
                     answer = options[0].get_attribute("value")
                     options[0].click()
+            else: answer = prev_answer
             questions_list.add((label_org, answer, "radio", prev_answer))
             continue
         
         # Check if it's a text question
-        text = try_xp(Question, "//input[@type='text']", False)
+        text = try_xp(Question, ".//input[@type='text']", False)
         if text: 
             do_actions = False
             label = try_xp(Question, ".//label[@for]", False)
@@ -528,6 +529,7 @@ def apply_to_jobs(search_terms):
                         # try: time_posted_text = find_by_class(driver, "jobs-unified-top-card__posted-date", 2).text
                         # except: 
                         time_posted_text = jobs_top_card.find_element(By.XPATH, './/span[contains(normalize-space(), " ago")]').text
+                        print("Time Posted: " + time_posted_text)
                         if time_posted_text.__contains__("Reposted"):
                             reposted = True
                             time_posted_text = time_posted_text.replace("Reposted", "")

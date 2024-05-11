@@ -34,7 +34,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 (I'm yet to complete the documentation, I'm adding in more features, still in development)
 
 
-#### General Features:
+#### General Features 🚀:
 
 - Opens browser with default logged in google account (Yet to test with browsers having multiple profiles)
 - **Auto Login**: If configured or already saved in browser (not saved passwords)
@@ -70,12 +70,12 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 
 
 
-#### Stealth features 🥸🕵🏼‍♂️:  
+#### Stealth features 🥸:  
 - Undetected Chromedriver to bypass anti-bot scripts (Browser, Undetected ChromeDriver versions must be compatible) (Beta) {If problem occurs uninstall and install undetected chromedriver, update browser, selenium and chromedriver}
 - Click intervals can be randomized and increased to avoid suspicions
 - Smooth Scrolls the elements into view before click
 
-#### Upcoming Features or currently in development 🚀🔧:
+#### Upcoming Features or currently in development 🛠️:
 - Answer questions with help of chatGpt or other LLMs
 - Humanize clicks and mouse movements for stealth 
 - Auto send personalized messages to HR that accept messages
@@ -88,12 +88,12 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
     - ChatGPT resume chat window opener
 
 
-## Disclaimer
+## Disclaimer 📜
 
 **This program is for educational purposes only. By downloading, using, copying, replicating, or interacting with this program or its code, you acknowledge and agree to abide by all the Terms, Conditions, Policies, and Licenses mentioned, which are subject to modification without prior notice. It is your responsibility to stay informed of any changes or updates. For the latest Terms & Conditions, Licenses, or Policies, please refer to [Auto Job Applier](https://github.com/GodsScion/Auto_job_applier_linkedIn). Additionally, kindly adhere to and comply with LinkedIn's terms of service and policies pertaining to web scraping. Usage is at your own risk. The creators and contributors of this program emphasize that they bear no responsibility or liability for any misuse, damages, or legal consequences resulting from its usage.**
 
 
-## Terms and Conditions
+## Terms and Conditions 🏛️
 
 Please consider the following:
 
@@ -134,7 +134,7 @@ You can connect and reach me out at:
 2. Email     :  saivigneshgolla@outlook.com
 
 
-## Update History:
+## Update History 🗓️:
 ### May 05, 2024
 - For questions similar to "What is your current location?", City posted in Job description will be posted as the answer if `current_city` is left empty in the configuration.
 - Added option to over write previously saved answers for a question `overwrite_previous_answers`.
@@ -146,7 +146,7 @@ You can connect and reach me out at:
 - Added option to fill in "City, state, or zip code" search box `search_location`.
 - Bug fixes in answering City or location question.
 
-## License
+## License ⚖️
 
 Copyright (C) 2024 Sai Vignesh Golla  <saivigneshgolla@outlook.com>
 

@@ -47,7 +47,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 **Stealth features 🥸🕵🏼‍♂️:**  
 - Undetected Chromedriver to bypass anti-bot scripts (Browser, Undetected ChromeDriver versions must be compatible) (Beta) {If problem occurs uninstall and install undetected chromedriver, update browser, selenium and chromedriver}
 - Click intervals can be randomized and increased to avoid suspicions
-- Smooth Scroll to view before click
+- Smooth Scrolls the elements into view before click
 
 **Upcoming Features or currently in development 🚀🔧:**
 - Answer questions with help of chatGpt or other LLMs

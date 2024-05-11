@@ -25,6 +25,8 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 
 ## Feature List
 (I'm yet to complete the documentation, I'm adding in more features, still in development)
+
+
 **General Features:**
 
 - Opens browser with default logged in google account (Yet to test with browsers having multiple profiles)

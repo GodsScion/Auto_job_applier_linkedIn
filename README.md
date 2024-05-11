@@ -31,7 +31,8 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - Auto Submits
 - Saves all the info of applied jobs, failed to apply jobs in excels and logs
 - Takes screenshot of questions answered to fail, for future debugging
-- Saves info of all questions and answers for those questions
+- Saves info of all questions, it's options, previous answer and current answer in application
+- Option to overwrite previous answers
 - Continuous applications non stop (beta)
 - No need for fear of missing out, Goes through all possible filters and sorts combinations with each cycle if configured (Most Recent, Most Relevant, Newest First, Past 24 Hrs, Past Month, Past Week etc)
 - Option to randomize the search order

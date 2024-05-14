@@ -59,12 +59,6 @@ search_terms = ["Software Engineer", "Software Developer", "Selenium Developer",
 # Search location, this will be filled in "City, state, or zip code" search box. Some valid examples: "United States", "India", "Chicago, Illinois, United States", "90001, Los Angeles, California, United States", "Bengaluru, Karnataka, India", etc.
 search_location = "" # If left empty as "", tool will leave it blank.
 
-# Do you want to randomize the search order for search_terms?
-randomize_search_order = True   # True of False
-
-# Do you want to overwrite previous answers? (In Development)
-overwrite_previous_answers = False # True or False
-
 
 # >>>>>>>>>>> Easy Apply Questions & Inputs <<<<<<<<<<<
 
@@ -140,12 +134,19 @@ fair_chance_employer = False    # True or False
 
 # >>>>>>>>>>> LinkedIn Settings <<<<<<<<<<<
 
+# Do you want to randomize the search order for search_terms?
+randomize_search_order = True   # True of False
+
+# Do you want to overwrite previous answers?
+overwrite_previous_answers = False # True or False
+
+
 ## Skip irrelevant jobs
 # Skip checking blacklist words for these companies... [Exceptions]
 blacklist_exceptions = ["Dice"]    # (dynamic multiple search) or leave empty as []. Ex: ["Jobot", "Dice"]
 
-# Avoid applying to companies with these words in their description...
-blacklist_words = ["Staffing", "Recruiting"] # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting"]
+# Avoid applying to these companies and companies with these words in their description (About Company)...
+blacklist_words = ["Crossover", "Staffing", "Recruiting"] # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting"]
 
 # Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
 current_experience = 4          # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)

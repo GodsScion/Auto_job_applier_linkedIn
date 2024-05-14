@@ -40,6 +40,10 @@ if run_in_background == True:
 tabs_count = 1
 
 
+easy_applied_count = 0
+external_jobs_count = 0
+
+
 #< Login Functions
 
 # Function to check if user is logged-in in LinkedIn
@@ -572,7 +576,7 @@ def apply_to_jobs(search_terms):
                                 # if description != "Unknown":
                                 #     resume = create_custom_resume(description)
                                 wait_span_click(driver, "Next", 1)
-                                # driver.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
+                                if overwrite_previous_answers: driver.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
                                 resume = os.path.basename(resume)
                                 next_button = True
                                 questions_list = set()
@@ -631,6 +635,9 @@ def apply_to_jobs(search_terms):
 
                     print_lg(f'Successfully saved "{title} | {company}" job. Job ID: {job_id} info')
                     current_count += 1
+                    global external_jobs_count, easy_applied_count
+                    if application_link == "Easy Applied": easy_applied_count += 1
+                    else:   external_jobs_count += 1
                     applied_jobs.add(job_id)
 
                 # Switching to next page
@@ -717,6 +724,11 @@ def main():
         critical_error_log("In Applier Main", e)
         pyautogui.alert(e,alert_title)
     finally:
+        print_lg("\n\nTotal runs:                           {}".format(total_runs))
+        print_lg("Total jobs Easy Applied:              {}".format(easy_applied_count))
+        print_lg("Total external job links collected:   {}".format(external_jobs_count))
+        print_lg("                                      ------")
+        print_lg("Total applied or collected:           {}".format(easy_applied_count + external_jobs_count))
         quote = choice([
             "You're one step closer than before.", 
             "All the best with your future interviews.", 
@@ -731,7 +743,7 @@ def main():
             "Obstacles are those frightful things you see when you take your eyes off your goal. - Henry Ford",
             "The only limit to our realization of tomorrow will be our doubts of today. - Franklin D. Roosevelt"
             ])
-        msg = f"{quote}\n\n\nBest regards,\nSai Vignesh Golla\nhttps://www.linkedin.com/in/saivigneshgolla/"
+        msg = f"\n{quote}\n\n\nBest regards,\nSai Vignesh Golla\nhttps://www.linkedin.com/in/saivigneshgolla/"
         pyautogui.alert(msg, "Exiting..")
         print_lg(msg,"Closing the browser...")
         if tabs_count >= 10:

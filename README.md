@@ -32,7 +32,11 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
   ```
 * Download and install latest version of [Google Chrome](https://www.google.com/chrome) in it's default location, visit https://www.google.com/chrome to download it's installer.
 * Clone the current git repo or download it as a zip file, url to the latest update https://github.com/GodsScion/Auto_job_applier_linkedIn.
-* Download and install the appropriate [Chrome Driver](https://googlechromelabs.github.io/chrome-for-testing/) for Google Chrome and paste it in the loaction Chrome was installed, visit https://googlechromelabs.github.io/chrome-for-testing/ to download. OR Alternatively, if you are using Windows, click on `windows-setup.bat` available in the `/setup` folder, this will install the latest chromedriver automatically.
+* Download and install the appropriate [Chrome Driver](https://googlechromelabs.github.io/chrome-for-testing/) for Google Chrome and paste it in the loaction Chrome was installed, visit https://googlechromelabs.github.io/chrome-for-testing/ to download.
+  <br> <br>
+  ***OR*** 
+  <br> <br>
+  If you are using Windows, click on `windows-setup.bat` available in the `/setup` folder, this will install the latest chromedriver automatically.
 * Open `config.py` file in `/setup` folder and enter your details, configure the tool as per your needs.
 * Run `autoJobApplierLinkedIn.py` and see the magic happen.
 

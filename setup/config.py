@@ -63,7 +63,7 @@ search_location = "" # If left empty as "", tool will leave it blank.
 # >>>>>>>>>>> Easy Apply Questions & Inputs <<<<<<<<<<<
 
 # Phone number (required), make sure it's valid.
-phone_number = "9876543210"
+phone_number = ""
 
 # Give an relative or absolute path of your default resume to be uploaded...
 default_resume_path = "all resumes/default/resume.pdf"      # (In Development)

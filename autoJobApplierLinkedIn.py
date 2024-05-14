@@ -42,6 +42,8 @@ tabs_count = 1
 
 easy_applied_count = 0
 external_jobs_count = 0
+failed_count = 0
+skip_count = 0
 
 
 #< Login Functions
@@ -254,7 +256,7 @@ def answer_questions(questions_list, work_location):
             if overwrite_previous_answers or selected_option == "Select an option":
                 answer = answer_common_questions(label,answer)
                 if 'gender' in label or 'sex' in label: answer = gender
-                if 'disability' in label: answer = disability_status
+                elif 'disability' in label: answer = disability_status
                 try: select.select_by_visible_text(answer)
                 except NoSuchElementException as e:
                     print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
@@ -282,7 +284,7 @@ def answer_questions(questions_list, work_location):
             if overwrite_previous_answers or prev_answer is None:
                 answer = answer_common_questions(label,answer)
                 if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
-                if 'sponsorship' in label or 'visa' in label: answer = require_visa
+                elif 'sponsorship' in label or 'visa' in label: answer = require_visa
                 if not try_xp(radio, f".//label[normalize-space()='{answer}']"):
                     answer = options[0].get_attribute("value")
                     options[0].click()
@@ -304,11 +306,12 @@ def answer_questions(questions_list, work_location):
             prev_answer = text.get_attribute("value")
             if not prev_answer or overwrite_previous_answers:
                 answer = answer_common_questions(label,answer)
-                if 'name' in label or 'signature' in label: answer = full_name  # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name
-                if 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
-                if 'salary' in label or 'compensation' in label: answer = desired_salary
-                if 'scale of 1-10' in label: answer = confidence_level
-                if 'city' in label or 'location' in label: 
+                if 'phone' in label or 'mobile' in label: answer = phone_number
+                elif 'name' in label or 'signature' in label: answer = full_name  # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name
+                elif 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
+                elif 'salary' in label or 'compensation' in label: answer = desired_salary
+                elif 'scale of 1-10' in label: answer = confidence_level
+                elif 'city' in label or 'location' in label: 
                     answer = current_city if current_city else work_location
                     do_actions = True            
                 text.send_keys(answer)
@@ -363,6 +366,8 @@ def external_apply(pagination_element, job_id, job_link, resume, date_listed, ap
         # print_lg(e)
         print_lg("Failed to apply!")
         failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link, screenshot_name)
+        global failed_count
+        failed_count += 1
         return True, application_link, tabs_count
 
 
@@ -422,7 +427,7 @@ def apply_to_jobs(search_terms):
     applied_jobs = get_applied_job_ids()
     rejected_jobs = set()
     blacklisted_companies = set()
-    global current_city
+    global current_city, failed_count, skip_count, easy_applied_count, external_jobs_count, tabs_count
     current_city = current_city.strip()
 
     if randomize_search_order:  shuffle(search_terms)
@@ -495,6 +500,7 @@ def apply_to_jobs(search_terms):
                     except ValueError as e:
                         print_lg('Skipping this job.', e)
                         failed_job(job_id, job_link, resume, date_listed, "Found Blacklisted words in About Company", e, "Skipped", screenshot_name)
+                        skip_count += 1
                         continue
                     except Exception as e:
                         print_lg("Failed to scroll to About Company!")
@@ -558,6 +564,7 @@ def apply_to_jobs(search_terms):
                                 print_lg('Skipping this job.', message)
                                 failed_job(job_id, job_link, resume, date_listed, "Required experience is high", message, "Skipped", screenshot_name)
                                 rejected_jobs.add(job_id)
+                                skip_count += 1
                                 continue
                     except Exception as e:
                         if description == "Unknown":    print_lg("Unable to extract job description!")
@@ -623,11 +630,11 @@ def apply_to_jobs(search_terms):
                             # print_lg(e)
                             critical_error_log("Somewhere in Easy Apply process",e)
                             failed_job(job_id, job_link, resume, date_listed, "Problem in Easy Applying", e, application_link, screenshot_name)
+                            failed_count += 1
                             discard_job()
                             continue
                     else:
                         # Case 2: Apply externally
-                        global tabs_count
                         skip, application_link, tabs_count = external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name)
                         if skip: continue
 
@@ -635,7 +642,6 @@ def apply_to_jobs(search_terms):
 
                     print_lg(f'Successfully saved "{title} | {company}" job. Job ID: {job_id} info')
                     current_count += 1
-                    global external_jobs_count, easy_applied_count
                     if application_link == "Easy Applied": easy_applied_count += 1
                     else:   external_jobs_count += 1
                     applied_jobs.add(job_id)
@@ -729,6 +735,8 @@ def main():
         print_lg("Total external job links collected:   {}".format(external_jobs_count))
         print_lg("                                      ------")
         print_lg("Total applied or collected:           {}".format(easy_applied_count + external_jobs_count))
+        print_lg("\nTotal failed:                         {}".format(failed_count))
+        print_lg("Total skipped:                        {}\n".format(skip_count))
         quote = choice([
             "You're one step closer than before.", 
             "All the best with your future interviews.", 

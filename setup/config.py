@@ -62,6 +62,9 @@ search_location = "" # If left empty as "", tool will leave it blank.
 
 # >>>>>>>>>>> Easy Apply Questions & Inputs <<<<<<<<<<<
 
+# Phone number (required), make sure it's valid.
+phone_number = "9876543210"
+
 # Give an relative or absolute path of your default resume to be uploaded...
 default_resume_path = "all resumes/default/resume.pdf"      # (In Development)
 
@@ -161,7 +164,7 @@ security_clearance = False       # True or False (True for Yes and False for No)
 
 ## Allow Manual Inputs
 # Should the tool pause before every submit application during easy apply to let you check the information?
-pause_before_submit = False     # True or False ,   Will be treated as False if run_in_background is True
+pause_before_submit = True     # True or False ,   Will be treated as False if run_in_background is True
 
 # Should the tool pause if it needs help in answering questions during easy apply?
 # Note: If set as False will answer randomly...

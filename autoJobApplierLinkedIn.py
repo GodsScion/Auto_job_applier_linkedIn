@@ -33,17 +33,21 @@ from modules.validator import validate_config
 if use_resume_generator:    from resume_generator import is_logged_in_GPT, login_GPT, open_resume_chat, create_custom_resume
 
 
+#< Global Variables and logics
+
 if run_in_background == True:
     pause_at_failed_question = False
     pause_before_submit = False
     run_non_stop = False
 tabs_count = 1
 
-
 easy_applied_count = 0
 external_jobs_count = 0
 failed_count = 0
 skip_count = 0
+
+re_experience = re.compile(r'[(]?\s*(\d+)\s*[)]?\s*[-to]*\s*\d*[+]*\s*year[s]?')
+#>
 
 
 #< Login Functions
@@ -222,7 +226,7 @@ def check_blacklist(rejected_jobs,job_id,company,blacklisted_companies):
 # Function to extract years of experience required from About Job
 def extract_years_of_experience(text):
     # Extract all patterns like '10+ years', '5 years', '3-5 years', etc.
-    matches = re.findall(r'[(]?\s*(\d+)\s*[)]?\s*[-to]*\s*\d*[+]*\s*year[s]?', text, flags=re.IGNORECASE)
+    matches = re.findall(re_experience, text, flags=re.IGNORECASE)
     if len(matches) == 0: 
         print_lg(f'Couldn\'t find experience requirement in About job \n{text}\n')
     return max([int(match) for match in matches if int(match) <= 12])
@@ -231,7 +235,7 @@ def extract_years_of_experience(text):
 
 # Function to answer common questions for Easy Apply
 def answer_common_questions(label, answer):
-    if ('hear' in label or 'come across' in label) and 'this' in label and ('job' in label or 'position' in label): answer = "LinkedIn"
+    if 'sponsorship' in label or 'visa' in label: answer = require_visa
     return answer
 
 
@@ -254,9 +258,9 @@ def answer_questions(questions_list, work_location):
             options = "".join([f' "{option.text}",' for option in select.options]) if label != "phone country code" else '"List of phone country codes"'
             prev_answer = selected_option
             if overwrite_previous_answers or selected_option == "Select an option":
-                answer = answer_common_questions(label,answer)
                 if 'gender' in label or 'sex' in label: answer = gender
                 elif 'disability' in label: answer = disability_status
+                answer = answer_common_questions(label,answer)
                 try: select.select_by_visible_text(answer)
                 except NoSuchElementException as e:
                     print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
@@ -269,7 +273,7 @@ def answer_questions(questions_list, work_location):
         if radio:
             prev_answer = None
             label = try_xp(radio, './/span[@data-test-form-builder-radio-button-form-component__title]', False)
-            label = try_find_by_classes(label, ['visually-hidden']).text
+            label = find_by_class(label, "visually-hidden", 2.0).text
             label_org = label if label else "Unknown"
             answer = 'Yes'
             label = label_org.lower()
@@ -282,9 +286,8 @@ def answer_questions(questions_list, work_location):
                 if option.is_selected(): prev_answer = option.get_attribute("value")
 
             if overwrite_previous_answers or prev_answer is None:
-                answer = answer_common_questions(label,answer)
                 if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
-                elif 'sponsorship' in label or 'visa' in label: answer = require_visa
+                answer = answer_common_questions(label,answer)
                 if not try_xp(radio, f".//label[normalize-space()='{answer}']"):
                     answer = options[0].get_attribute("value")
                     options[0].click()
@@ -305,21 +308,36 @@ def answer_questions(questions_list, work_location):
 
             prev_answer = text.get_attribute("value")
             if not prev_answer or overwrite_previous_answers:
-                answer = answer_common_questions(label,answer)
                 if 'phone' in label or 'mobile' in label: answer = phone_number
                 elif 'name' in label or 'signature' in label: answer = full_name  # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name
+                elif 'city' in label or 'location' in label:
+                    answer = current_city if current_city else work_location
+                    do_actions = True
                 elif 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
                 elif 'salary' in label or 'compensation' in label: answer = desired_salary
                 elif 'scale of 1-10' in label: answer = confidence_level
-                elif 'city' in label or 'location' in label: 
-                    answer = current_city if current_city else work_location
-                    do_actions = True            
+                elif ('hear' in label or 'come across' in label) and 'this' in label and ('job' in label or 'position' in label): answer = "LinkedIn"
+                answer = answer_common_questions(label,answer)
                 text.send_keys(answer)
                 if do_actions:
                     sleep(2)
                     actions.send_keys(Keys.ARROW_DOWN)
                     actions.send_keys(Keys.ENTER).perform()
             questions_list.add((label, text.get_attribute("value"), "text", prev_answer))
+
+        # Check if it's a textarea question
+        text_area = try_xp(Question, ".//textarea", False)
+        if text_area:
+            label = try_xp(Question, ".//label[@for]", False).text
+            label_org = label.text if label else "Unknown"
+            label = label_org.lower()
+            answer = ""
+            prev_answer = text_area.get_attribute("value")
+            if not prev_answer or overwrite_previous_answers:
+                if 'summary' in label: answer = summary
+                elif 'cover' in label: answer = cover_letter
+                text_area.send_keys(answer)
+            questions_list.add((label, text_area.get_attribute("value"), "textarea", prev_answer))
 
     # Select todays date
     try_xp(driver, "//button[contains(@aria-label, 'This is today')]")
@@ -427,7 +445,7 @@ def apply_to_jobs(search_terms):
     applied_jobs = get_applied_job_ids()
     rejected_jobs = set()
     blacklisted_companies = set()
-    global current_city, failed_count, skip_count, easy_applied_count, external_jobs_count, tabs_count
+    global current_city, failed_count, skip_count, easy_applied_count, external_jobs_count, tabs_count, pause_before_submit, pause_at_failed_question
     current_city = current_city.strip()
 
     if randomize_search_order:  shuffle(search_terms)
@@ -549,23 +567,23 @@ def apply_to_jobs(search_terms):
 
                     # Get job description
                     try:
+                        found_masters = False
                         description = find_by_class(driver, "jobs-box__html-content").text
                         descriptionLow = description.lower()
                         if security_clearance == False and ('polygraph' in descriptionLow or 'security clearance' in descriptionLow or 'secret clearance' in descriptionLow):
-                            print_lg(f'Skipping this job. Found "Security Clearence" or "Polygraph" in \n{description}')
+                            print_lg(f'Skipping this job. Found "Security Clearance" or "Polygraph" in \n{description}')
                             experience_required = "Skipped checking (Polygraph)"
-                        if did_masters and current_experience >= 2 and 'master' in descriptionLow:
-                            print_lg(f'Skipped checking for minimum years of experience required cause found the word "master" in \n{description}')
-                            experience_required = "Skipped checking (Masters)"
-                        else:
-                            experience_required = extract_years_of_experience(description)
-                            if current_experience > -1 and experience_required > current_experience:
-                                message = f'Experience required {experience_required} > Current Experience {current_experience}\n{description}'
-                                print_lg('Skipping this job.', message)
-                                failed_job(job_id, job_link, resume, date_listed, "Required experience is high", message, "Skipped", screenshot_name)
-                                rejected_jobs.add(job_id)
-                                skip_count += 1
-                                continue
+                        if did_masters and 'master' in descriptionLow:
+                            print_lg(f'Found the word "master" in \n{description}')
+                            found_masters = True
+                        experience_required = extract_years_of_experience(description)
+                        if current_experience > -1 and experience_required > current_experience + 2 if found_masters else 0:
+                            message = f'Experience required {experience_required} > Current Experience {current_experience}\n{description}'
+                            print_lg('Skipping this job.', message)
+                            failed_job(job_id, job_link, resume, date_listed, "Required experience is high", message, "Skipped", screenshot_name)
+                            rejected_jobs.add(job_id)
+                            skip_count += 1
+                            continue
                     except Exception as e:
                         if description == "Unknown":    print_lg("Unable to extract job description!")
                         else:
@@ -578,12 +596,13 @@ def apply_to_jobs(search_terms):
                         try: 
                             try:
                                 errored = ""
-                                wait_span_click(driver, "Next", 1)
+                                modal = find_by_class(driver, "jobs-easy-apply-modal")
+                                wait_span_click(modal, "Next", 1)
                                 resume = default_resume_path
                                 # if description != "Unknown":
                                 #     resume = create_custom_resume(description)
-                                wait_span_click(driver, "Next", 1)
-                                if overwrite_previous_answers: driver.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
+                                wait_span_click(modal, "Next", 1)
+                                if overwrite_previous_answers: modal.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
                                 resume = os.path.basename(resume)
                                 next_button = True
                                 questions_list = set()
@@ -601,8 +620,8 @@ def apply_to_jobs(search_terms):
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(questions_list, work_location)
-                                    try: next_button = driver.find_element(By.XPATH, '//span[normalize-space(.)="Review"]') 
-                                    except NoSuchElementException:  next_button = driver.find_element(By.XPATH, '//button[contains(span, "Next")]')
+                                    try: next_button = modal.find_element(By.XPATH, '//span[normalize-space(.)="Review"]') 
+                                    except NoSuchElementException:  next_button = modal.find_element(By.XPATH, '//button[contains(span, "Next")]')
                                     try: next_button.click()
                                     except ElementClickInterceptedException: break    # Happens when it tries to click Next button in About Company photos section
                                     buffer(click_gap)
@@ -611,11 +630,13 @@ def apply_to_jobs(search_terms):
                             finally:
                                 if questions_list and errored != "stuck": print_lg("Answered the following questions...", questions_list)
                                 wait_span_click(driver, "Review", 2, scrollTop=True)
-                                if errored != "stuck" and pause_before_submit: pyautogui.alert('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py',"Paused")
+                                cur_pause_before_submit = pause_before_submit
+                                if errored != "stuck" and cur_pause_before_submit:
+                                    pause_before_submit = False if "Turn off" == pyautogui.confirm('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py\nTo TEMPORARILY turn it off, click "Turn off"', "Confirm your information",["Turn off", "Continue"]) else True
                                 if wait_span_click(driver, "Submit application", 2, scrollTop=True): 
                                     date_applied = datetime.now()
                                     if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
-                                elif errored != "stuck" and pause_before_submit and "Yes" in pyautogui.confirm("You submitted the application, didn't you 😒?", "Failed to find Submit Application!", ["Yes", "No"]):
+                                elif errored != "stuck" and cur_pause_before_submit and "Yes" in pyautogui.confirm("You submitted the application, didn't you 😒?", "Failed to find Submit Application!", ["Yes", "No"]):
                                     date_applied = datetime.now()
                                     wait_span_click(driver, "Done", 2)
                                 else:

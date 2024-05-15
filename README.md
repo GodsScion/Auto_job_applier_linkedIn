@@ -136,6 +136,14 @@ With heartfelt appreciation, <br>
 
 
 ## 🗓️ Update History:
+### May 14, 2024
+- Added support for textarea type questions (Summary, Cover letter)
+- Patch for answering Phone Numbers
+- Improved performance for answering questions
+- Logic change for masters students
+- Added session summary for logs
+- Added option to turn off "Pause before Submit" until next run
+
 ### May 05, 2024
 - For questions similar to "What is your current location?", City posted in Job description will be posted as the answer if `current_city` is left empty in the configuration.
 - Added option to over write previously saved answers for a question `overwrite_previous_answers`.

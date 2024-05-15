@@ -147,20 +147,23 @@ overwrite_previous_answers = False # True or False
 
 
 ## Skip irrelevant jobs
-# Skip checking blacklist words for these companies... [Exceptions]
-blacklist_exceptions = ["Dice"]    # (dynamic multiple search) or leave empty as []. Ex: ["Jobot", "Dice"]
+# Skip checking for `about_company_bad_words` for these companies if they have these good words in their 'About Company' section... [Exceptions]
+about_company_good_words = ["Dice"]   # (dynamic multiple search) or leave empty as []. Ex: ["Jobot", "Dice"]
 
-# Avoid applying to these companies and companies with these words in their description (About Company)...
-blacklist_words = ["Crossover", "Staffing", "Recruiting"] # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting"]
+# Avoid applying to these companies, and companies with these bad words in their 'About Company' section...
+about_company_bad_words = ["Crossover", "Staffing", "Recruiting"]   # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting"]
 
-# Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
-current_experience = 4             # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
-
-# Do you have a Masters degree? (True for Yes and False for No). If True, the tool will apply to jobs containing the word 'master' in their job description and if it's experience required <= current_experience + 2. 
-did_masters = True                 # True or False
+# Avoid applying to these companies if they have these bad words in their 'Job Description' section...  (In development)
+bad_words = ["polygraph", "security clearance", "Secret Clearance", "US Citizenship", "USA Citizen"]   # (dynamic multiple search) or leave empty as []. Case Insensitive. Ex: ["word_1", "phrase 1", "word word", "polygraph", "US Citizenship", "Security Clearance"]
 
 # Do you have an active Security Clearance? (True for Yes and False for No)
 security_clearance = False         # True or False
+
+# Do you have a Masters degree? (True for Yes and False for No). If True, the tool will apply to jobs containing the word 'master' in their job description and if it's experience required <= current_experience + 2 and current_experience is not set as -1. 
+did_masters = True                 # True or False
+
+# Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
+current_experience = 4             # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
 ##
 
 

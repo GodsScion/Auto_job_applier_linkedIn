@@ -205,13 +205,13 @@ def check_blacklist(rejected_jobs,job_id,company,blacklisted_companies):
     about_company_org = about_company_org.text
     about_company = about_company_org.lower()
     skip_checking = False
-    for word in blacklist_exceptions:
+    for word in about_company_good_words:
         if word.lower() in about_company:
             print_lg(f'Found the word "{word}". So, skipped checking for blacklist words.')
             skip_checking = True
             break
     if not skip_checking:
-        for word in blacklist_words: 
+        for word in about_company_bad_words: 
             if word.lower() in about_company: 
                 rejected_jobs.add(job_id)
                 blacklisted_companies.add(company)
@@ -292,7 +292,7 @@ def answer_questions(questions_list, work_location):
                     answer = options[0].get_attribute("value")
                     options[0].click()
             else: answer = prev_answer
-            questions_list.add((label_org, answer, "radio", prev_answer))
+            questions_list.add((label_org+" ]", answer, "radio", prev_answer))
             continue
         
         # Check if it's a text question
@@ -309,10 +309,10 @@ def answer_questions(questions_list, work_location):
             prev_answer = text.get_attribute("value")
             if not prev_answer or overwrite_previous_answers:
                 if 'phone' in label or 'mobile' in label: answer = phone_number
-                elif 'name' in label or 'signature' in label: answer = full_name  # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name
                 elif 'city' in label or 'location' in label:
                     answer = current_city if current_city else work_location
                     do_actions = True
+                elif 'name' in label or 'signature' in label: answer = full_name  # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name     # What if question is 'name of the city or university you attend, name of referral etc?'
                 elif 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
                 elif 'salary' in label or 'compensation' in label: answer = desired_salary
                 elif 'scale of 1-10' in label: answer = confidence_level
@@ -324,6 +324,7 @@ def answer_questions(questions_list, work_location):
                     actions.send_keys(Keys.ARROW_DOWN)
                     actions.send_keys(Keys.ENTER).perform()
             questions_list.add((label, text.get_attribute("value"), "text", prev_answer))
+            continue
 
         # Check if it's a textarea question
         text_area = try_xp(Question, ".//textarea", False)
@@ -338,6 +339,7 @@ def answer_questions(questions_list, work_location):
                 elif 'cover' in label: answer = cover_letter
                 text_area.send_keys(answer)
             questions_list.add((label, text_area.get_attribute("value"), "textarea", prev_answer))
+            continue
 
     # Select todays date
     try_xp(driver, "//button[contains(@aria-label, 'This is today')]")
@@ -345,19 +347,6 @@ def answer_questions(questions_list, work_location):
     # Collect important skills
     # if 'do you have' in label and 'experience' in label and ' in ' in label -> Get word (skill) after ' in ' from label
     # if 'how many years of expereince do you have in ' in label -> Get word (skill) after ' in '
-
-    # Redundancy
-
-    # # Fill any left out texts with years_of_experience
-    # text_inputs = driver.find_elements(By.CLASS_NAME, "artdeco-text-input--input")
-    # for text_input in text_inputs:
-    #     if not text_input.get_attribute("value"): text_input.send_keys(years_of_experience)
-
-    # # All select questions
-    # all_select_questions = driver.find_elements(By.XPATH, "//label[@data-test-text-entity-list-form-title]")
-    # for question in all_select_questions:
-    #     question = question.text
-    #     questions_list.add((question, "Yes", "select"))    
 
     return questions_list
 
@@ -570,9 +559,17 @@ def apply_to_jobs(search_terms):
                         found_masters = False
                         description = find_by_class(driver, "jobs-box__html-content").text
                         descriptionLow = description.lower()
+                        for word in bad_words:
+                            if word.lower() in descriptionLow:
+                                print_lg(f'Skipping this job. Found "{word}" in \n{description}')    
+                                experience_required = "Skipped checking (Bad word)"
+                                # skip_count += 1
+                                continue
                         if security_clearance == False and ('polygraph' in descriptionLow or 'security clearance' in descriptionLow or 'secret clearance' in descriptionLow):
                             print_lg(f'Skipping this job. Found "Security Clearance" or "Polygraph" in \n{description}')
                             experience_required = "Skipped checking (Polygraph)"
+                            # skip_count += 1
+                            continue
                         if did_masters and 'master' in descriptionLow:
                             print_lg(f'Found the word "master" in \n{description}')
                             found_masters = True
@@ -687,7 +684,7 @@ def apply_to_jobs(search_terms):
 def run(total_runs):
     print_lg("\n########################################################################################################################\n")
     print_lg(f"Date and Time: {datetime.now()}")
-    print_lg(f"Cycle number: {total_runs+1}")
+    print_lg(f"Cycle number: {total_runs}")
     print_lg(f"Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'")
     apply_to_jobs(search_terms)
     print_lg("########################################################################################################################\n")
@@ -730,7 +727,7 @@ def main():
 
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)
-        total_runs = 0
+        total_runs = 1
         total_runs = run(total_runs)
         while(run_non_stop):
             if cycle_date_posted:

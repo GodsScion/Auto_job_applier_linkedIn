@@ -39,6 +39,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
   If you are using Windows, click on `windows-setup.bat` available in the `/setup` folder, this will install the latest chromedriver automatically.
 * Open `config.py` file in `/setup` folder and enter your details, configure the tool as per your needs.
 * Run `autoJobApplierLinkedIn.py` and see the magic happen.
+* If you have questions or need help setting it up or to talk in general, join the github server: https://discord.gg/fFp7uUzWCY
 
 ## 🤩 Feature List
 (I'm yet to complete the documentation, I'm adding in more features, still in development)
@@ -187,6 +188,22 @@ See [AGPLv3 LICENSE](LICENSE) for more info.
 
 
 <br>
+
+## 🐧 Socials
+- **LinkedIn** : https://www.linkedin.com/in/saivigneshgolla/
+- **Email**    : saivigneshgolla@outlook.com
+- **Discord**  : godsscion
+
+## 🙌 Community Support and Discussions
+- **Discord Server** : https://discord.gg/fFp7uUzWCY
+- **GitHub**
+    - [All Discussions](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions)
+    - [Announcements](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/announcements)
+    - [General](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/general)
+    - [Feature requests or Ideas](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/feature-requests-or-ideas)
+    - [Polls](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/polls)
+    - [Community Flex](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/community-flex)
+    - [Support Q&A](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/support-q-a)
 
 ---
 

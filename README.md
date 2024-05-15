@@ -140,7 +140,8 @@ With heartfelt appreciation, <br>
 
 ## 🗓️ Update History:
 ### May 15, 2024
-- Added support for textarea type questions (Summary, Cover letter)
+- Added support for textarea type questions `summary`, `cover_letter`(Summary, Cover letter)
+- Added support for checkbox type questions (acknowledgements)
 - Added feature to skip irrelevant jobs based on `bad_words` 
 - Patch for answering Phone Numbers
 - Improved performance for answering questions

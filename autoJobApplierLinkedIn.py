@@ -260,6 +260,7 @@ def answer_questions(questions_list, work_location):
             if overwrite_previous_answers or selected_option == "Select an option":
                 if 'gender' in label or 'sex' in label: answer = gender
                 elif 'disability' in label: answer = disability_status
+                elif 'proficiency' in label: answer = 'Professional'
                 answer = answer_common_questions(label,answer)
                 try: select.select_by_visible_text(answer)
                 except NoSuchElementException as e:
@@ -339,6 +340,18 @@ def answer_questions(questions_list, work_location):
                 elif 'cover' in label: answer = cover_letter
                 text_area.send_keys(answer)
             questions_list.add((label, text_area.get_attribute("value"), "textarea", prev_answer))
+            continue
+
+        # Check if it's a checkbox question
+        checkbox = try_xp(Question, ".//input[@type='checkbox']", False)
+        if checkbox:
+            label = try_xp(Question, ".//span[@class='visually-hidden']", False)
+            label_org = label.text if label else "Unknown"
+            label = label_org.lower()
+            answer = try_xp(Question, ".//label[@for]", False).text
+            prev_answer = checkbox.is_selected()
+            if not prev_answer: checkbox.click()
+            questions_list.add((f'{label} ([X] {answer})', checkbox.is_selected(), "checkbox", prev_answer))
             continue
 
     # Select todays date
@@ -563,12 +576,12 @@ def apply_to_jobs(search_terms):
                             if word.lower() in descriptionLow:
                                 print_lg(f'Skipping this job. Found "{word}" in \n{description}')    
                                 experience_required = "Skipped checking (Bad word)"
-                                # skip_count += 1
+                                skip_count += 1
                                 continue
                         if security_clearance == False and ('polygraph' in descriptionLow or 'security clearance' in descriptionLow or 'secret clearance' in descriptionLow):
                             print_lg(f'Skipping this job. Found "Security Clearance" or "Polygraph" in \n{description}')
                             experience_required = "Skipped checking (Polygraph)"
-                            # skip_count += 1
+                            skip_count += 1
                             continue
                         if did_masters and 'master' in descriptionLow:
                             print_lg(f'Found the word "master" in \n{description}')
@@ -630,6 +643,7 @@ def apply_to_jobs(search_terms):
                                 cur_pause_before_submit = pause_before_submit
                                 if errored != "stuck" and cur_pause_before_submit:
                                     pause_before_submit = False if "Turn off" == pyautogui.confirm('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py\nTo TEMPORARILY turn it off, click "Turn off"', "Confirm your information",["Turn off", "Continue"]) else True
+                                    try_xp(modal, ".//span[normalize-space(.)='Review']")
                                 if wait_span_click(driver, "Submit application", 2, scrollTop=True): 
                                     date_applied = datetime.now()
                                     if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
@@ -748,13 +762,13 @@ def main():
         critical_error_log("In Applier Main", e)
         pyautogui.alert(e,alert_title)
     finally:
-        print_lg("\n\nTotal runs:                           {}".format(total_runs))
-        print_lg("Total jobs Easy Applied:              {}".format(easy_applied_count))
-        print_lg("Total external job links collected:   {}".format(external_jobs_count))
-        print_lg("                                      ------")
-        print_lg("Total applied or collected:           {}".format(easy_applied_count + external_jobs_count))
-        print_lg("\nTotal failed:                         {}".format(failed_count))
-        print_lg("Total skipped:                        {}\n".format(skip_count))
+        print_lg("\n\nTotal runs:                     {}".format(total_runs))
+        print_lg("Jobs Easy Applied:              {}".format(easy_applied_count))
+        print_lg("External job links collected:   {}".format(external_jobs_count))
+        print_lg("                              ----------")
+        print_lg("Total applied or collected:     {}".format(easy_applied_count + external_jobs_count))
+        print_lg("\nFailed jobs:                    {}".format(failed_count))
+        print_lg("Irrelevant jobs skipped:        {}\n".format(skip_count))
         quote = choice([
             "You're one step closer than before.", 
             "All the best with your future interviews.", 

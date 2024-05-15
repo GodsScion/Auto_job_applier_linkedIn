@@ -154,7 +154,7 @@ about_company_good_words = ["Dice"]   # (dynamic multiple search) or leave empty
 about_company_bad_words = ["Crossover", "Staffing", "Recruiting"]   # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting"]
 
 # Avoid applying to these companies if they have these bad words in their 'Job Description' section...  (In development)
-bad_words = ["polygraph", "security clearance", "Secret Clearance", "US Citizenship", "USA Citizen"]   # (dynamic multiple search) or leave empty as []. Case Insensitive. Ex: ["word_1", "phrase 1", "word word", "polygraph", "US Citizenship", "Security Clearance"]
+bad_words = ["US Citizen", "USA Citizen"]   # (dynamic multiple search) or leave empty as []. Case Insensitive. Ex: ["word_1", "phrase 1", "word word", "polygraph", "US Citizenship", "Security Clearance"]
 
 # Do you have an active Security Clearance? (True for Yes and False for No)
 security_clearance = False         # True or False

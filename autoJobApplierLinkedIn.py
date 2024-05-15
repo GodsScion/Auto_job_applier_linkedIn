@@ -39,8 +39,10 @@ if run_in_background == True:
     pause_at_failed_question = False
     pause_before_submit = False
     run_non_stop = False
-tabs_count = 1
 
+randomly_answered_questions = set()
+
+tabs_count = 1
 easy_applied_count = 0
 external_jobs_count = 0
 failed_count = 0
@@ -261,12 +263,17 @@ def answer_questions(questions_list, work_location):
                 if 'gender' in label or 'sex' in label: answer = gender
                 elif 'disability' in label: answer = disability_status
                 elif 'proficiency' in label: answer = 'Professional'
-                answer = answer_common_questions(label,answer)
+                else: answer = answer_common_questions(label,answer)
                 try: select.select_by_visible_text(answer)
                 except NoSuchElementException as e:
+                    ''' <<<<<<<<<<<<<<<<<<  
+                        Only works if options match exactly, implement logic to check if word in options... 
+                        Also implement US voluntary self- identification
+                    '''
                     print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
-                    select.select_by_index(randint(1, len(select.options)-1))            
-            questions_list.add((f'{label_org} [ {options} ]', select.first_selected_option.text, "select", prev_answer)) # <<<<<<<<<<<<<<<<<<
+                    select.select_by_index(randint(1, len(select.options)-1))
+                    randomly_answered_questions.add((f'{label_org} [ {options} ]',"select"))
+            questions_list.add((f'{label_org} [ {options} ]', select.first_selected_option.text, "select", prev_answer))
             continue
         
         # Check if it's a radio Question
@@ -283,15 +290,17 @@ def answer_questions(questions_list, work_location):
             options = radio.find_elements(By.TAG_NAME, 'input')
             
             for option in options:
-                label_org =  f'{label_org} "{option.get_attribute("value")}",'
+                label_org =  f'{label_org} "{try_xp(radio, f".//label[for='{option.get_attribute("id")}']", False).text} <{option.get_attribute("value")}>",' # Saving option as "label <value>"
                 if option.is_selected(): prev_answer = option.get_attribute("value")
 
             if overwrite_previous_answers or prev_answer is None:
                 if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
-                answer = answer_common_questions(label,answer)
+                elif 'veteran' in label or 'protected' in label: answer = veteran_status
+                else: answer = answer_common_questions(label,answer)
                 if not try_xp(radio, f".//label[normalize-space()='{answer}']"):
                     answer = options[0].get_attribute("value")
                     options[0].click()
+                    randomly_answered_questions.add((f'{label_org} ]',"radio"))
             else: answer = prev_answer
             questions_list.add((label_org+" ]", answer, "radio", prev_answer))
             continue
@@ -304,12 +313,13 @@ def answer_questions(questions_list, work_location):
             try: label = label.find_element(By.CLASS_NAME,'visually-hidden').text
             except: label = label.text
             label_org = label if label else "Unknown"
-            answer = years_of_experience
+            answer = "" # years_of_experience
             label = label_org.lower()
 
             prev_answer = text.get_attribute("value")
             if not prev_answer or overwrite_previous_answers:
-                if 'phone' in label or 'mobile' in label: answer = phone_number
+                if 'experience' in label: answer = years_of_experience
+                elif 'phone' in label or 'mobile' in label: answer = phone_number
                 elif 'city' in label or 'location' in label:
                     answer = current_city if current_city else work_location
                     do_actions = True
@@ -318,7 +328,9 @@ def answer_questions(questions_list, work_location):
                 elif 'salary' in label or 'compensation' in label: answer = desired_salary
                 elif 'scale of 1-10' in label: answer = confidence_level
                 elif ('hear' in label or 'come across' in label) and 'this' in label and ('job' in label or 'position' in label): answer = "LinkedIn"
-                answer = answer_common_questions(label,answer)
+                else: answer = answer_common_questions(label,answer)
+                if answer == "":
+                    randomly_answered_questions.add((label_org, "text"))
                 text.send_keys(answer)
                 if do_actions:
                     sleep(2)
@@ -339,6 +351,8 @@ def answer_questions(questions_list, work_location):
                 if 'summary' in label: answer = summary
                 elif 'cover' in label: answer = cover_letter
                 text_area.send_keys(answer)
+                if answer == "": 
+                    randomly_answered_questions.add((label_org, "textarea"))
             questions_list.add((label, text_area.get_attribute("value"), "textarea", prev_answer))
             continue
 
@@ -769,6 +783,7 @@ def main():
         print_lg("Total applied or collected:     {}".format(easy_applied_count + external_jobs_count))
         print_lg("\nFailed jobs:                    {}".format(failed_count))
         print_lg("Irrelevant jobs skipped:        {}\n".format(skip_count))
+        print_lg("\n\nQuestions randomly answered:\n  {}  \n\n".format(randomly_answered_questions))
         quote = choice([
             "You're one step closer than before.", 
             "All the best with your future interviews.", 

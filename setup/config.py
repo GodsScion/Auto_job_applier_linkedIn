@@ -124,10 +124,6 @@ desired_salary = "90000"           # "80000", "90000", "100000" or "120000" and 
 # Example question: "On a scale of 1-10 how much experience do you have building web or mobile applications? 1 being very little or only in school, 10 being that you have built and launched applications to real users"
 confidence_level = "8"             # Any number between "1" to "10" including 1 and 10, put it in quotes ""
 
-# How do you identify yourself? If left empty as "", tool will not answer the question. However, note that some companies make compulsory to be answered
-gender = "Male"                    # "Male", "Female", "Other", "Decline" or ""
-disability_status = "Decline"      # 
-
 current_city = ""                  # If left empty will fill in location of jobs location.
 
 full_name = "Sai Vignesh Golla"    # Your name in quotes Eg: "First Middle Last"
@@ -135,6 +131,20 @@ full_name = "Sai Vignesh Golla"    # Your name in quotes Eg: "First Middle Last"
 summary = ""                       # Your summary in quotes
 
 cover_letter = ""                  # Your cover letter in quotes
+
+## US Equal Opportunity questions
+# What is your ethnicity or race? If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
+ethnicity = "Decline"              # "Decline", "Hispanic/Latino", "American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "Other"
+
+# How do you identify yourself? If left empty as "", tool will not answer the question. However, note that some companies make compulsory to be answered
+gender = "Decline"                 # "Male", "Female", "Other", "Decline" or ""
+
+# Are you physically disabled? If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
+disability_status = "Decline"      # 
+
+veteran_status = "Decline"         # "Yes", "No", "Decline"
+##
+
 
 
 # >>>>>>>>>>> LinkedIn Settings <<<<<<<<<<<
@@ -190,7 +200,7 @@ connect_hr = True                  # True or False
 connect_request_message = ""       # Leave Empty to send connection request without personalized invitation (recommended to leave it empty, since you only get 10 per month without LinkedIn Premium*)
 
 # Do you want the program to run continuously until you stop it? (Beta)
-run_non_stop = True                # True or False ,   Will be treated as False if run_in_background is True
+run_non_stop = False               # True or False ,   Will be treated as False if run_in_background is True
 alternate_sortby = True            # True or False
 cycle_date_posted = True           # True or False
 stop_date_cycle_at_24hr = True     # True or False

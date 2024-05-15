@@ -47,7 +47,7 @@ try:
     wait = WebDriverWait(driver, 5)
     actions = ActionChains(driver)
 except Exception as e:
-    msg = "Seems like Google Chrome browser is already running or Chrome-driver is out dated. Close Chrome and run windows-setup.bat for windows or try your luck with setup.sh or update the Chrome-driver and then run this program! If error occurred when using undetected_mode uninstall and install undetected-chromedriver. (Open  terminal and use commands 'pip uninstall undetected-chromedriver' and 'pip install undetected-chromedriver' respectively.)"
+    msg = 'Seems like either... \n\n1. Chrome is already running. \nA. Close all Chrome windows and try again. \n\n2. Google Chrome or Chromedriver is out dated. \nA. Update browser and Chromedriver (You can run "windows-setup.bat" in /setup folder for Windows PC to update Chromedriver)! \n\n3. If error occurred when using "undetected_mode", try reinstalling undetected-chromedriver. \nA. Open a terminal and use commands "pip uninstall undetected-chromedriver" and "pip install undetected-chromedriver". \n\n\nIf issue persists, try Safe Mode. Set, safe_mode = True in config.py \n\nPlease check GitHub discussions/support for solutions https://github.com/GodsScion/Auto_job_applier_linkedIn \n                                   OR \nReach out in discord ( https://discord.gg/fFp7uUzWCY )'
     if isinstance(e,TimeoutError): msg = "Couldn't download Chrome-driver. Set undetected_mode = False in config!"
     print_lg(msg)
     critical_error_log("In Opening Chrome", e)

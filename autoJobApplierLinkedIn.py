@@ -290,7 +290,8 @@ def answer_questions(questions_list, work_location):
             options = radio.find_elements(By.TAG_NAME, 'input')
             
             for option in options:
-                label_org =  f'{label_org} "{try_xp(radio, f".//label[for='{option.get_attribute("id")}']", False).text} <{option.get_attribute("value")}>",' # Saving option as "label <value>"
+                option_label = try_xp(radio, f".//label[@for='{option.get_attribute("id")}']", False)
+                label_org =  f'{label_org} "{option_label.text if option_label else "Unknown"} <{option.get_attribute("value")}>",' # Saving option as "label <value>"
                 if option.is_selected(): prev_answer = option.get_attribute("value")
 
             if overwrite_previous_answers or prev_answer is None:
@@ -373,7 +374,7 @@ def answer_questions(questions_list, work_location):
 
     # Collect important skills
     # if 'do you have' in label and 'experience' in label and ' in ' in label -> Get word (skill) after ' in ' from label
-    # if 'how many years of expereince do you have in ' in label -> Get word (skill) after ' in '
+    # if 'how many years of experience do you have in ' in label -> Get word (skill) after ' in '
 
     return questions_list
 
@@ -583,7 +584,7 @@ def apply_to_jobs(search_terms):
 
                     # Get job description
                     try:
-                        found_masters = False
+                        found_masters = 0
                         description = find_by_class(driver, "jobs-box__html-content").text
                         descriptionLow = description.lower()
                         for word in bad_words:
@@ -599,11 +600,11 @@ def apply_to_jobs(search_terms):
                             continue
                         if did_masters and 'master' in descriptionLow:
                             print_lg(f'Found the word "master" in \n{description}')
-                            found_masters = True
+                            found_masters = 2
                         experience_required = extract_years_of_experience(description)
-                        if current_experience > -1 and experience_required > current_experience + 2 if found_masters else 0:
-                            message = f'Experience required {experience_required} > Current Experience {current_experience}\n{description}'
-                            print_lg('Skipping this job.', message)
+                        if current_experience > -1 and experience_required > current_experience + found_masters:
+                            message = f'Experience required {experience_required} > Current Experience {current_experience + found_masters}\n\n{description}'
+                            print_lg('\nSkipping this job.', message)
                             failed_job(job_id, job_link, resume, date_listed, "Required experience is high", message, "Skipped", screenshot_name)
                             rejected_jobs.add(job_id)
                             skip_count += 1
@@ -652,7 +653,9 @@ def apply_to_jobs(search_terms):
 
                             except NoSuchElementException: errored = "nose"
                             finally:
-                                if questions_list and errored != "stuck": print_lg("Answered the following questions...", questions_list)
+                                if questions_list and errored != "stuck": 
+                                    print_lg("Answered the following questions...", questions_list)
+                                    print("\n\n" + "\n".join(str(question) for question in questions_list) + "\n\n")
                                 wait_span_click(driver, "Review", 2, scrollTop=True)
                                 cur_pause_before_submit = pause_before_submit
                                 if errored != "stuck" and cur_pause_before_submit:
@@ -783,7 +786,7 @@ def main():
         print_lg("Total applied or collected:     {}".format(easy_applied_count + external_jobs_count))
         print_lg("\nFailed jobs:                    {}".format(failed_count))
         print_lg("Irrelevant jobs skipped:        {}\n".format(skip_count))
-        print_lg("\n\nQuestions randomly answered:\n  {}  \n\n".format(randomly_answered_questions))
+        if randomly_answered_questions: print_lg("\n\nQuestions randomly answered:\n  {}  \n\n".format(";\n".join(str(question) for question in randomly_answered_questions)))
         quote = choice([
             "You're one step closer than before.", 
             "All the best with your future interviews.", 
@@ -798,7 +801,7 @@ def main():
             "Obstacles are those frightful things you see when you take your eyes off your goal. - Henry Ford",
             "The only limit to our realization of tomorrow will be our doubts of today. - Franklin D. Roosevelt"
             ])
-        msg = f"\n{quote}\n\n\nBest regards,\nSai Vignesh Golla\nhttps://www.linkedin.com/in/saivigneshgolla/"
+        msg = f"\n{quote}\n\n\nBest regards,\nSai Vignesh Golla\nhttps://www.linkedin.com/in/saivigneshgolla/\n\n"
         pyautogui.alert(msg, "Exiting..")
         print_lg(msg,"Closing the browser...")
         if tabs_count >= 10:

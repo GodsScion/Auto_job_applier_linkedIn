@@ -140,10 +140,8 @@ With heartfelt appreciation, <br>
 
 ## 🗓️ Update History:
 ### May 15, 2024
-- Added support for textarea type questions `summary`, `cover_letter`(Summary, Cover letter)
-- Added support for checkbox type questions (acknowledgements)
+- Added functionality for textarea type questions `summary`, `cover_letter`(Summary, Cover letter); checkbox type questions (acknowledgements)
 - Added feature to skip irrelevant jobs based on `bad_words` 
-- Patch for answering Phone Numbers
 - Improved performance for answering questions
 - Logic change for masters students skipping
 - Change variable names `blacklist_exceptions` -> `about_company_good_words` and `blacklist_words` -> `about_company_bad_words`

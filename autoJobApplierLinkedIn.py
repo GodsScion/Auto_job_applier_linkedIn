@@ -48,7 +48,7 @@ external_jobs_count = 0
 failed_count = 0
 skip_count = 0
 
-re_experience = re.compile(r'[(]?\s*(\d+)\s*[)]?\s*[-to]*\s*\d*[+]*\s*year[s]?')
+re_experience = re.compile(r'[(]?\s*(\d+)\s*[)]?\s*[-to]*\s*\d*[+]*\s*year[s]?', re.IGNORECASE)
 #>
 
 
@@ -228,7 +228,7 @@ def check_blacklist(rejected_jobs,job_id,company,blacklisted_companies):
 # Function to extract years of experience required from About Job
 def extract_years_of_experience(text):
     # Extract all patterns like '10+ years', '5 years', '3-5 years', etc.
-    matches = re.findall(re_experience, text, flags=re.IGNORECASE)
+    matches = re.findall(re_experience, text)
     if len(matches) == 0: 
         print_lg(f'Couldn\'t find experience requirement in About job \n{text}\n')
     return max([int(match) for match in matches if int(match) <= 12])

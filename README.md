@@ -22,6 +22,8 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - [Disclaimer](#-disclaimer)
 - [Terms and Conditions](#%EF%B8%8F-terms-and-conditions)
 - [License](#%EF%B8%8F-license)
+- [Socials](#-socials)
+- [Support and Discussions](#-community-support-and-discussions)
 
 
 ## ⚙️ How to install

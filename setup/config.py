@@ -51,11 +51,11 @@ use_resume_generator = False       # True or False ,   This feature may only wor
 
 # Login Credentials for LinkedIn
 username = "username@example.com"  # Enter your username in the quotes
-password = "example_password"       # Enter your password in the quotes
+password = "example_password"      # Enter your password in the quotes
 
 # These Sentences are Searched in LinkedIn
+# Enter your search terms inside '[ ]' with quotes ' "searching title" ' for each search followed by comma ', ' Eg: ["Software Engineer", "Software Developer", "Selenium Developer"]
 search_terms = ["Software Engineer", "Software Developer", "Python Developer"]
-                                   # Enter your search terms inside '[ ]' with quotes ' "searching title" ' for each search followed by comma ', ' Eg: ["Software Engineer", "Software Developer", "Selenium Developer"]
 
 # Search location, this will be filled in "City, state, or zip code" search box. If left empty as "", tool will not fill it.
 search_location = ""               # Some valid examples: "", "United States", "India", "Chicago, Illinois, United States", "90001, Los Angeles, California, United States", "Bengaluru, Karnataka, India", etc.
@@ -71,11 +71,11 @@ question_3 = []                    # (dynamic multiple select)
 
 '''
 
-sort_by = "Most relevant"          # "Most recent", "Most relevant" or ("" to not select) 
-date_posted = "Any time"           # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
+sort_by = ""                       # "Most recent", "Most relevant" or ("" to not select) 
+date_posted = "Past month"         # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                        # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
-easy_apply_only = True             # True or False
+easy_apply_only = False            # True or False
 
 experience_level = []              # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
 job_type = []                      # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
@@ -105,28 +105,28 @@ phone_number = ""        # Enter your 10 digit number in quotes Eg: "9876543210"
 default_resume_path = "all resumes/default/resume.pdf"      # (In Development)
 
 # What do you want to answer for questions that ask about years of experience you have, this is different from current_experience? 
-years_of_experience = "4"          # A number in quotes Eg: "0","1","2","3","4", etc.
+years_of_experience = "2"          # A number in quotes Eg: "0","1","2","3","4", etc.
 
 # Do you need visa sponsorship now or in future?
 require_visa = "No"                # "Yes" or "No"
 
 # What is the status of your citizenship? # If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
 # Valid options are: "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident" or "Other"
-us_citizenship = "Non-citizen allowed to work for any employer"
+us_citizenship = "U.S. Citizen/Permanent Resident"
 
 
 # What is the link to your portfolio website, leave it empty as "", if you want to leave this question unanswered
-website = "https://github.com/GodsScion" # "www.example.bio" or "" and so on....
+website = ""                       # "www.example.bio" or "" and so on....
 
 # What to enter in your desired salary question, only enter in numbers inside quotes as some companies only allow numbers
-desired_salary = "90000"           # "80000", "90000", "100000" or "120000" and so on....
+desired_salary = "0"               # "80000", "90000", "100000" or "120000" and so on....
 
 # Example question: "On a scale of 1-10 how much experience do you have building web or mobile applications? 1 being very little or only in school, 10 being that you have built and launched applications to real users"
 confidence_level = "8"             # Any number between "1" to "10" including 1 and 10, put it in quotes ""
 
 current_city = ""                  # If left empty will fill in location of jobs location.
 
-full_name = "Sai Vignesh Golla"    # Your name in quotes Eg: "First Middle Last"
+full_name = "First Middle Last"    # Your name in quotes Eg: "First Middle Last"
 
 summary = ""                       # Your summary in quotes
 
@@ -157,23 +157,24 @@ overwrite_previous_answers = False # True or False
 
 
 ## Skip irrelevant jobs
-# Skip checking for `about_company_bad_words` for these companies if they have these good words in their 'About Company' section... [Exceptions]
-about_company_good_words = ["Dice"]   # (dynamic multiple search) or leave empty as []. Ex: ["Jobot", "Dice"]
-
 # Avoid applying to these companies, and companies with these bad words in their 'About Company' section...
-about_company_bad_words = ["Crossover", "Staffing", "Recruiting"]   # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting"]
+about_company_bad_words = []       # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting"]
+
+# Skip checking for `about_company_bad_words` for these companies if they have these good words in their 'About Company' section... [Exceptions]
+about_company_good_words = []      # (dynamic multiple search) or leave empty as []. Ex: ["Jobot", "Dice"]
+
 
 # Avoid applying to these companies if they have these bad words in their 'Job Description' section...  (In development)
-bad_words = ["US Citizen", "USA Citizen"]   # (dynamic multiple search) or leave empty as []. Case Insensitive. Ex: ["word_1", "phrase 1", "word word", "polygraph", "US Citizenship", "Security Clearance"]
+bad_words = []                     # (dynamic multiple search) or leave empty as []. Case Insensitive. Ex: ["word_1", "phrase 1", "word word", "polygraph", "US Citizenship", "Security Clearance"]
 
 # Do you have an active Security Clearance? (True for Yes and False for No)
 security_clearance = False         # True or False
 
 # Do you have a Masters degree? (True for Yes and False for No). If True, the tool will apply to jobs containing the word 'master' in their job description and if it's experience required <= current_experience + 2 and current_experience is not set as -1. 
-did_masters = True                 # True or False
+did_masters = False                # True or False
 
 # Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
-current_experience = -1            # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
+current_experience = 2             # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
 ##
 
 
@@ -187,10 +188,10 @@ pause_at_failed_question = True    # True or False ,   Will be treated as False 
 ##
 
 # Keep the External Application tabs open?
-close_tabs = True                  # True or False
+close_tabs = False                 # True or False
 
 # After how many number of applications should we keep switching? 
-switch_number = 50                 # Only numbers greater than 25... Don't put in quotes
+switch_number = 30                 # Only numbers greater than 25... Don't put in quotes
 
 ## Upcoming features (In Development)
 # Send connection requests to HR's

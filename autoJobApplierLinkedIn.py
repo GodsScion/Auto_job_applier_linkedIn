@@ -40,6 +40,7 @@ if run_in_background == True:
     pause_before_submit = False
     run_non_stop = False
 
+useNewResume = True
 randomly_answered_questions = set()
 
 tabs_count = 1
@@ -466,7 +467,7 @@ def apply_to_jobs(search_terms):
     applied_jobs = get_applied_job_ids()
     rejected_jobs = set()
     blacklisted_companies = set()
-    global current_city, failed_count, skip_count, easy_applied_count, external_jobs_count, tabs_count, pause_before_submit, pause_at_failed_question
+    global current_city, failed_count, skip_count, easy_applied_count, external_jobs_count, tabs_count, pause_before_submit, pause_at_failed_question, useNewResume
     current_city = current_city.strip()
 
     if randomize_search_order:  shuffle(search_terms)
@@ -620,6 +621,7 @@ def apply_to_jobs(search_terms):
                             print_lg("Unable to extract years of experience required!")
                         # print_lg(e)
 
+                    uploaded = False
                     # Case 1: Easy Apply Button
                     if wait_span_click(driver, "Easy Apply", 2):
                         try: 
@@ -631,7 +633,9 @@ def apply_to_jobs(search_terms):
                                 # if description != "Unknown":
                                 #     resume = create_custom_resume(description)
                                 wait_span_click(modal, "Next", 1)
-                                if overwrite_previous_answers: modal.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
+                                if useNewResume:
+                                    modal.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
+                                    uploaded = True
                                 resume = os.path.basename(resume)
                                 next_button = True
                                 questions_list = set()
@@ -692,6 +696,7 @@ def apply_to_jobs(search_terms):
                         if skip: continue
 
                     submitted_jobs(job_id, title, company, work_location, work_style, description, experience_required, skills, hr_name, hr_link, resume, reposted, date_listed, date_applied, job_link, application_link, questions_list, connect_request)
+                    if uploaded:   useNewResume = False
 
                     print_lg(f'Successfully saved "{title} | {company}" job. Job ID: {job_id} info')
                     current_count += 1
@@ -735,16 +740,20 @@ chatGPT_tab = False
 linkedIn_tab = False
 def main():
     try:
+        global linkedIn_tab, tabs_count, useNewResume
         alert_title = "Error Occurred. Closing Browser!"
+        total_runs = 1        
         validate_config()
-        if not os.path.exists(default_resume_path):   raise Exception('Your default resume "{}" is missing! Please update it\'s folder path in config.py or add a resume with exact name and path (check for spelling mistakes including cases).'.format(default_resume_path))
+        
+        if not os.path.exists(default_resume_path):
+            pyautogui.alert(text='Your default resume "{}" is missing! Please update it\'s folder path "default_resume_path" in config.py\n\nOR\n\nAdd a resume with exact name and path (check for spelling mistakes including cases).\n\n\nFor now the bot will continue using your previous upload from LinkedIn!'.format(default_resume_path), title="Missing Resume", button="OK")
+            useNewResume = False
         
         # Login to LinkedIn
-        global tabs_count
         tabs_count = len(driver.window_handles)
         driver.get("https://www.linkedin.com/login")
         if not is_logged_in_LN(): login_LN()
-        global linkedIn_tab
+        
         linkedIn_tab = driver.current_window_handle
 
         # Login to ChatGPT in a new tab for resume customization
@@ -761,7 +770,6 @@ def main():
 
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)
-        total_runs = 1
         total_runs = run(total_runs)
         while(run_non_stop):
             if cycle_date_posted:

@@ -291,7 +291,8 @@ def answer_questions(questions_list, work_location):
             options_labels = []
             
             for option in options:
-                option_label = try_xp(radio, f".//label[@for='{option.get_attribute("id")}']", False)
+                id = option.get_attribute("id")
+                option_label = try_xp(radio, f'.//label[@for="{id}"]', False)
                 options_labels.append( f'"{option_label.text if option_label else "Unknown"}"<{option.get_attribute("value")}>' ) # Saving option as "label <value>"
                 if option.is_selected(): prev_answer = options_labels[-1]
                 label_org += f' {options_labels[-1]},'
@@ -736,7 +737,6 @@ def main():
     try:
         alert_title = "Error Occurred. Closing Browser!"
         validate_config()
-        make_directories([file_name,failed_file_name,logs_folder_path+"/screenshots",default_resume_path,generated_resume_path+"/temp"])
         if not os.path.exists(default_resume_path):   raise Exception('Your default resume "{}" is missing! Please update it\'s folder path in config.py or add a resume with exact name and path (check for spelling mistakes including cases).'.format(default_resume_path))
         
         # Login to LinkedIn

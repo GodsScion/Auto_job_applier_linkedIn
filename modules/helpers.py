@@ -55,7 +55,7 @@ def print_lg(*msgs):
     try:
         message = "\n".join(str(msg) for msg in msgs)
         path = logs_folder_path+"/log.txt"
-        with open(path.replace("//","/"), 'a', encoding="utf-8") as file:
+        with open(path.replace("//","/"), 'a+', encoding="utf-8") as file:
             file.write(message + '\n')
         print(message)
     except Exception as e:

@@ -286,20 +286,22 @@ def answer_questions(questions_list, work_location):
             answer = 'Yes'
             label = label_org.lower()
 
-            label_org = label_org + " [ "
+            label_org += ' [ '
             options = radio.find_elements(By.TAG_NAME, 'input')
+            options_labels = []
             
             for option in options:
                 option_label = try_xp(radio, f".//label[@for='{option.get_attribute("id")}']", False)
-                label_org =  f'{label_org} "{option_label.text if option_label else "Unknown"} <{option.get_attribute("value")}>",' # Saving option as "label <value>"
-                if option.is_selected(): prev_answer = option.get_attribute("value")
+                options_labels.append( f'"{option_label.text if option_label else "Unknown"}"<{option.get_attribute("value")}>' ) # Saving option as "label <value>"
+                if option.is_selected(): prev_answer = options_labels[-1]
+                label_org += f' {options_labels[-1]},'
 
             if overwrite_previous_answers or prev_answer is None:
                 if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
                 elif 'veteran' in label or 'protected' in label: answer = veteran_status
                 else: answer = answer_common_questions(label,answer)
                 if not try_xp(radio, f".//label[normalize-space()='{answer}']"):
-                    answer = options[0].get_attribute("value")
+                    answer = options_labels[0]
                     options[0].click()
                     randomly_answered_questions.add((f'{label_org} ]',"radio"))
             else: answer = prev_answer
@@ -332,6 +334,7 @@ def answer_questions(questions_list, work_location):
                 else: answer = answer_common_questions(label,answer)
                 if answer == "":
                     randomly_answered_questions.add((label_org, "text"))
+                    answer = years_of_experience
                 text.send_keys(answer)
                 if do_actions:
                     sleep(2)
@@ -656,7 +659,7 @@ def apply_to_jobs(search_terms):
                                 if questions_list and errored != "stuck": 
                                     print_lg("Answered the following questions...", questions_list)
                                     print("\n\n" + "\n".join(str(question) for question in questions_list) + "\n\n")
-                                wait_span_click(driver, "Review", 2, scrollTop=True)
+                                wait_span_click(driver, "Review", 1, scrollTop=True)
                                 cur_pause_before_submit = pause_before_submit
                                 if errored != "stuck" and cur_pause_before_submit:
                                     pause_before_submit = False if "Turn off" == pyautogui.confirm('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py\nTo TEMPORARILY turn it off, click "Turn off"', "Confirm your information",["Turn off", "Continue"]) else True

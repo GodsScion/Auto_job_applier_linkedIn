@@ -37,7 +37,7 @@ safe_mode = False                  # True or False
 smooth_scroll = False              # True or False
 
 # If enabled (True), the program would keep your screen active and prevent PC from sleeping. Instead you could disable this feature (set it to false) and adjust your PC sleep settings to Never Sleep or a preferred time. 
-keep_screen_awake = True           # True or False (Will temporarily deactivate when any application dialog boxes are present (Eg: Review Application, Help needed for a question..))
+keep_screen_awake = True           # True or False (Note: Will temporarily deactivate when any application dialog boxes are present (Eg: Pause before submit, Help needed for a question..))
 
 # Run in undetected mode to bypass anti-bot protections (Preview Feature, UNSTABLE. Recommended to leave it as False)
 undetected_mode = True             # True or False
@@ -51,10 +51,10 @@ use_resume_generator = False       # True or False ,   This feature may only wor
 
 # Login Credentials for LinkedIn
 username = "username@example.com"  # Enter your username in the quotes
-password = "examplepassword"       # Enter your password in the quotes
+password = "example_password"       # Enter your password in the quotes
 
 # These Sentences are Searched in LinkedIn
-search_terms = ["Software Engineer", "Software Developer", "Selenium Developer", "Python Developer", "Java Developer", "Junior Software Developer", "Junior Software Engineer", "React Developer", "Express Developer", "Nodejs Developer", "Junior Full Stack Developer", "New Grad Software Developer", "New Grad Software Engineer"]
+search_terms = ["Software Engineer", "Software Developer", "Python Developer"]
                                    # Enter your search terms inside '[ ]' with quotes ' "searching title" ' for each search followed by comma ', ' Eg: ["Software Engineer", "Software Developer", "Selenium Developer"]
 
 # Search location, this will be filled in "City, state, or zip code" search box. If left empty as "", tool will not fill it.
@@ -71,7 +71,7 @@ question_3 = []                    # (dynamic multiple select)
 
 '''
 
-sort_by = "Most recent"            # "Most recent", "Most relevant" or ("" to not select) 
+sort_by = "Most relevant"          # "Most recent", "Most relevant" or ("" to not select) 
 date_posted = "Any time"           # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                        # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
@@ -99,7 +99,7 @@ fair_chance_employer = False       # True or False
 # >>>>>>>>>>> Easy Apply Questions & Inputs <<<<<<<<<<<
 
 # Phone number (required), make sure it's valid.
-phone_number = "9876543210"        # Enter your 10 digit number in quotes Eg: "9876543210"     
+phone_number = ""        # Enter your 10 digit number in quotes Eg: "9876543210"     
 
 # Give an relative or absolute path of your default resume to be uploaded...
 default_resume_path = "all resumes/default/resume.pdf"      # (In Development)
@@ -173,7 +173,7 @@ security_clearance = False         # True or False
 did_masters = True                 # True or False
 
 # Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
-current_experience = 4             # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
+current_experience = -1            # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
 ##
 
 
@@ -213,7 +213,7 @@ stop_date_cycle_at_24hr = True     # True or False
 
 # Login Credentials for ChatGPT
 chatGPT_username = "username@example.com"
-chatGPT_password = "examplepassword"
+chatGPT_password = "example_password"
 
 chatGPT_resume_chat_title = "Resume review and feedback."
 

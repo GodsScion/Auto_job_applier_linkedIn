@@ -11,17 +11,17 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 '''
 
-from modules.helpers import make_directories
 from setup.config import run_in_background, undetected_mode, disable_extensions, safe_mode, file_name, failed_file_name, logs_folder_path, default_resume_path, generated_resume_path
+from modules.helpers import make_directories, find_default_profile_directory, critical_error_log, print_lg
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+
 if undetected_mode:
     import undetected_chromedriver as uc
 else: 
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
-    # from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import WebDriverWait
-from modules.helpers import find_default_profile_directory, critical_error_log, print_lg
+
 
 try:
     make_directories([file_name,failed_file_name,logs_folder_path+"/screenshots",default_resume_path,generated_resume_path+"/temp"])

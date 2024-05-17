@@ -236,6 +236,13 @@ def extract_years_of_experience(text):
 
 
 
+# Function to upload resume
+def upload_resume(modal, resume):
+    try:
+        modal.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
+        return True, os.path.basename(default_resume_path)
+    except: return False, "Previous resume"
+
 # Function to answer common questions for Easy Apply
 def answer_common_questions(label, answer):
     if 'sponsorship' in label or 'visa' in label: answer = require_visa
@@ -261,7 +268,8 @@ def answer_questions(questions_list, work_location):
             options = "".join([f' "{option.text}",' for option in select.options]) if label != "phone country code" else '"List of phone country codes"'
             prev_answer = selected_option
             if overwrite_previous_answers or selected_option == "Select an option":
-                if 'gender' in label or 'sex' in label: answer = gender
+                if 'email' in label or 'phone' in label: answer = prev_answer
+                elif 'gender' in label or 'sex' in label: answer = gender
                 elif 'disability' in label: answer = disability_status
                 elif 'proficiency' in label: answer = 'Professional'
                 else: answer = answer_common_questions(label,answer)
@@ -337,6 +345,7 @@ def answer_questions(questions_list, work_location):
                 if answer == "":
                     randomly_answered_questions.add((label_org, "text"))
                     answer = years_of_experience
+                text.clear()
                 text.send_keys(answer)
                 if do_actions:
                     sleep(2)
@@ -356,6 +365,7 @@ def answer_questions(questions_list, work_location):
             if not prev_answer or overwrite_previous_answers:
                 if 'summary' in label: answer = summary
                 elif 'cover' in label: answer = cover_letter
+                text_area.clear()
                 text_area.send_keys(answer)
                 if answer == "": 
                     randomly_answered_questions.add((label_org, "textarea"))
@@ -373,6 +383,7 @@ def answer_questions(questions_list, work_location):
             if not prev_answer: checkbox.click()
             questions_list.add((f'{label} ([X] {answer})', checkbox.is_selected(), "checkbox", prev_answer))
             continue
+
 
     # Select todays date
     try_xp(driver, "//button[contains(@aria-label, 'This is today')]")
@@ -629,14 +640,9 @@ def apply_to_jobs(search_terms):
                                 errored = ""
                                 modal = find_by_class(driver, "jobs-easy-apply-modal")
                                 wait_span_click(modal, "Next", 1)
-                                resume = default_resume_path
                                 # if description != "Unknown":
                                 #     resume = create_custom_resume(description)
-                                wait_span_click(modal, "Next", 1)
-                                if useNewResume:
-                                    modal.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
-                                    uploaded = True
-                                resume = os.path.basename(resume)
+                                resume = "Previous resume"
                                 next_button = True
                                 questions_list = set()
                                 next_counter = 0
@@ -653,6 +659,7 @@ def apply_to_jobs(search_terms):
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(questions_list, work_location)
+                                    if useNewResume and not uploaded: uploaded, resume = upload_resume(modal, default_resume_path)
                                     try: next_button = modal.find_element(By.XPATH, '//span[normalize-space(.)="Review"]') 
                                     except NoSuchElementException:  next_button = modal.find_element(By.XPATH, '//button[contains(span, "Next")]')
                                     try: next_button.click()

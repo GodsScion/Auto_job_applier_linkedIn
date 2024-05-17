@@ -139,6 +139,10 @@ With heartfelt appreciation, <br>
 
 
 ## 🗓️ Update History:
+### May 17, 2024
+- Major Bug fixes
+- Made uploading default resume as not required
+
 ### May 15, 2024
 - Added functionality for textarea type questions `summary`, `cover_letter`(Summary, Cover letter); checkbox type questions (acknowledgements)
 - Added feature to skip irrelevant jobs based on `bad_words` 
@@ -149,16 +153,16 @@ With heartfelt appreciation, <br>
 - Added option to turn off "Pause before Submit" until next run
 
 ### May 05, 2024
-- For questions similar to "What is your current location?", City posted in Job description will be posted as the answer if `current_city` is left empty in the configuration.
-- Added option to over write previously saved answers for a question `overwrite_previous_answers`.
-- Tool will now save previous answer of a question.
-- Tool will now collect all available options for a Radio type or Select type question.
-- Major update in answering logic for Easy Apply Application questions.
-- Added Safe mode option for quick stable launches `safe_mode`.
+- For questions similar to "What is your current location?", City posted in Job description will be posted as the answer if `current_city` is left empty in the configuration
+- Added option to over write previously saved answers for a question `overwrite_previous_answers`
+- Tool will now save previous answer of a question
+- Tool will now collect all available options for a Radio type or Select type question
+- Major update in answering logic for Easy Apply Application questions
+- Added Safe mode option for quick stable launches `safe_mode`
 
 ### May 04, 2024
-- Added option to fill in "City, state, or zip code" search box `search_location`.
-- Bug fixes in answering City or location question.
+- Added option to fill in "City, state, or zip code" search box `search_location`
+- Bug fixes in answering City or location question
 
 
 [back to index](#-content)

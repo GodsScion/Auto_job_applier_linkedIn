@@ -13,7 +13,7 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 from setup.config import *
 
-def validate_TorF(var, var_name):
+def validate_bool(var, var_name):
     if var == True or var == False: return True
     raise Exception(f'Invalid input for {var_name}. Expecting a Boolean input "True" or "False", not "{var}" and do NOT surround True or False in Quotes ("")!')
 
@@ -37,10 +37,10 @@ def validate_config():
 
     if not isinstance(click_gap, int) and click_gap >= 0: raise Exception(f'Invalid input for click_gap. Expecting an int greater than or equal to 0, NOT "{click_gap}"!')
 
-    validate_TorF(run_in_background, "run_in_background")
-    validate_TorF(smooth_scroll, "smooth_scroll")
+    validate_bool(run_in_background, "run_in_background")
+    validate_bool(smooth_scroll, "smooth_scroll")
 
-    validate_TorF(close_tabs, "close_tabs")
+    validate_bool(close_tabs, "close_tabs")
 
     validate_String(username, "username")
     validate_String(password, "password")
@@ -63,10 +63,10 @@ def validate_config():
     validate_Multi(benefits, "benefits")
     validate_Multi(commitments, "commitments")
 
-    validate_TorF(easy_apply_only, "easy_apply_only")
-    validate_TorF(under_10_applicants, "under_10_applicants")
-    validate_TorF(in_your_network, "in_your_network")
-    validate_TorF(fair_chance_employer, "fair_chance_employer")
+    validate_bool(easy_apply_only, "easy_apply_only")
+    validate_bool(under_10_applicants, "under_10_applicants")
+    validate_bool(in_your_network, "in_your_network")
+    validate_bool(fair_chance_employer, "fair_chance_employer")
 
 
     validate_String(chatGPT_username, "chatGPT_username")

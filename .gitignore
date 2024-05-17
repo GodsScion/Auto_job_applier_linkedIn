@@ -1,8 +1,13 @@
+# ENVIRONMENT
 __pycache__
 .vscode
+venv
 
+# LOGS
 all excels
 all resumes
 logs
-
 old
+
+# FILES
+setup/config.py

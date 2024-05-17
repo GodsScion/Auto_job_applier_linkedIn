@@ -39,7 +39,8 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
   ***OR*** 
   <br> <br>
   If you are using Windows, click on `windows-setup.bat` available in the `/setup` folder, this will install the latest chromedriver automatically.
-* Open `config.py` file in `/setup` folder and enter your details, configure the tool as per your needs.
+* Duplicate the `config.example.py` and rename the dupliacted version to `config.py`. Don't touch the old config.example.py.
+* Configure the newly created `config.py` to your needs.
 * Run `autoJobApplierLinkedIn.py` and see the magic happen.
 * If you have questions or need help setting it up or to talk in general, join the github server: https://discord.gg/fFp7uUzWCY
 

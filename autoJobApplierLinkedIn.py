@@ -477,7 +477,9 @@ def apply_to_jobs(search_terms):
 
         if search_location.strip():
             print_lg(f'Setting search location as: "{search_location.strip()}"')
-            search_location_ele = try_xp(driver, "//input[@aria-label='City, state, or zip code'and not(@disabled)]", False) #  and not(@aria-hidden='true')]")
+            
+            search_location_ele = wait_location_input(driver) #  and not(@aria-hidden='true')]")
+            print(search_location_ele)
             search_location_ele.clear()
             search_location_ele.send_keys(search_location.strip())
             sleep(2)

@@ -30,8 +30,16 @@ def wait_span_click(driver, x, time=5.0, click=True, scroll=True, scrollTop = Fa
             return button
         except Exception as e:
             print_lg("Click Failed! Didn't find '"+x+"'")
-            # print_lg(e)
+            print_lg(e)
             return False
+
+def wait_location_input(driver, time=5.0):
+    try:
+        location_el = WebDriverWait(driver, time).until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[aria-label='City, state, or zip code']")))
+        return location_el
+    except:
+        print_lg("Could't find location search input")
+        return False
 
 def multi_sel(driver, l, time=5.0):
     for x in l:
@@ -42,7 +50,7 @@ def multi_sel(driver, l, time=5.0):
             buffer(click_gap)
         except Exception as e:
             print_lg("Click Failed! Didn't find '"+x+"'")
-            # print_lg(e)
+            print_lg(e)
 
 def multi_sel_noWait(driver, l, actions=False):
     for x in l:
@@ -54,7 +62,7 @@ def multi_sel_noWait(driver, l, actions=False):
         except Exception as e:
             if actions: company_search_click(driver,actions,x)
             else:   print_lg("Click Failed! Didn't find '"+x+"'")
-            # print_lg(e)
+            print_lg(e)
 
 def boolean_button_click(driver, actions, x):
     try:
@@ -65,7 +73,7 @@ def boolean_button_click(driver, actions, x):
         buffer(click_gap)
     except Exception as e:
         print_lg("Click Failed! Didn't find '"+x+"'")
-        # print_lg(e)
+        print_lg(e)
 
 # Find functions
 def find_by_class(driver, class_name, time=5.0):

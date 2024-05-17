@@ -13,7 +13,7 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 from setup.config import *
 
-def validate_bool(var, var_name):
+def validate_Bool(var, var_name):
     if var == True or var == False: return True
     raise Exception(f'Invalid input for {var_name}. Expecting a Boolean input "True" or "False", not "{var}" and do NOT surround True or False in Quotes ("")!')
 

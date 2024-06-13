@@ -203,6 +203,7 @@ def get_job_main_details(job):
 
 # Function to check for Blacklisted words in About Company
 def check_blacklist(rejected_jobs,job_id,company,blacklisted_companies):
+    jobs_top_card = try_find_by_classes(driver, ["job-details-jobs-unified-top-card__primary-description-container","job-details-jobs-unified-top-card__primary-description","jobs-unified-top-card__primary-description","jobs-details__main-content"])
     about_company_org = find_by_class(driver, "jobs-company__box")
     scroll_to_view(driver, about_company_org)
     about_company_org = about_company_org.text
@@ -218,9 +219,8 @@ def check_blacklist(rejected_jobs,job_id,company,blacklisted_companies):
             if word.lower() in about_company: 
                 rejected_jobs.add(job_id)
                 blacklisted_companies.add(company)
-                raise ValueError(f'Found the word "{word}" in \n"{about_company_org}"')
+                raise ValueError(f'\n"{about_company_org}"\n\nContains "{word}".')
     buffer(click_gap)
-    jobs_top_card = try_find_by_classes(driver, ["job-details-jobs-unified-top-card__primary-description-container","job-details-jobs-unified-top-card__primary-description","jobs-unified-top-card__primary-description"])
     scroll_to_view(driver, jobs_top_card)
     return rejected_jobs, blacklisted_companies, jobs_top_card
 
@@ -231,7 +231,8 @@ def extract_years_of_experience(text):
     # Extract all patterns like '10+ years', '5 years', '3-5 years', etc.
     matches = re.findall(re_experience, text)
     if len(matches) == 0: 
-        print_lg(f'Couldn\'t find experience requirement in About job \n{text}\n')
+        print_lg(f'\n{text}\n\nCouldn\'t find experience requirement in About the Job!')
+        return 0
     return max([int(match) for match in matches if int(match) <= 12])
 
 
@@ -331,9 +332,9 @@ def answer_questions(questions_list, work_location):
 
             prev_answer = text.get_attribute("value")
             if not prev_answer or overwrite_previous_answers:
-                if 'experience' in label: answer = years_of_experience
+                if 'experience' in label or 'years' in label: answer = years_of_experience
                 elif 'phone' in label or 'mobile' in label: answer = phone_number
-                elif 'city' in label or 'location' in label:
+                elif 'city' in label or 'location' in label or 'address' in label:
                     answer = current_city if current_city else work_location
                     do_actions = True
                 elif 'name' in label or 'signature' in label: answer = full_name  # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name     # What if question is 'name of the city or university you attend, name of referral etc?'
@@ -357,7 +358,7 @@ def answer_questions(questions_list, work_location):
         # Check if it's a textarea question
         text_area = try_xp(Question, ".//textarea", False)
         if text_area:
-            label = try_xp(Question, ".//label[@for]", False).text
+            label = try_xp(Question, ".//label[@for]", False)
             label_org = label.text if label else "Unknown"
             label = label_org.lower()
             answer = ""
@@ -549,7 +550,7 @@ def apply_to_jobs(search_terms):
                     try:
                         rejected_jobs, blacklisted_companies, jobs_top_card = check_blacklist(rejected_jobs,job_id,company,blacklisted_companies)
                     except ValueError as e:
-                        print_lg('Skipping this job.', e)
+                        print_lg(e, 'Skipping this job!\n')
                         failed_job(job_id, job_link, resume, date_listed, "Found Blacklisted words in About Company", e, "Skipped", screenshot_name)
                         skip_count += 1
                         continue
@@ -603,25 +604,29 @@ def apply_to_jobs(search_terms):
                         found_masters = 0
                         description = find_by_class(driver, "jobs-box__html-content").text
                         descriptionLow = description.lower()
+                        skip = False
                         for word in bad_words:
                             if word.lower() in descriptionLow:
-                                print_lg(f'Skipping this job. Found "{word}" in \n{description}')    
-                                experience_required = "Skipped checking (Bad word)"
-                                skip_count += 1
-                                continue
-                        if security_clearance == False and ('polygraph' in descriptionLow or 'security clearance' in descriptionLow or 'secret clearance' in descriptionLow):
-                            print_lg(f'Skipping this job. Found "Security Clearance" or "Polygraph" in \n{description}')
-                            experience_required = "Skipped checking (Polygraph)"
-                            skip_count += 1
-                            continue
-                        if did_masters and 'master' in descriptionLow:
-                            print_lg(f'Found the word "master" in \n{description}')
-                            found_masters = 2
-                        experience_required = extract_years_of_experience(description)
-                        if current_experience > -1 and experience_required > current_experience + found_masters:
-                            message = f'Experience required {experience_required} > Current Experience {current_experience + found_masters}\n\n{description}'
-                            print_lg('\nSkipping this job.', message)
-                            failed_job(job_id, job_link, resume, date_listed, "Required experience is high", message, "Skipped", screenshot_name)
+                                message = f'\n{description}\n\nContains bad word "{word}". Skipping this job!\n'
+                                reason = "Found a Bad Word in About Job"
+                                skip = True
+                                break
+                        if not skip and security_clearance == False and ('polygraph' in descriptionLow or 'clearance' in descriptionLow or 'secret' in descriptionLow):
+                            message = f'\n{description}\n\nFound "Clearance" or "Polygraph". Skipping this job!\n'
+                            reason = "Asking for Security clearance"
+                            skip = True
+                        if not skip:
+                            if did_masters and 'master' in descriptionLow:
+                                print_lg(f'Found the word "master" in \n{description}')
+                                found_masters = 2
+                            experience_required = extract_years_of_experience(description)
+                            if current_experience > -1 and experience_required > current_experience + found_masters:
+                                message = f'\n{description}\n\nExperience required {experience_required} > Current Experience {current_experience + found_masters}. Skipping this job!\n'
+                                reason = "Required experience is high"
+                                skip = True
+                        if skip:
+                            print_lg(message)
+                            failed_job(job_id, job_link, resume, date_listed, reason, message, "Skipped", screenshot_name)
                             rejected_jobs.add(job_id)
                             skip_count += 1
                             continue
@@ -660,8 +665,8 @@ def apply_to_jobs(search_terms):
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(questions_list, work_location)
                                     if useNewResume and not uploaded: uploaded, resume = upload_resume(modal, default_resume_path)
-                                    try: next_button = modal.find_element(By.XPATH, '//span[normalize-space(.)="Review"]') 
-                                    except NoSuchElementException:  next_button = modal.find_element(By.XPATH, '//button[contains(span, "Next")]')
+                                    try: next_button = modal.find_element(By.XPATH, './/span[normalize-space(.)="Review"]') 
+                                    except NoSuchElementException:  next_button = modal.find_element(By.XPATH, './/button[contains(span, "Next")]')
                                     try: next_button.click()
                                     except ElementClickInterceptedException: break    # Happens when it tries to click Next button in About Company photos section
                                     buffer(click_gap)

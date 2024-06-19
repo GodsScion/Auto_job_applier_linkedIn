@@ -40,6 +40,11 @@ if run_in_background == True:
     pause_before_submit = False
     run_non_stop = False
 
+first_name = first_name.strip()
+middle_name = middle_name.strip()
+last_name = last_name.strip()
+full_name = first_name + " " + middle_name + " " + last_name if middle_name else first_name + " " + last_name
+
 useNewResume = True
 randomly_answered_questions = set()
 
@@ -337,10 +342,17 @@ def answer_questions(questions_list, work_location):
                 elif 'city' in label or 'location' in label or 'address' in label:
                     answer = current_city if current_city else work_location
                     do_actions = True
-                elif 'name' in label or 'signature' in label: answer = full_name  # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name     # What if question is 'name of the city or university you attend, name of referral etc?'
+                elif 'signature' in label: answer = full_name # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name     # What if question is 'name of the city or university you attend, name of referral etc?'
+                elif 'name' in label:
+                    if 'full' in label: answer = full_name
+                    elif 'first' in label and 'last' not in label: answer = first_name
+                    elif 'middle' in label and 'last' not in label: answer = middle_name
+                    elif 'last' in label and 'first' not in label: answer = last_name
+                    else: answer = full_name
                 elif 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
                 elif 'salary' in label or 'compensation' in label: answer = desired_salary
                 elif 'scale of 1-10' in label: answer = confidence_level
+                elif 'headline' in label: answer = headline
                 elif ('hear' in label or 'come across' in label) and 'this' in label and ('job' in label or 'position' in label): answer = "LinkedIn"
                 else: answer = answer_common_questions(label,answer)
                 if answer == "":

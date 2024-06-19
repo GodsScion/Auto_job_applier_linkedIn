@@ -139,8 +139,8 @@ With heartfelt appreciation, <br>
 
 
 ## 🗓️ Update History:
-### May 17, 2024
-- Major Bug fixes
+### June 19, 2024
+- Major Bug fixes (Text Area type questions)
 - Made uploading default resume as not required
 
 ### May 15, 2024

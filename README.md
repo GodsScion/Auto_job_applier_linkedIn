@@ -207,6 +207,7 @@ See [AGPLv3 LICENSE](LICENSE) for more info.
 ## 🐧 Socials
 - **LinkedIn** : https://www.linkedin.com/in/saivigneshgolla/
 - **Email**    : saivigneshgolla@outlook.com
+- **X/Twitter**: https://x.com/gods_scion
 - **Discord**  : godsscion
 
 ## 🙌 Community Support and Discussions

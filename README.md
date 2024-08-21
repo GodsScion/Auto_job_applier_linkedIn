@@ -139,6 +139,12 @@ With heartfelt appreciation, <br>
 
 
 ## 🗓️ Update History:
+### Aug 20, 2024
+- Added ability to discard from pause at submission dialogue box
+- Added support for address input
+- Bug fixed radio questions, added support for physical disability questions
+- Added framework for future config file updates
+
 ### June 19, 2024
 - Major Bug fixes (Text Area type questions)
 - Made uploading default resume as not required

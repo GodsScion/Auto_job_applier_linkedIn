@@ -264,14 +264,20 @@ def answer_questions(questions_list, work_location):
         # Check if it's a select Question
         select = try_xp(Question, ".//select", False)
         if select:
-            label = Question.find_element(By.TAG_NAME, "label")
-            label_org = label.find_element(By.TAG_NAME, "span")
-            label_org = label_org.text if label_org else "Unknown"
+            label_org = "Unknown"
+            try:
+                label = Question.find_element(By.TAG_NAME, "label")
+                label_org = label.find_element(By.TAG_NAME, "span").text
+            except: pass
             answer = 'Yes'
             label = label_org.lower()
             select = Select(select)
             selected_option = select.first_selected_option.text
-            options = "".join([f' "{option.text}",' for option in select.options]) if label != "phone country code" else '"List of phone country codes"'
+            optionsText = []
+            options = '"List of phone country codes"'
+            if label != "phone country code":
+                optionsText = [option.text for option in select.options]
+                options = "".join([f' "{option}",' for option in optionsText])
             prev_answer = selected_option
             if overwrite_previous_answers or selected_option == "Select an option":
                 if 'email' in label or 'phone' in label: answer = prev_answer
@@ -296,8 +302,9 @@ def answer_questions(questions_list, work_location):
         if radio:
             prev_answer = None
             label = try_xp(radio, './/span[@data-test-form-builder-radio-button-form-component__title]', False)
-            label = find_by_class(label, "visually-hidden", 2.0).text
-            label_org = label if label else "Unknown"
+            try: label = find_by_class(label, "visually-hidden", 2.0)
+            except: pass
+            label_org = label.text if label else "Unknown"
             answer = 'Yes'
             label = label_org.lower()
 
@@ -315,11 +322,24 @@ def answer_questions(questions_list, work_location):
             if overwrite_previous_answers or prev_answer is None:
                 if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
                 elif 'veteran' in label or 'protected' in label: answer = veteran_status
+                elif 'disability' in label or 'handicapped' in label: 
+                    answer = disability_status
                 else: answer = answer_common_questions(label,answer)
-                if not try_xp(radio, f".//label[normalize-space()='{answer}']"):
-                    answer = options_labels[0]
-                    options[0].click()
-                    randomly_answered_questions.add((f'{label_org} ]',"radio"))
+                foundOption = try_xp(radio, f".//label[normalize-space()='{answer}']", False)
+                if foundOption: 
+                    actions.move_to_element(foundOption).click().perform()
+                else:    
+                    ele = options[0]
+                    if answer == 'Decline':
+                        answer = options_labels[0]
+                        for phrase in ["Prefer not", "not want", "not wish"]:
+                            foundOption = try_xp(radio, f".//label[normalize-space()='{phrase}']", False)
+                            if foundOption:
+                                answer = f'Decline ({phrase})'
+                                ele = foundOption
+                                break
+                    actions.move_to_element(ele).click().perform()
+                    if not foundOption: randomly_answered_questions.add((f'{label_org} ]',"radio"))
             else: answer = prev_answer
             questions_list.add((label_org+" ]", answer, "radio", prev_answer))
             continue
@@ -329,9 +349,9 @@ def answer_questions(questions_list, work_location):
         if text: 
             do_actions = False
             label = try_xp(Question, ".//label[@for]", False)
-            try: label = label.find_element(By.CLASS_NAME,'visually-hidden').text
-            except: label = label.text
-            label_org = label if label else "Unknown"
+            try: label = label.find_element(By.CLASS_NAME,'visually-hidden')
+            except: pass
+            label_org = label.text if label else "Unknown"
             answer = "" # years_of_experience
             label = label_org.lower()
 
@@ -339,6 +359,7 @@ def answer_questions(questions_list, work_location):
             if not prev_answer or overwrite_previous_answers:
                 if 'experience' in label or 'years' in label: answer = years_of_experience
                 elif 'phone' in label or 'mobile' in label: answer = phone_number
+                elif 'street' in label: answer = street
                 elif 'city' in label or 'location' in label or 'address' in label:
                     answer = current_city if current_city else work_location
                     do_actions = True
@@ -348,12 +369,16 @@ def answer_questions(questions_list, work_location):
                     elif 'first' in label and 'last' not in label: answer = first_name
                     elif 'middle' in label and 'last' not in label: answer = middle_name
                     elif 'last' in label and 'first' not in label: answer = last_name
+                    elif 'employer' in label: answer = recent_employer
                     else: answer = full_name
                 elif 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
                 elif 'salary' in label or 'compensation' in label: answer = desired_salary
                 elif 'scale of 1-10' in label: answer = confidence_level
                 elif 'headline' in label: answer = headline
                 elif ('hear' in label or 'come across' in label) and 'this' in label and ('job' in label or 'position' in label): answer = "LinkedIn"
+                elif 'state' in label or 'province' in label: answer = state
+                elif 'zip' in label or 'postal' in label or 'code' in label: answer = zipcode
+                elif 'country' in label: answer = country
                 else: answer = answer_common_questions(label,answer)
                 if answer == "":
                     randomly_answered_questions.add((label_org, "text"))
@@ -691,7 +716,9 @@ def apply_to_jobs(search_terms):
                                 wait_span_click(driver, "Review", 1, scrollTop=True)
                                 cur_pause_before_submit = pause_before_submit
                                 if errored != "stuck" and cur_pause_before_submit:
-                                    pause_before_submit = False if "Turn off" == pyautogui.confirm('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py\nTo TEMPORARILY turn it off, click "Turn off"', "Confirm your information",["Turn off", "Continue"]) else True
+                                    decision = pyautogui.confirm('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py\nTo TEMPORARILY disable pausing, click "Disable Pause"', "Confirm your information",["Disable Pause", "Discard Application", "Submit Application"])
+                                    if decision == "Discard Application": raise Exception("Job application discarded by user!")
+                                    pause_before_submit = False if "Disable Pause" == decision else True
                                     try_xp(modal, ".//span[normalize-space(.)='Review']")
                                 if wait_span_click(driver, "Submit application", 2, scrollTop=True): 
                                     date_applied = datetime.now()

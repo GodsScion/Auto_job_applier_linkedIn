@@ -116,7 +116,7 @@ us_citizenship = "U.S. Citizen/Permanent Resident"
 
 
 # What is the link to your portfolio website, leave it empty as "", if you want to leave this question unanswered
-website = "www.example.bio"                       # "www.example.bio" or "" and so on....
+website = "https://github.com/GodsScion"                       # "www.example.bio" or "" and so on....
 
 # What to enter in your desired salary question, only enter in numbers inside quotes as some companies only allow numbers
 desired_salary = "90000"          # "80000", "90000", "100000" or "120000" and so on....
@@ -126,9 +126,16 @@ confidence_level = "7"             # Any number between "1" to "10" including 1 
 
 current_city = ""                  # If left empty will fill in location of jobs location.
 
-first_name = "First"                 # Your first name in quotes Eg: "First", "Sai"
-middle_name = "Middle"            # Your name in quotes Eg: "Middle", "Vignesh", ""
-last_name = "Last"                # Your last name in quotes Eg: "Last", "Golla"
+## SOME ANNOYING QUESTIONS BY COMPANIES 🫠 ##
+# Address, not so common question but some job applications make it required!
+street = "123 Main Street"
+state = "STATE"
+zipcode = "12345"
+country = "Will Let You Know When Established"
+
+first_name = "Sai"                 # Your first name in quotes Eg: "First", "Sai"
+middle_name = "Vignesh"            # Your name in quotes Eg: "Middle", "Vignesh", ""
+last_name = "Golla"                # Your last name in quotes Eg: "Last", "Golla"
 
 # Your LinkedIn headline in quotes Eg: "Software Engineer @ Google, Masters in Computer Science", "Recent Grad Student @ MIT, Computer Science"
 headline = "Headline"
@@ -139,6 +146,8 @@ summary = "Summary"
 # Your cover letter in quotes, use \n to add line breaks
 cover_letter = "Cover Letter"
 
+# Name of your most recent employer
+recent_employer = "Not Applicable" # "", "Lala Company", "Google", "Snowflake", "Databricks"
 
 ## US Equal Opportunity questions
 # What is your ethnicity or race? If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
@@ -147,8 +156,8 @@ ethnicity = "Decline"              # "Decline", "Hispanic/Latino", "American Ind
 # How do you identify yourself? If left empty as "", tool will not answer the question. However, note that some companies make compulsory to be answered
 gender = "Decline"                 # "Male", "Female", "Other", "Decline" or ""
 
-# Are you physically disabled? If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
-disability_status = "Decline"      # 
+# Are you physically disabled or have a history/record of having a disability? If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
+disability_status = "Decline"      # "Yes", "No", "Decline"
 
 veteran_status = "Decline"         # "Yes", "No", "Decline"
 ##

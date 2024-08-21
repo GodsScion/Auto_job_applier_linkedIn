@@ -780,9 +780,10 @@ def run(total_runs):
     apply_to_jobs(search_terms)
     print_lg("########################################################################################################################\n")
     print_lg("Sleeping for 10 min...")
-    sleep(0)
+    sleep(300)
     print_lg("Few more min... Gonna start with in next 5 min...")
-    buffer(-3)
+    sleep(300)
+    buffer(3)
     return total_runs + 1
 
 

@@ -119,10 +119,10 @@ us_citizenship = "U.S. Citizen/Permanent Resident"
 website = "https://github.com/GodsScion"                       # "www.example.bio" or "" and so on....
 
 # What to enter in your desired salary question, only enter in numbers inside quotes as some companies only allow numbers
-desired_salary = "90000"          # "80000", "90000", "100000" or "120000" and so on....
+desired_salary = "120000"          # "80000", "90000", "100000" or "120000" and so on....
 
 # Example question: "On a scale of 1-10 how much experience do you have building web or mobile applications? 1 being very little or only in school, 10 being that you have built and launched applications to real users"
-confidence_level = "7"             # Any number between "1" to "10" including 1 and 10, put it in quotes ""
+confidence_level = "8"             # Any number between "1" to "10" including 1 and 10, put it in quotes ""
 
 current_city = ""                  # If left empty will fill in location of jobs location.
 
@@ -182,7 +182,7 @@ about_company_good_words = []      # (dynamic multiple search) or leave empty as
 
 
 # Avoid applying to these companies if they have these bad words in their 'Job Description' section...  (In development)
-bad_words = []                     # (dynamic multiple search) or leave empty as []. Case Insensitive. Ex: ["word_1", "phrase 1", "word word", "polygraph", "US Citizenship", "Security Clearance"]
+bad_words = ["Embedded Engineering", "Dev Ops"]                     # (dynamic multiple search) or leave empty as []. Case Insensitive. Ex: ["word_1", "phrase 1", "word word", "polygraph", "US Citizenship", "Security Clearance"]
 
 # Do you have an active Security Clearance? (True for Yes and False for No)
 security_clearance = False         # True or False
@@ -208,7 +208,7 @@ pause_at_failed_question = True    # True or False ,   Will be treated as False 
 close_tabs = True                  # True or False
 
 # After how many number of applications should we keep switching? 
-switch_number = 30                 # Only numbers greater than 25... Don't put in quotes
+switch_number = 10                 # Only numbers greater than 0... Don't put in quotes
 
 ## Upcoming features (In Development)
 # Send connection requests to HR's

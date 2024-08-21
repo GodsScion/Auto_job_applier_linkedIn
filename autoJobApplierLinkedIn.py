@@ -53,6 +53,7 @@ easy_applied_count = 0
 external_jobs_count = 0
 failed_count = 0
 skip_count = 0
+dailyEasyApplyLimitReached = False
 
 re_experience = re.compile(r'[(]?\s*(\d+)\s*[)]?\s*[-to]*\s*\d*[+]*\s*year[s]?', re.IGNORECASE)
 #>
@@ -187,7 +188,7 @@ def get_page_info():
 
 
 # Function to get job main details
-def get_job_main_details(job):
+def get_job_main_details(job, blacklisted_companies, rejected_jobs):
     job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
     scroll_to_view(driver, job_details_button, True)
     title = job_details_button.text
@@ -196,14 +197,28 @@ def get_job_main_details(job):
     work_location = job.find_element(By.CLASS_NAME, "job-card-container__metadata-item").text
     work_style = work_location[work_location.rfind('(')+1:work_location.rfind(')')]
     work_location = work_location[:work_location.rfind('(')].strip()
-    try: job_details_button.click()
+    # Skip if previously rejected due to blacklist or already applied
+    skip = False
+    if company in blacklisted_companies:
+        print_lg(f'Skipping "{title} | {company}" job (Blacklisted Company). Job ID: {job_id}!')
+        skip = True
+    elif job_id in rejected_jobs: 
+        print_lg(f'Skipping previously rejected "{title} | {company}" job. Job ID: {job_id}!')
+        skip = True
+    try:
+        if job.find_element(By.CLASS_NAME, "job-card-container__footer-job-state").text == "Applied":
+            skip = True
+            print_lg(f'Already applied to "{title} | {company}" job. Job ID: {job_id}!')
+    except: pass
+    try: 
+        if not skip: job_details_button.click()
     except Exception as e:
         print_lg(f'Failed to click "{title} | {company}" job on details button. Job ID: {job_id}!') 
         # print_lg(e)
         discard_job()
-        job_details_button.click()
+        job_details_button.click() # To pass the error outside
     buffer(click_gap)
-    return (job_id,title,company,work_location,work_style)
+    return (job_id,title,company,work_location,work_style,skip)
 
 
 # Function to check for Blacklisted words in About Company
@@ -437,8 +452,12 @@ def answer_questions(questions_list, work_location):
 
 # Function to open new tab and save external job application links
 def external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name):
-    global tabs_count
-    if easy_apply_only: 
+    global tabs_count, dailyEasyApplyLimitReached
+    
+    if easy_apply_only:
+        try:
+            if "exceeded the daily application limit" in driver.find_element(By.CLASS_NAME, "artdeco-inline-feedback__message").text: dailyEasyApplyLimitReached = True
+        except: pass
         print_lg("Easy apply failed I guess!")
         if pagination_element != None: return True, application_link, tabs_count
     try:
@@ -553,15 +572,10 @@ def apply_to_jobs(search_terms):
                     if current_count >= switch_number: break
                     print_lg("\n-@-\n")
 
-                    job_id,title,company,work_location,work_style = get_job_main_details(job)
+                    job_id,title,company,work_location,work_style,skip = get_job_main_details(job, blacklisted_companies, rejected_jobs)
                     
-                    # Skip if previously rejected due to blacklist or already applied
-                    if company in blacklisted_companies:
-                        print_lg(f'Skipping "{title} | {company}" job (Blacklisted Company). Job ID: {job_id}!')
-                        continue
-                    elif job_id in rejected_jobs: 
-                        print_lg(f'Skipping previously rejected "{title} | {company}" job. Job ID: {job_id}!')
-                        continue
+                    if skip: continue
+                    # Redundant fail safe check for applied jobs!
                     try:
                         if job_id in applied_jobs or find_by_class(driver, "jobs-s-apply__application-link", 2):
                             print_lg(f'Already applied to "{title} | {company}" job. Job ID: {job_id}!')
@@ -744,6 +758,9 @@ def apply_to_jobs(search_terms):
                     else:
                         # Case 2: Apply externally
                         skip, application_link, tabs_count = external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name)
+                        if dailyEasyApplyLimitReached:
+                            print_lg("\n###############  Daily application limit for Easy Apply is reached!  ###############\n")
+                            return
                         if skip: continue
 
                     submitted_jobs(job_id, title, company, work_location, work_style, description, experience_required, skills, hr_name, hr_link, resume, reposted, date_listed, date_applied, job_link, application_link, questions_list, connect_request)
@@ -754,6 +771,8 @@ def apply_to_jobs(search_terms):
                     if application_link == "Easy Applied": easy_applied_count += 1
                     else:   external_jobs_count += 1
                     applied_jobs.add(job_id)
+
+
 
                 # Switching to next page
                 if pagination_element == None:
@@ -773,16 +792,19 @@ def apply_to_jobs(search_terms):
 
         
 def run(total_runs):
+    if dailyEasyApplyLimitReached:
+        return total_runs
     print_lg("\n########################################################################################################################\n")
     print_lg(f"Date and Time: {datetime.now()}")
     print_lg(f"Cycle number: {total_runs}")
     print_lg(f"Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'")
     apply_to_jobs(search_terms)
     print_lg("########################################################################################################################\n")
-    print_lg("Sleeping for 10 min...")
-    sleep(300)
-    print_lg("Few more min... Gonna start with in next 5 min...")
-    sleep(300)
+    if not dailyEasyApplyLimitReached:
+        print_lg("Sleeping for 10 min...")
+        sleep(300)
+        print_lg("Few more min... Gonna start with in next 5 min...")
+        sleep(300)
     buffer(3)
     return total_runs + 1
 
@@ -833,8 +855,9 @@ def main():
                 sort_by = "Most recent" if sort_by == "Most relevant" else "Most relevant"
                 total_runs = run(total_runs)
                 sort_by = "Most recent" if sort_by == "Most relevant" else "Most relevant"
-            
             total_runs = run(total_runs)
+            if dailyEasyApplyLimitReached:
+                break
         
 
     except NoSuchWindowException:   pass

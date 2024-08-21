@@ -139,7 +139,9 @@ With heartfelt appreciation, <br>
 
 
 ## 🗓️ Update History:
-### Aug 20, 2024
+### Aug 21, 2024
+- Performance improvements (skip clicking on applied and blacklisted companies)
+- Stop when easy apply application limit is reached
 - Added ability to discard from pause at submission dialogue box
 - Added support for address input
 - Bug fixed radio questions, added support for physical disability questions

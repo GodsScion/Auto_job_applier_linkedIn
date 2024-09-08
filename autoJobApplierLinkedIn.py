@@ -26,11 +26,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, NoSuchWindowException
-from setup.config import *
+from config.personals import *
+from config.questions import *
+from config.search import *
+from config.secrets import *
+from config.settings import *
+from config.XdepricatedX import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
-if use_resume_generator:    from resume_generator import is_logged_in_GPT, login_GPT, open_resume_chat, create_custom_resume
+# if use_resume_generator:    from resume_generator import is_logged_in_GPT, login_GPT, open_resume_chat, create_custom_resume
 
 
 #< Global Variables and logics
@@ -834,17 +839,17 @@ def main():
         
         linkedIn_tab = driver.current_window_handle
 
-        # Login to ChatGPT in a new tab for resume customization
-        if use_resume_generator:
-            try:
-                driver.switch_to.new_window('tab')
-                driver.get("https://chat.openai.com/")
-                if not is_logged_in_GPT(): login_GPT()
-                open_resume_chat()
-                global chatGPT_tab
-                chatGPT_tab = driver.current_window_handle
-            except Exception as e:
-                print_lg("Opening OpenAI chatGPT tab failed!")
+        # # Login to ChatGPT in a new tab for resume customization
+        # if use_resume_generator:
+        #     try:
+        #         driver.switch_to.new_window('tab')
+        #         driver.get("https://chat.openai.com/")
+        #         if not is_logged_in_GPT(): login_GPT()
+        #         open_resume_chat()
+        #         global chatGPT_tab
+        #         chatGPT_tab = driver.current_window_handle
+        #     except Exception as e:
+        #         print_lg("Opening OpenAI chatGPT tab failed!")
 
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)

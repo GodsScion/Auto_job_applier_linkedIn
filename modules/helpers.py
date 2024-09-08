@@ -15,7 +15,7 @@ import os
 from time import sleep
 from random import randint
 from datetime import datetime, timedelta
-from setup.config import logs_folder_path 
+from config.settings import logs_folder_path 
 
 
 #### Common functions ####
@@ -26,7 +26,11 @@ def make_directories(paths):
     for path in paths:  
         path = path.replace("//","/")
         if '/' in path and '.' in path: path = path[:path.rfind('/')]
-        if not os.path.exists(path):   os.makedirs(path)
+        try:
+            if not os.path.exists(path):
+                os.makedirs(path)
+        except Exception as e:
+            print(f'Error while creating directory "{path}": ', e)
 
 # Function to search for Chrome Profiles
 def find_default_profile_directory():

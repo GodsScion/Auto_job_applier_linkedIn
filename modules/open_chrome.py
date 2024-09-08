@@ -12,7 +12,8 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 '''
 
 from modules.helpers import make_directories
-from setup.config import run_in_background, undetected_mode, disable_extensions, safe_mode, file_name, failed_file_name, logs_folder_path, default_resume_path, generated_resume_path
+from config.settings import run_in_background, undetected_mode, disable_extensions, safe_mode, file_name, failed_file_name, logs_folder_path, generated_resume_path
+from config.questions import default_resume_path
 if undetected_mode:
     import undetected_chromedriver as uc
 else: 

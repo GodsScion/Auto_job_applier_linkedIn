@@ -11,7 +11,13 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 '''
 
-from setup.config import *
+from config.personals import *
+from config.questions import *
+from config.search import *
+from config.secrets import *
+from config.settings import *
+from config.XdepricatedX import *
+
 
 def validate_TorF(var, var_name):
     if var == True or var == False: return True

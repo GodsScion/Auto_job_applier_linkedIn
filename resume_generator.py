@@ -15,7 +15,7 @@ from modules.open_chrome import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from setup.config import chatGPT_username, chatGPT_password, chatGPT_resume_chat_title, click_gap
+from setup.XdepricatedX import chatGPT_username, chatGPT_password, chatGPT_resume_chat_title, click_gap
 from modules.helpers import buffer, manual_login_retry, print_lg
 from modules.clickers_and_finders import text_input_by_ID, wait_span_click
 

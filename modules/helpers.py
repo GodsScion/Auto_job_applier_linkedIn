@@ -68,7 +68,7 @@ def print_lg(*msgs):
 
 
 # Function to wait within a period of selected random range
-def buffer(speed=0):
+def buffer(speed: int=0) -> None:
     if speed<=0:
         return
     elif speed <= 1 and speed < 2:

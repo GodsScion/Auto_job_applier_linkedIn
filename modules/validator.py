@@ -11,68 +11,161 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 '''
 
-from config.personals import *
-from config.questions import *
-from config.search import *
-from config.secrets import *
-from config.settings import *
+
+
+
 # from config.XdepricatedX import *
 
 
-def validate_TorF(var, var_name):
+def check_int(var: int, var_name: str, min_value: int=0) -> bool | TypeError | ValueError:
+    if not isinstance(var, int): raise TypeError(f'Invalid input for {var_name}. Expecting an Integer! Note: DoNOT surround an Integer in Quotes ("")!')
+    if var < min_value: raise ValueError(f'Invalid input for {var_name}. Expecting an Integer greater than or equal to {min_value}!')
+    return True
+
+def check_boolean(var: bool, var_name: str) -> bool | ValueError:
     if var == True or var == False: return True
-    raise Exception(f'Invalid input for {var_name}. Expecting a Boolean input "True" or "False", not "{var}" and do NOT surround True or False in Quotes ("")!')
+    raise ValueError(f'Invalid input for {var_name}. Expecting a Boolean input "True" or "False", not "{var}" and do NOT surround True or False in Quotes ("")!')
 
-def validate_String(var, var_name, options=[]):
-    if not isinstance(var, str): raise Exception(f'Invalid input for {var_name}. Expecting a String!')
-    if len(options) > 0 and var not in options: raise Exception(f'Invalid input for {var_name}. Expecting a value from {options}, not {var}!')
+def check_string(var: str, var_name: str, options: list=[], min_length: int=0) -> bool | TypeError | ValueError:
+    if not isinstance(var, str): raise TypeError(f'Invalid input for {var_name}. Expecting a String!')
+    if min_length > 0 and len(var) < min_length: raise ValueError(f'Invalid input for {var_name}. Expecting a String of length at least {min_length}!')
+    if len(options) > 0 and var not in options: raise ValueError(f'Invalid input for {var_name}. Expecting a value from {options}, not {var}!')
     return True
 
-def validate_Multi(var, var_name, options=[]):
-    if not isinstance(var, list): raise Exception(f'Invalid input for {var_name}. Expecting a List!')
+def check_list(var: list, var_name: str, options: list=[], min_length: int=0) -> bool | TypeError | ValueError:
+    if not isinstance(var, list): 
+        raise TypeError(f'Invalid input for {var_name}. Expecting a List!')
+    if len(var) < min_length: raise ValueError(f'Invalid input for {var_name}. Expecting a List of length at least {min_length}!')
     for element in var:
-        if not isinstance(element, str): raise Exception(f'Invalid input for {var_name}. All elements in the list must be strings!')
-        if len(options) > 0 and element not in options: raise Exception(f'Invalid input for {var_name}. Expecting all elements to be values from {options}. This "{element}" is NOT in options!')
+        if not isinstance(element, str): raise TypeError(f'Invalid input for {var_name}. All elements in the list must be strings!')
+        if len(options) > 0 and element not in options: raise ValueError(f'Invalid input for {var_name}. Expecting all elements to be values from {options}. This "{element}" is NOT in options!')
     return True
 
 
-def validate_config():
+
+from config.personals import *
+def validate_personals() -> None | ValueError | TypeError:
+    check_string(first_name, "first_name", min_length=1)
+    check_string(middle_name, "middle_name")
+    check_string(last_name, "last_name", min_length=1)
+
+    check_string(phone_number, "phone_number", min_length=10)
     
-    validate_String(file_name, "file_name")
-    validate_String(failed_file_name, "failed_file_name")
+    check_string(street, "street")
+    check_string(state, "state")
+    check_string(zipcode, "zipcode")
+    check_string(country, "country")
+    
+    check_string(ethnicity, "ethnicity", ["Decline", "Hispanic/Latino", "American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "Other"],  min_length=0)
+    check_string(gender, "gender", ["Male", "Female", "Other", "Decline", ""])
+    check_string(disability_status, "disability_status", ["Yes", "No", "Decline"])
+    check_string(veteran_status, "veteran_status", ["Yes", "No", "Decline"])
 
-    if not isinstance(click_gap, int) and click_gap >= 0: raise Exception(f'Invalid input for click_gap. Expecting an int greater than or equal to 0, NOT "{click_gap}"!')
 
-    validate_TorF(run_in_background, "run_in_background")
-    validate_TorF(smooth_scroll, "smooth_scroll")
 
-    validate_TorF(close_tabs, "close_tabs")
+from config.questions import *
+def validate_questions() -> None | ValueError | TypeError:
+    check_string(default_resume_path, "default_resume_path")
+    check_string(years_of_experience, "years_of_experience")
+    check_string(require_visa, "require_visa", ["Yes", "No"])
+    check_string(current_city, "current_city")
+    check_string(website, "website")
+    check_string(desired_salary, "desired_salary")
+    check_string(us_citizenship, "us_citizenship", ["U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident", "Other"])
+    check_string(headline, "headline")
+    check_string(summary, "summary")
+    check_string(cover_letter, "cover_letter")
+    check_string(recent_employer, "recent_employer")
+    check_string(confidence_level, "confidence_level")
 
-    validate_String(username, "username")
-    validate_String(password, "password")
+    check_boolean(pause_before_submit, "pause_before_submit")
+    check_boolean(pause_at_failed_question, "pause_at_failed_question")
+    check_boolean(overwrite_previous_answers, "overwrite_previous_answers")
 
-    validate_Multi(search_terms, "search_terms")
 
-    validate_String(sort_by, "sort_by", ["", "Most recent", "Most relevant"])
-    validate_String(date_posted, "date_posted", ["", "Any time", "Past week", "Past 24 hours", "Past month"])
-    validate_String(salary, "salary", ["", "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"])
+from config.search import *
+def validate_search() -> None | ValueError | TypeError:
+    check_list(search_terms, "search_terms", min_length=1)
+    check_string(search_location, "search_location")
+    check_int(switch_number, "switch_number", 1)
+    check_boolean(randomize_search_order, "randomize_search_order")
 
-    validate_Multi(experience_level, "experience_level", ["Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"])
-    validate_Multi(job_type, "job_type", ["Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"])
-    validate_Multi(on_site, "on_site", ["On-site", "Remote", "Hybrid"])
+    check_string(sort_by, "sort_by", ["", "Most recent", "Most relevant"])
+    check_string(date_posted, "date_posted", ["", "Any time", "Past month", "Past week", "Past 24 hours"])
+    check_string(salary, "salary")
 
-    validate_Multi(companies, "companies")
-    validate_Multi(location, "location")
-    validate_Multi(industry, "industry")
-    validate_Multi(job_function, "job_function")
-    validate_Multi(job_titles, "job_titles")
-    validate_Multi(benefits, "benefits")
-    validate_Multi(commitments, "commitments")
+    check_boolean(easy_apply_only, "easy_apply_only")
 
-    validate_TorF(easy_apply_only, "easy_apply_only")
-    validate_TorF(under_10_applicants, "under_10_applicants")
-    validate_TorF(in_your_network, "in_your_network")
-    validate_TorF(fair_chance_employer, "fair_chance_employer")
+    check_list(experience_level, "experience_level", ["Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"])
+    check_list(job_type, "job_type", ["Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"])
+    check_list(on_site, "on_site", ["On-site", "Remote", "Hybrid"])
+
+    check_list(companies, "companies")
+    check_list(location, "location")
+    check_list(industry, "industry")
+    check_list(job_function, "job_function")
+    check_list(job_titles, "job_titles")
+    check_list(benefits, "benefits")
+    check_list(commitments, "commitments")
+
+    check_boolean(under_10_applicants, "under_10_applicants")
+    check_boolean(in_your_network, "in_your_network")
+    check_boolean(fair_chance_employer, "fair_chance_employer")
+
+    check_list(about_company_bad_words, "about_company_bad_words")
+    check_list(about_company_good_words, "about_company_good_words")
+    check_list(bad_words, "bad_words")
+    check_boolean(security_clearance, "security_clearance")
+    check_boolean(did_masters, "did_masters")
+    check_int(current_experience, "current_experience", -1)
+
+
+
+
+from config.secrets import *
+def validate_secrets() -> None | ValueError | TypeError:
+    check_string(username, "username", min_length=5)
+    check_string(password, "password", min_length=5)
+
+    # check_string(api_key, "api_key", min_length=10)
+
+
+
+from config.settings import *
+def validate_settings() -> None | ValueError | TypeError:
+    check_boolean(close_tabs, "close_tabs")
+    # check_boolean(connect_hr, "connect_hr")
+    # check_string(connect_request_message, "connect_request_message", min_length=10)
+
+    check_boolean(run_non_stop, "run_non_stop")
+    check_boolean(alternate_sortby, "alternate_sortby")
+    check_boolean(cycle_date_posted, "cycle_date_posted")
+    check_boolean(stop_date_cycle_at_24hr, "stop_date_cycle_at_24hr")
+    
+    # check_string(generated_resume_path, "generated_resume_path", min_length=1)
+
+    check_string(file_name, "file_name", min_length=1)
+    check_string(failed_file_name, "failed_file_name", min_length=1)
+    check_string(logs_folder_path, "logs_folder_path", min_length=1)
+
+    check_int(click_gap, "click_gap", 0)
+
+    check_boolean(run_in_background, "run_in_background")
+    check_boolean(disable_extensions, "disable_extensions")
+    check_boolean(safe_mode, "safe_mode")
+    check_boolean(smooth_scroll, "smooth_scroll")
+    check_boolean(keep_screen_awake, "keep_screen_awake")
+    check_boolean(undetected_mode, "undetected_mode")
+
+
+
+
+def validate_config() -> bool | ValueError | TypeError:
+    validate_personals()
+    validate_questions()
+    validate_search()
+    validate_secrets()
+    validate_settings()
 
 
     # validate_String(chatGPT_username, "chatGPT_username")

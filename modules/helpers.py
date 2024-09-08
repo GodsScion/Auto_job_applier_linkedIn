@@ -22,7 +22,7 @@ from config.settings import logs_folder_path
 
 #< Directories related
 # Function to create missing directories
-def make_directories(paths):
+def make_directories(paths: list[str]) -> None:
     for path in paths:  
         path = path.replace("//","/")
         if '/' in path and '.' in path: path = path[:path.rfind('/')]
@@ -33,7 +33,7 @@ def make_directories(paths):
             print(f'Error while creating directory "{path}": ', e)
 
 # Function to search for Chrome Profiles
-def find_default_profile_directory():
+def find_default_profile_directory() -> str | None:
     # List of default profile directory locations to search
     default_locations = [
         r"%LOCALAPPDATA%\Google\Chrome\User Data",
@@ -50,12 +50,11 @@ def find_default_profile_directory():
 
 #< Logging related
 # Function to log critical errors
-def critical_error_log(possible_reason, stack_trace):
+def critical_error_log(possible_reason: str, stack_trace: Exception) -> None:
     print_lg(possible_reason, stack_trace, datetime.now())
-    pass
 
 # Function to log and print
-def print_lg(*msgs):
+def print_lg(*msgs: str) -> None:
     try:
         message = "\n".join(str(msg) for msg in msgs)
         path = logs_folder_path+"/log.txt"
@@ -80,7 +79,7 @@ def buffer(speed: int=0) -> None:
     
 
 # Function to ask and validate manual login
-def manual_login_retry(is_logged_in, limit = 2):
+def manual_login_retry(is_logged_in: function, limit: int = 2) -> None:
     count = 0
     while not is_logged_in():
         from pyautogui import alert
@@ -95,7 +94,7 @@ def manual_login_retry(is_logged_in, limit = 2):
 
 
 # Function to calculate date posted
-def calculate_date_posted(time_string):
+def calculate_date_posted(time_string: str) -> datetime | None:
     time_string = time_string.strip()
     # print_lg(f"Trying to calculate date job was posted from '{time_string}'")
     now = datetime.now()

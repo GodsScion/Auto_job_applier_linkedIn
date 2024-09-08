@@ -21,6 +21,7 @@ pyautogui.FAILSAFE = False
 from random import choice, shuffle, randint
 from datetime import datetime
 from modules.open_chrome import *
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -66,7 +67,7 @@ re_experience = re.compile(r'[(]?\s*(\d+)\s*[)]?\s*[-to]*\s*\d*[+]*\s*year[s]?',
 #< Login Functions
 
 # Function to check if user is logged-in in LinkedIn
-def is_logged_in_LN():
+def is_logged_in_LN() -> bool:
     if driver.current_url == "https://www.linkedin.com/feed/": return True
     if try_linkText(driver, "Sign in"): return False
     if try_xp(driver, '//button[@type="submit" and contains(text(), "Sign in")]'):  return False
@@ -75,7 +76,7 @@ def is_logged_in_LN():
     return True
 
 # Function to login for LinkedIn
-def login_LN():
+def login_LN() -> None:
     # Find the username and password fields and fill them with user credentials
     driver.get("https://www.linkedin.com/login")
     try:
@@ -113,7 +114,7 @@ def login_LN():
 
 
 # Function to get list of applied job's Job IDs
-def get_applied_job_ids():
+def get_applied_job_ids() -> set:
     job_ids = set()
     try:
         with open(file_name, 'r', encoding='utf-8') as file:
@@ -127,7 +128,7 @@ def get_applied_job_ids():
 
 
 # Function to apply job search filters
-def apply_filters():
+def apply_filters() -> None:
     try:
         recommended_wait = 1 if click_gap < 1 else 0
 
@@ -167,7 +168,7 @@ def apply_filters():
         multi_sel_noWait(driver, commitments)
         if benefits or commitments: buffer(recommended_wait)
 
-        show_results_button = driver.find_element(By.XPATH, '//button[contains(@aria-label, "Apply current filters to show")]')
+        show_results_button: WebElement = driver.find_element(By.XPATH, '//button[contains(@aria-label, "Apply current filters to show")]')
         show_results_button.click()
 
     except Exception as e:
@@ -177,7 +178,7 @@ def apply_filters():
 
 
 # Function to get pagination element and current page number
-def get_page_info():
+def get_page_info() -> tuple[WebElement | None, int | None]:
     try:
         pagination_element = try_find_by_classes(driver, ["artdeco-pagination", "artdeco-pagination__pages"])
         scroll_to_view(driver, pagination_element)
@@ -192,7 +193,7 @@ def get_page_info():
 
 
 # Function to get job main details
-def get_job_main_details(job, blacklisted_companies, rejected_jobs):
+def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_jobs: set) -> tuple[str, str, str, str, str, bool]:
     job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
     scroll_to_view(driver, job_details_button, True)
     title = job_details_button.text

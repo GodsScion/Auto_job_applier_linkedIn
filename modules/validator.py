@@ -16,7 +16,7 @@ from config.questions import *
 from config.search import *
 from config.secrets import *
 from config.settings import *
-from config.XdepricatedX import *
+# from config.XdepricatedX import *
 
 
 def validate_TorF(var, var_name):
@@ -75,10 +75,10 @@ def validate_config():
     validate_TorF(fair_chance_employer, "fair_chance_employer")
 
 
-    validate_String(chatGPT_username, "chatGPT_username")
-    validate_String(chatGPT_password, "chatGPT_password")
+    # validate_String(chatGPT_username, "chatGPT_username")
+    # validate_String(chatGPT_password, "chatGPT_password")
 
-    validate_String(chatGPT_resume_chat_title, "chatGPT_resume_chat_title")
+    # validate_String(chatGPT_resume_chat_title, "chatGPT_resume_chat_title")
 
     return True
 

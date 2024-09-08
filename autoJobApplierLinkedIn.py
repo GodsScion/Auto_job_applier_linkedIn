@@ -31,7 +31,6 @@ from config.questions import *
 from config.search import *
 from config.secrets import *
 from config.settings import *
-from config.XdepricatedX import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config

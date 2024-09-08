@@ -66,9 +66,11 @@ re_experience = re.compile(r'[(]?\s*(\d+)\s*[)]?\s*[-to]*\s*\d*[+]*\s*year[s]?',
 
 
 #< Login Functions
-
-# Function to check if user is logged-in in LinkedIn
 def is_logged_in_LN() -> bool:
+    '''
+    Function to check if user is logged-in in LinkedIn
+    * Returns: `True` if user is logged-in or `False` if not
+    '''
     if driver.current_url == "https://www.linkedin.com/feed/": return True
     if try_linkText(driver, "Sign in"): return False
     if try_xp(driver, '//button[@type="submit" and contains(text(), "Sign in")]'):  return False
@@ -76,8 +78,14 @@ def is_logged_in_LN() -> bool:
     print_lg("Didn't find Sign in link, so assuming user is logged in!")
     return True
 
-# Function to login for LinkedIn
+
 def login_LN() -> None:
+    '''
+    Function to login for LinkedIn
+    * Tries to login using given `username` and `password` from `secrets.py`
+    * If failed, tries to login using saved LinkedIn profile button if available
+    * If both failed, asks user to login manually
+    '''
     # Find the username and password fields and fill them with user credentials
     driver.get("https://www.linkedin.com/login")
     try:
@@ -114,8 +122,11 @@ def login_LN() -> None:
 
 
 
-# Function to get list of applied job's Job IDs
 def get_applied_job_ids() -> set:
+    '''
+    Function to get a `set` of applied job's Job IDs
+    * Returns a set of Job IDs from existing applied jobs history csv file
+    '''
     job_ids = set()
     try:
         with open(file_name, 'r', encoding='utf-8') as file:
@@ -128,8 +139,10 @@ def get_applied_job_ids() -> set:
 
 
 
-# Function to apply job search filters
 def apply_filters() -> None:
+    '''
+    Function to apply job search filters
+    '''
     try:
         recommended_wait = 1 if click_gap < 1 else 0
 
@@ -178,8 +191,10 @@ def apply_filters() -> None:
 
 
 
-# Function to get pagination element and current page number
 def get_page_info() -> tuple[WebElement | None, int | None]:
+    '''
+    Function to get pagination element and current page number
+    '''
     try:
         pagination_element = try_find_by_classes(driver, ["artdeco-pagination", "artdeco-pagination__pages"])
         scroll_to_view(driver, pagination_element)
@@ -193,8 +208,17 @@ def get_page_info() -> tuple[WebElement | None, int | None]:
 
 
 
-# Function to get job main details
 def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_jobs: set) -> tuple[str, str, str, str, str, bool]:
+    '''
+    # Function to get job main details.
+    Returns a tuple of (job_id, title, company, work_location, work_style, skip)
+    * job_id: Job ID
+    * title: Job title
+    * company: Company name
+    * work_location: Work location of this job
+    * work_style: Work style of this job (Remote, On-site, Hybrid)
+    * skip: A boolean flag to skip this job
+    '''
     job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
     scroll_to_view(driver, job_details_button, True)
     title = job_details_button.text

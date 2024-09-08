@@ -135,8 +135,12 @@ With heartfelt appreciation, <br>
 
 
 ## 🗓️ Update History:
+### Sep 07, 2024
+- Restructured config file
+- Fixed pagination bug
+
 ### Aug 21, 2024
-- Performance improvements (skip clicking on applied and blacklisted companies)
+- Performance improvements (skip clicking on applied jobs and blacklisted companies)
 - Stop when easy apply application limit is reached
 - Added ability to discard from pause at submission dialogue box
 - Added support for address input

@@ -175,7 +175,7 @@ def apply_filters():
 # Function to get pagination element and current page number
 def get_page_info():
     try:
-        pagination_element = find_by_class(driver, "artdeco-pagination")
+        pagination_element = try_find_by_classes(driver, ["artdeco-pagination", "artdeco-pagination__pages"])
         scroll_to_view(driver, pagination_element)
         current_page = int(pagination_element.find_element(By.XPATH, "//li[contains(@class, 'active')]").text)
     except Exception as e:
@@ -431,9 +431,13 @@ def answer_questions(questions_list, work_location):
             label = try_xp(Question, ".//span[@class='visually-hidden']", False)
             label_org = label.text if label else "Unknown"
             label = label_org.lower()
-            answer = try_xp(Question, ".//label[@for]", False).text
+            answer = try_xp(Question, ".//label[@for]", False).text  # Sometimes multiple checkboxes are given for 1 question, Not accounted for that yet
             prev_answer = checkbox.is_selected()
-            if not prev_answer: checkbox.click()
+            if not prev_answer:
+                try: checkbox.click()
+                except: 
+                    print_lg("Checkbox click failed!")
+                    pass
             questions_list.add((f'{label} ([X] {answer})', checkbox.is_selected(), "checkbox", prev_answer))
             continue
 

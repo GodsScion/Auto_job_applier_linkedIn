@@ -35,6 +35,7 @@ from config.settings import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
+from typing import Literal
 # if use_resume_generator:    from resume_generator import is_logged_in_GPT, login_GPT, open_resume_chat, create_custom_resume
 
 
@@ -227,7 +228,7 @@ def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_j
 
 
 # Function to check for Blacklisted words in About Company
-def check_blacklist(rejected_jobs,job_id,company,blacklisted_companies):
+def check_blacklist(rejected_jobs: set, job_id: str, company: str, blacklisted_companies: set) -> tuple[set, set, WebElement] | ValueError:
     jobs_top_card = try_find_by_classes(driver, ["job-details-jobs-unified-top-card__primary-description-container","job-details-jobs-unified-top-card__primary-description","jobs-unified-top-card__primary-description","jobs-details__main-content"])
     about_company_org = find_by_class(driver, "jobs-company__box")
     scroll_to_view(driver, about_company_org)
@@ -252,7 +253,7 @@ def check_blacklist(rejected_jobs,job_id,company,blacklisted_companies):
 
 
 # Function to extract years of experience required from About Job
-def extract_years_of_experience(text):
+def extract_years_of_experience(text: str) -> int:
     # Extract all patterns like '10+ years', '5 years', '3-5 years', etc.
     matches = re.findall(re_experience, text)
     if len(matches) == 0: 
@@ -263,20 +264,20 @@ def extract_years_of_experience(text):
 
 
 # Function to upload resume
-def upload_resume(modal, resume):
+def upload_resume(modal: WebElement, resume: str) -> tuple[bool, str]:
     try:
         modal.find_element(By.NAME, "file").send_keys(os.path.abspath(resume))
         return True, os.path.basename(default_resume_path)
     except: return False, "Previous resume"
 
 # Function to answer common questions for Easy Apply
-def answer_common_questions(label, answer):
+def answer_common_questions(label: str, answer: str) -> str:
     if 'sponsorship' in label or 'visa' in label: answer = require_visa
     return answer
 
 
 # Function to answer the questions for Easy Apply
-def answer_questions(questions_list, work_location):
+def answer_questions(questions_list: set, work_location: str) -> set:
     # Get all questions from the page
     all_questions = driver.find_elements(By.CLASS_NAME, "jobs-easy-apply-form-element")
 
@@ -460,7 +461,7 @@ def answer_questions(questions_list, work_location):
 
 
 # Function to open new tab and save external job application links
-def external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name):
+def external_apply(pagination_element: WebElement, job_id: str, job_link: str, resume: str, date_listed, application_link: str, screenshot_name: str) -> tuple[bool, str, int]:
     global tabs_count, dailyEasyApplyLimitReached
     
     if easy_apply_only:
@@ -493,7 +494,7 @@ def external_apply(pagination_element, job_id, job_link, resume, date_listed, ap
 #< Failed attempts logging
 
 # Function to update failed jobs list in excel
-def failed_job(job_id, job_link, resume, date_listed, error, exception, application_link, screenshot_name):
+def failed_job(job_id: str, job_link: str, resume: str, date_listed, error: str, exception: Exception, application_link: str, screenshot_name: str) -> None:
     with open(failed_file_name, 'a', newline='', encoding='utf-8') as file:
         fieldnames = ['Job ID', 'Job Link', 'Resume Tried', 'Date listed', 'Date Tried', 'Assumed Reason', 'Stack Trace', 'External Job link', 'Screenshot Name']
         writer = csv.DictWriter(file, fieldnames=fieldnames)
@@ -503,7 +504,7 @@ def failed_job(job_id, job_link, resume, date_listed, error, exception, applicat
 
 
 # Function to to take screenshot for debugging
-def screenshot(driver, job_id, failedAt):
+def screenshot(driver: WebDriver, job_id: str, failedAt: str) -> str:
     screenshot_name = "{} - {} - {}.png".format( job_id, failedAt, str(datetime.now()) )
     path = logs_folder_path+"/screenshots/"+screenshot_name.replace(":",".")
     # special_chars = {'*', '"', '\\', '<', '>', ':', '|', '?'}
@@ -515,7 +516,10 @@ def screenshot(driver, job_id, failedAt):
 
 
 # Function to create or append to the CSV file, once the application is submitted successfully
-def submitted_jobs(job_id, title, company, work_location, work_style, description, experience_required, skills, hr_name, hr_link, resume, reposted, date_listed, date_applied, job_link, application_link, questions_list, connect_request):
+def submitted_jobs(job_id: str, title: str, company: str, work_location: str, work_style: str, description: str, experience_required: int | Literal['Unknown', 'Error in extraction'], 
+                   skills: list[str] | Literal['In Development'], hr_name: str | Literal['Unknown'], hr_link: str | Literal['Unknown'], resume: str, 
+                   reposted: bool, date_listed: datetime | Literal['Unknown'], date_applied:  datetime | Literal['Pending'], job_link: str, application_link: str, 
+                   questions_list: set | None, connect_request: Literal['In Development']) -> None:
     with open(file_name, mode='a', newline='', encoding='utf-8') as csv_file:
         fieldnames = ['Job ID', 'Title', 'Company', 'Work Location', 'Work Style', 'About Job', 'Experience required', 'Skills required', 'HR Name', 'HR Link', 'Resume', 'Re-posted', 'Date Posted', 'Date Applied', 'Job Link', 'External Job link', 'Questions Found', 'Connect Request']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
@@ -530,7 +534,7 @@ def submitted_jobs(job_id, title, company, work_location, work_style, descriptio
 
 
 # Function to discard the job application
-def discard_job():
+def discard_job() -> None:
     actions.send_keys(Keys.ESCAPE).perform()
     wait_span_click(driver, 'Discard', 2)
 
@@ -540,7 +544,7 @@ def discard_job():
 
 
 # Function to apply to jobs
-def apply_to_jobs(search_terms):
+def apply_to_jobs(search_terms: list[str]) -> None:
     applied_jobs = get_applied_job_ids()
     rejected_jobs = set()
     blacklisted_companies = set()
@@ -800,7 +804,7 @@ def apply_to_jobs(search_terms):
             # print_lg(e)
 
         
-def run(total_runs):
+def run(total_runs: int) -> int:
     if dailyEasyApplyLimitReached:
         return total_runs
     print_lg("\n########################################################################################################################\n")
@@ -821,7 +825,8 @@ def run(total_runs):
 
 chatGPT_tab = False
 linkedIn_tab = False
-def main():
+
+def main() -> None:
     try:
         global linkedIn_tab, tabs_count, useNewResume
         alert_title = "Error Occurred. Closing Browser!"
@@ -906,4 +911,6 @@ def main():
         try: driver.quit()
         except Exception as e: critical_error_log("When quitting...", e)
 
-main()
+
+if __name__ == "__main__":
+    main()

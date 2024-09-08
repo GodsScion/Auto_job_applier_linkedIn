@@ -79,7 +79,7 @@ def buffer(speed: int=0) -> None:
     
 
 # Function to ask and validate manual login
-def manual_login_retry(is_logged_in: function, limit: int = 2) -> None:
+def manual_login_retry(is_logged_in: callable, limit: int = 2) -> None:
     count = 0
     while not is_logged_in():
         from pyautogui import alert

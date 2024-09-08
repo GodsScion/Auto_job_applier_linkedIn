@@ -167,11 +167,8 @@ def validate_config() -> bool | ValueError | TypeError:
     validate_secrets()
     validate_settings()
 
-
     # validate_String(chatGPT_username, "chatGPT_username")
     # validate_String(chatGPT_password, "chatGPT_password")
-
     # validate_String(chatGPT_resume_chat_title, "chatGPT_resume_chat_title")
-
     return True
 

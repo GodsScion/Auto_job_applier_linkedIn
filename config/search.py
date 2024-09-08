@@ -31,18 +31,17 @@ randomize_search_order = False     # True of False
 # >>>>>>>>>>> Job Search Filters <<<<<<<<<<<
 ''' 
 You could set your preferences or leave them as empty to not select options except for 'True or False' options. Below are some valid examples for leaving them empty:
-This is below format:
-<QUESTION> = <VALID ANSWER>
+This is below format: QUESTION = VALID_ANSWER
 
-# Examples of how to leave them empty. Note that True or False options cannot be left empty! 
-question_1 = ""                    # answer1, answer2, answer3, etc.
-question_2 = []                    # (multiple select)
-question_3 = []                    # (dynamic multiple select)
+## Examples of how to leave them empty. Note that True or False options cannot be left empty! 
+* question_1 = ""                    # answer1, answer2, answer3, etc.
+* question_2 = []                    # (multiple select)
+* question_3 = []                    # (dynamic multiple select)
 
-# Some valid examples of how to answer questions:
-question_1 = "answer1"                  # "answer1", "answer2", "answer3" or ("" to not select). Answers are case sensitive.
-question_2 = ["answer1", "answer2"]     # (multiple select) "answer1", "answer2", "answer3" or ([] to not select). Note that answers must be in [] and are case sensitive.
-question_3 = ["answer1", "Random AnswER"]     # (dynamic multiple select) "answer1", "answer2", "answer3" or ([] to not select). Note that answers must be in [] and need not match the available options.
+## Some valid examples of how to answer questions:
+* question_1 = "answer1"                  # "answer1", "answer2", "answer3" or ("" to not select). Answers are case sensitive.
+* question_2 = ["answer1", "answer2"]     # (multiple select) "answer1", "answer2", "answer3" or ([] to not select). Note that answers must be in [] and are case sensitive.
+* question_3 = ["answer1", "Random AnswER"]     # (dynamic multiple select) "answer1", "answer2", "answer3" or ([] to not select). Note that answers must be in [] and need not match the available options.
 
 '''
 

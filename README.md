@@ -136,6 +136,8 @@ With heartfelt appreciation, <br>
 
 ## 🗓️ Update History:
 ### Sep 07, 2024
+- Annotations for developers
+- Robust input validations
 - Restructured config file
 - Fixed pagination bug
 

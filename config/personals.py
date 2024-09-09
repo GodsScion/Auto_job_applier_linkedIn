@@ -45,7 +45,18 @@ veteran_status = "Decline"         # "Yes", "No", "Decline"
 ##
 
 
+'''
+For string variables followed by comments with options, only use the answers from given options.
+Some valid examples are:
+* variable1 = "option1"         # "option1", "option2", "option3" or ("" to not select). Answers are case sensitive.#
+* variable2 = ""                # "option1", "option2", "option3" or ("" to not select). Answers are case sensitive.#
 
+Other variables are free text. No restrictions other than compulsory use of quotes.
+Some valid examples are:
+* variable3 = "Random Answer 5"         # Enter your answer. Eg: "Answer1", "Answer2"
+
+Invalid inputs will result in an error!
+'''
 
 
 

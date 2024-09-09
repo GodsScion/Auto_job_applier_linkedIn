@@ -8,7 +8,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 
 
 ## ✨ Content
-- [Introduction](#linkedin-auto-job-applier-)
+- [Introduction](#linkedin-ai-auto-job-applier-)
 - [Demo Video](#%EF%B8%8F-see-it-in-action)
 - [Index](#-content)
 - [How to install](#%EF%B8%8F-how-to-install)

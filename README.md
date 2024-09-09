@@ -30,17 +30,20 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
   ```
 * Download and install latest version of [Google Chrome](https://www.google.com/chrome) in it's default location, visit https://www.google.com/chrome to download it's installer.
 * Clone the current git repo or download it as a zip file, url to the latest update https://github.com/GodsScion/Auto_job_applier_linkedIn.
-* (Not needed if you set `undetected_mode = True` in `config/settings.py` ) Download and install the appropriate [Chrome Driver](https://googlechromelabs.github.io/chrome-for-testing/) for Google Chrome and paste it in the location Chrome was installed, visit https://googlechromelabs.github.io/chrome-for-testing/ to download.
+* (Not needed if you set `stealth_mode = True` in `config/settings.py` ) Download and install the appropriate [Chrome Driver](https://googlechromelabs.github.io/chrome-for-testing/) for Google Chrome and paste it in the location Chrome was installed, visit https://googlechromelabs.github.io/chrome-for-testing/ to download.
   <br> <br>
   ***OR*** 
   <br> <br>
   If you are using Windows, click on `windows-setup.bat` available in the `/setup` folder, this will install the latest chromedriver automatically.
-* Open `personals.py` file in `/config` folder and enter your details like name, phone number, address, etc. Whatever you want to fill in Application.
+* If you have questions or need help setting it up or to talk in general, join the github server: https://discord.gg/fFp7uUzWCY
+
+## 🔧 How to configure
+* Open `personals.py` file in `/config` folder and enter your details like name, phone number, address, etc. Whatever you want to fill in your applications.
 * Open `questions.py` file in `/config` folder and enter your answers for application questions, configure wether you want the bot to pause before submission or pause if it can't answer unknown questions.
-* Open `search.py` file in `/config` folder and enter your search preferences, job filters, configure the bot as per your needs, these settings decide which jobs to apply for or skip.
-* Open `secrets.py` file in `/config` folder and enter your LinkedIn username, password to login and OpeanAI API Key for generation of job tailored resume and cover letter (This entire step is optional). If you do not provide username or password or leave them as default, it will login with saved profile in browser, if failed will ask you to login manually.
+* Open `search.py` file in `/config` folder and enter your search preferences, job filters, configure the bot as per your needs (these settings decide which jobs to apply for or skip).
+* Open `secrets.py` file in `/config` folder and enter your LinkedIn username, password to login and OpeanAI API Key for generation of job tailored resumes and cover letters (This entire step is optional). If you do not provide username or password or leave them as default, it will login with saved profile in browser, if failed will ask you to login manually.
 * Open `settings.py` file in `/config` folder to configure the bot settings like, keep screen awake, click intervals (click intervals are randomized to seem like human behavior), run in background, stealth mode (to avoid bot detection), etc. as per your needs.
-* (Optional) Don't forget to add you default resume in the location you mentioned in `default_resume_path = "all resumes/default/resume.pdf"` in `/config/questions.py`. If one is not provided, it will use your previous resume submitted in LinkedIn or (In Development) generate custom resume if OpeanAI APT key is provided!
+* (Optional) Don't forget to add you default resume in the location you mentioned in `default_resume_path = "all resumes/default/resume.pdf"` given in `/config/questions.py`. If one is not provided, it will use your previous resume submitted in LinkedIn or (In Development) generate custom resume if OpeanAI APT key is provided!
 * Run `autoJobApplierLinkedIn.py` and see the magic happen.
 * If you have questions or need help setting it up or to talk in general, join the github server: https://discord.gg/fFp7uUzWCY
 

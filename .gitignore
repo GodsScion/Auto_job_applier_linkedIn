@@ -6,3 +6,6 @@ all resumes
 logs
 
 old
+
+secrets.py
+config/personals.py

@@ -144,6 +144,14 @@ With heartfelt appreciation, <br>
 
 
 ## 🗓️ Update History:
+### Sep 09, 2024
+- Smarter Auto-fill for salaries and notice periods
+- Robust Search location filter, will work in window mode (No need for full screen)
+- Better logic for Select and Radio type questions
+- Propper functioning of Decline to answer questions in Equal Employement opportunity questions
+- Checkbox questions select fail bug fixed
+- Annotations are clearer in instructions for setup
+
 ### Sep 07, 2024
 - Annotations for developers
 - Robust input validations

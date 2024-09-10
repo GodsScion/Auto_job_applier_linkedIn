@@ -21,8 +21,10 @@ from config.settings import logs_folder_path
 #### Common functions ####
 
 #< Directories related
-# Function to create missing directories
 def make_directories(paths: list[str]) -> None:
+    '''
+    Function to create missing directories
+    '''
     for path in paths:  
         path = path.replace("//","/")
         if '/' in path and '.' in path: path = path[:path.rfind('/')]
@@ -32,9 +34,11 @@ def make_directories(paths: list[str]) -> None:
         except Exception as e:
             print(f'Error while creating directory "{path}": ', e)
 
-# Function to search for Chrome Profiles
+
 def find_default_profile_directory() -> str | None:
-    # List of default profile directory locations to search
+    '''
+    Function to search for Chrome Profiles within default locations
+    '''
     default_locations = [
         r"%LOCALAPPDATA%\Google\Chrome\User Data",
         r"%USERPROFILE%\AppData\Local\Google\Chrome\User Data",
@@ -49,12 +53,17 @@ def find_default_profile_directory() -> str | None:
 
 
 #< Logging related
-# Function to log critical errors
 def critical_error_log(possible_reason: str, stack_trace: Exception) -> None:
+    '''
+    Function to log and print critical errors along with datetime stamp
+    '''
     print_lg(possible_reason, stack_trace, datetime.now())
 
-# Function to log and print
+
 def print_lg(*msgs: str) -> None:
+    '''
+    Function to log and print
+    '''
     try:
         message = "\n".join(str(msg) for msg in msgs)
         path = logs_folder_path+"/log.txt"
@@ -66,8 +75,15 @@ def print_lg(*msgs: str) -> None:
 #>
 
 
-# Function to wait within a period of selected random range
 def buffer(speed: int=0) -> None:
+    '''
+    Function to wait within a period of selected random range.
+    * Will not wait if input `speed <= 0`
+    * Will wait within a random range of 
+      - `0.6 to 1.0 secs` if `1 <= speed < 2`
+      - `1.0 to 1.8 secs` if `2 <= speed < 3`
+      - `1.8 to speed secs` if `3 <= speed`
+    '''
     if speed<=0:
         return
     elif speed <= 1 and speed < 2:
@@ -78,8 +94,10 @@ def buffer(speed: int=0) -> None:
         return sleep(randint(18,round(speed)*10)*0.1)
     
 
-# Function to ask and validate manual login
 def manual_login_retry(is_logged_in: callable, limit: int = 2) -> None:
+    '''
+    Function to ask and validate manual login
+    '''
     count = 0
     while not is_logged_in():
         from pyautogui import alert
@@ -93,8 +111,22 @@ def manual_login_retry(is_logged_in: callable, limit: int = 2) -> None:
         if alert(message, "Login Required", button) and count > limit: return
 
 
-# Function to calculate date posted
-def calculate_date_posted(time_string: str) -> datetime | None:
+
+def calculate_date_posted(time_string: str) -> datetime | None | ValueError:
+    '''
+    Function to calculate date posted from string.
+    Returns datetime object | None if unable to calculate | ValueError if time_string is invalid
+    Valid time string examples:
+    * 10 seconds ago
+    * 15 minutes ago
+    * 2 hours ago
+    * 1 hour ago
+    * 1 day ago
+    * 10 days ago
+    * 1 week ago
+    * 1 month ago
+    * 1 year ago
+    '''
     time_string = time_string.strip()
     # print_lg(f"Trying to calculate date job was posted from '{time_string}'")
     now = datetime.now()
@@ -124,7 +156,23 @@ def calculate_date_posted(time_string: str) -> datetime | None:
     return date_posted
     
 
-
+def convert_to_lakhs(value: str) -> str:
+    '''
+    Converts str value to lakhs, no validations are done except for length and stripping.
+    Examples:
+    * "100000" -> "1.00"
+    * "101,000" -> "10.1," Notice ',' is not removed 
+    * "50" -> "0.00"
+    * "5000" -> "0.05" 
+    '''
+    value = value.strip()
+    l = len(value)
+    if l > 0:
+        if l > 5:
+            value = value[:l-5] + "." + value[l-5:l-3]
+        else:
+            value = "0." + "0"*(5-l) + value[:2]
+    return value
 
 
 

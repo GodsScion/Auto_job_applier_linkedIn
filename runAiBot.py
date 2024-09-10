@@ -239,7 +239,7 @@ def get_page_info() -> tuple[WebElement | None, int | None]:
         print_lg("Failed to find Pagination element, hence couldn't scroll till end!")
         pagination_element = None
         current_page = None
-        # print_lg(e)
+        print_lg(e)
     return pagination_element, current_page
 
 

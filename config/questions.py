@@ -30,10 +30,23 @@ require_visa = "No"               # "Yes" or "No"
 current_city = ""                  # Los Angeles, San Francisco, etc.
 
 # What is the link to your portfolio website, leave it empty as "", if you want to leave this question unanswered
-website = "https://github.com/GodsScion"                       # "www.example.bio" or "" and so on....
+website = "https://github.com/GodsScion"                        # "www.example.bio" or "" and so on....
 
-# What to enter in your desired salary question, only enter in numbers inside quotes as some companies only allow numbers
-desired_salary = "120000"          # "80000", "90000", "100000" or "120000" and so on....
+# Please provide the link to your LinkedIn profile.
+linkedIn = "https://www.linkedin.com/in/saivigneshgolla/"       # "https://www.linkedin.com/in/example" or "" and so on...
+
+# What to enter in your desired salary question (American and European), What is your expected CTC (Indian subcontinent)?, only enter in numbers as some companies only allow numbers,
+desired_salary = 2400000          # 80000, 90000, 100000 or 120000 and so on... Do NOT use quotes
+'''
+Note: If question has the word "lakhs" in it (Example: What is your expected CTC in lakhs), 
+then it will add '.' before last 5 digits and answer. Examples: 
+* "2400000" will be answered as "24.00"
+* "850000" will be answered as "8.50"
+And if asked in months, then it will divide by 12 and answer. Examples:
+* "2400000" will be answered as "200000"
+* "850000" will be answered as "70833"
+'''
+
 
 # What is the status of your citizenship? # If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
 # Valid options are: "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident" or "Other"
@@ -42,6 +55,32 @@ us_citizenship = "U.S. Citizen/Permanent Resident"
 
 
 ## SOME ANNOYING QUESTIONS BY COMPANIES 🫠 ##
+
+# What is your current CTC? Some companies make it compulsory to be answered in numbers...
+current_ctc = 75000            # 800000, 900000, 1000000 or 1200000 and so on... Do NOT use quotes
+'''
+Note: If question has the word "lakhs" in it (Example: What is your current CTC in lakhs), 
+then it will add '.' before last 5 digits and answer. Examples: 
+* 2400000 will be answered as "24.00"
+* 850000 will be answered as "8.50"
+# And if asked in months, then it will divide by 12 and answer. Examples:
+# * 2400000 will be answered as "200000"
+# * 850000 will be answered as "70833"
+'''
+
+# What is your notice period in days?
+notice_period = 30                   # Any number >= 0 without quotes. Eg: 0, 7, 15, 30, 45, etc.
+'''
+Note: If question has 'month' or 'week' in it (Example: What is your notice period in months), 
+then it will divide by 30 or 7 and answer respectively. Examples:
+* For notice_period = 66:
+  - "66" OR "2" if asked in months OR "9" if asked in weeks
+* For notice_period = 15:"
+  - "15" OR "0" if asked in months OR "2" if asked in weeks
+* For notice_period = 0:
+  - "0" OR "0" if asked in months OR "0" if asked in weeks
+'''
+
 
 # Your LinkedIn headline in quotes Eg: "Software Engineer @ Google, Masters in Computer Science", "Recent Grad Student @ MIT, Computer Science"
 headline = "Headline"

@@ -12,7 +12,7 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 '''
 
 from config.settings import click_gap, smooth_scroll
-from modules.helpers import buffer, print_lg
+from modules.helpers import buffer, print_lg, sleep
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -114,3 +114,12 @@ def company_search_click(driver: WebDriver, actions: ActionChains, x: str) -> No
     actions.send_keys(Keys.DOWN).perform()
     actions.send_keys(Keys.ENTER).perform()
     print_lg(f'Tried searching and adding "{x}"')
+
+def text_input(actions: ActionChains, textInputEle: WebElement | bool, value: str, textFieldName: str = "Text") -> None | Exception:
+    if textInputEle:
+        textInputEle.clear()
+        textInputEle.send_keys(value.strip())
+        sleep(2)
+        actions.send_keys(Keys.ENTER).perform()
+    else:
+        print_lg(f'{textFieldName} input was not given!')

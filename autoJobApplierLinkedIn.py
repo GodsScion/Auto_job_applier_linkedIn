@@ -26,7 +26,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
-from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, NoSuchWindowException
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, NoSuchWindowException, ElementNotInteractableException
 from config.personals import *
 from config.questions import *
 from config.search import *
@@ -62,6 +62,18 @@ skip_count = 0
 dailyEasyApplyLimitReached = False
 
 re_experience = re.compile(r'[(]?\s*(\d+)\s*[)]?\s*[-to]*\s*\d*[+]*\s*year[s]?', re.IGNORECASE)
+
+desired_salary_lakhs = str(round(desired_salary / 100000, 2))
+desired_salary_monthly = str(round(desired_salary/12, 2))
+desired_salary = str(desired_salary)
+
+current_ctc_lakhs = str(round(current_ctc / 100000, 2))
+current_ctc_monthly = str(round(current_ctc/12, 2))
+current_ctc = str(current_ctc)
+
+notice_period_months = str(notice_period//30)
+notice_period_weeks = str(notice_period//7)
+notice_period = str(notice_period)
 #>
 
 
@@ -139,10 +151,34 @@ def get_applied_job_ids() -> set:
 
 
 
+def set_search_location() -> None:
+    '''
+    Function to set search location
+    '''
+    if search_location.strip():
+        try:
+            print_lg(f'Setting search location as: "{search_location.strip()}"')
+            search_location_ele = try_xp(driver, ".//input[@aria-label='City, state, or zip code'and not(@disabled)]", False) #  and not(@aria-hidden='true')]")
+            text_input(actions, search_location_ele, search_location, "Search Location")
+        except ElementNotInteractableException:
+            try_xp(driver, ".//label[@class='jobs-search-box__input-icon jobs-search-box__keywords-label']")
+            actions.send_keys(Keys.TAB, Keys.TAB).perform()
+            actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).perform()
+            actions.send_keys(search_location.strip()).perform()
+            sleep(2)
+            actions.send_keys(Keys.ENTER).perform()
+            try_xp(driver, ".//button[@aria-label='Cancel']")
+        except Exception as e:
+            try_xp(driver, ".//button[@aria-label='Cancel']")
+            print_lg("Failed to update search location, continuing with default location!", e)
+
+
 def apply_filters() -> None:
     '''
     Function to apply job search filters
     '''
+    set_search_location()
+
     try:
         recommended_wait = 1 if click_gap < 1 else 0
 
@@ -332,14 +368,22 @@ def answer_questions(questions_list: set, work_location: str) -> set:
                 else: answer = answer_common_questions(label,answer)
                 try: select.select_by_visible_text(answer)
                 except NoSuchElementException as e:
-                    ''' <<<<<<<<<<<<<<<<<<  
-                        Only works if options match exactly, implement logic to check if word in options... 
-                        Also implement US voluntary self- identification
-                    '''
-                    print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
-                    select.select_by_index(randint(1, len(select.options)-1))
-                    randomly_answered_questions.add((f'{label_org} [ {options} ]',"select"))
-            questions_list.add((f'{label_org} [ {options} ]', select.first_selected_option.text, "select", prev_answer))
+                    possible_answer_phrases = ["Decline", "not wish", "don't wish", "Prefer not", "not want"] if answer == 'Decline' else [answer]
+                    foundOption = False
+                    for phrase in possible_answer_phrases:
+                        for option in optionsText:
+                            if phrase in option:
+                                select.select_by_visible_text(option)
+                                answer = f'Decline ({option})' if len(possible_answer_phrases) > 1 else option
+                                foundOption = True
+                                break
+                        if foundOption: break
+                    if not foundOption:
+                        print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
+                        select.select_by_index(randint(1, len(select.options)-1))
+                        answer = select.first_selected_option.text
+                        randomly_answered_questions.add((f'{label_org} [ {options} ]',"select"))
+            questions_list.add((f'{label_org} [ {options} ]', answer, "select", prev_answer))
             continue
         
         # Check if it's a radio Question
@@ -374,15 +418,25 @@ def answer_questions(questions_list: set, work_location: str) -> set:
                 if foundOption: 
                     actions.move_to_element(foundOption).click().perform()
                 else:    
+                    possible_answer_phrases = ["Decline", "not wish", "don't wish", "Prefer not", "not want"] if answer == 'Decline' else [answer]
                     ele = options[0]
-                    if answer == 'Decline':
-                        answer = options_labels[0]
-                        for phrase in ["Prefer not", "not want", "not wish"]:
-                            foundOption = try_xp(radio, f".//label[normalize-space()='{phrase}']", False)
-                            if foundOption:
-                                answer = f'Decline ({phrase})'
+                    answer = options_labels[0]
+                    for phrase in possible_answer_phrases:
+                        for i, option_label in enumerate(options_labels):
+                            if phrase in option_label:
+                                foundOption = options[i]
                                 ele = foundOption
+                                answer = f'Decline ({option_label})' if len(possible_answer_phrases) > 1 else option_label
                                 break
+                        if foundOption: break
+                    # if answer == 'Decline':
+                    #     answer = options_labels[0]
+                    #     for phrase in ["Prefer not", "not want", "not wish"]:
+                    #         foundOption = try_xp(radio, f".//label[normalize-space()='{phrase}']", False)
+                    #         if foundOption:
+                    #             answer = f'Decline ({phrase})'
+                    #             ele = foundOption
+                    #             break
                     actions.move_to_element(ele).click().perform()
                     if not foundOption: randomly_answered_questions.add((f'{label_org} ]',"radio"))
             else: answer = prev_answer
@@ -416,11 +470,32 @@ def answer_questions(questions_list: set, work_location: str) -> set:
                     elif 'last' in label and 'first' not in label: answer = last_name
                     elif 'employer' in label: answer = recent_employer
                     else: answer = full_name
-                elif 'website' in label or 'blog' in label or 'portfolio' in label: answer = website
-                elif 'salary' in label or 'compensation' in label: answer = desired_salary
+                elif 'notice' in label:
+                    if 'month' in label:
+                        answer = notice_period_months
+                    elif 'week' in label:
+                        answer = notice_period_weeks
+                    else: answer = notice_period
+                elif 'salary' in label or 'compensation' in label or 'ctc' in label or 'pay' in label: 
+                    if 'current' in label or 'present' in label:
+                        if 'month' in label:
+                            answer = current_ctc_monthly
+                        elif 'lakh' in label:
+                            answer = current_ctc_lakhs
+                        else:
+                            answer = current_ctc
+                    else:
+                        if 'month' in label:
+                            answer = desired_salary_monthly
+                        elif 'lakh' in label:
+                            answer = desired_salary_lakhs
+                        else:
+                            answer = desired_salary
+                elif 'linkedin' in label: answer = linkedIn
+                elif 'website' in label or 'blog' in label or 'portfolio' in label or 'link' in label: answer = website
                 elif 'scale of 1-10' in label: answer = confidence_level
                 elif 'headline' in label: answer = headline
-                elif ('hear' in label or 'come across' in label) and 'this' in label and ('job' in label or 'position' in label): answer = "LinkedIn"
+                elif ('hear' in label or 'come across' in label) and 'this' in label and ('job' in label or 'position' in label): answer = "https://github.com/GodsScion/Auto_job_applier_linkedIn"
                 elif 'state' in label or 'province' in label: answer = state
                 elif 'zip' in label or 'postal' in label or 'code' in label: answer = zipcode
                 elif 'country' in label: answer = country
@@ -461,14 +536,18 @@ def answer_questions(questions_list: set, work_location: str) -> set:
             label = try_xp(Question, ".//span[@class='visually-hidden']", False)
             label_org = label.text if label else "Unknown"
             label = label_org.lower()
-            answer = try_xp(Question, ".//label[@for]", False).text  # Sometimes multiple checkboxes are given for 1 question, Not accounted for that yet
+            answer = try_xp(Question, ".//label[@for]", False)  # Sometimes multiple checkboxes are given for 1 question, Not accounted for that yet
+            answer = answer.text if answer else "Unknown"
             prev_answer = checkbox.is_selected()
+            checked = prev_answer
             if not prev_answer:
-                try: checkbox.click()
-                except: 
-                    print_lg("Checkbox click failed!")
+                try:
+                    actions.move_to_element(checkbox).click().perform()
+                    checked = True
+                except Exception as e: 
+                    print_lg("Checkbox click failed!", e)
                     pass
-            questions_list.add((f'{label} ([X] {answer})', checkbox.is_selected(), "checkbox", prev_answer))
+            questions_list.add((f'{label} ([X] {answer})', checked, "checkbox", prev_answer))
             continue
 
 
@@ -580,14 +659,6 @@ def apply_to_jobs(search_terms: list[str]) -> None:
         driver.get(f"https://www.linkedin.com/jobs/search/?keywords={searchTerm}")
         print_lg("\n________________________________________________________________________________________________________________________\n")
         print_lg(f'\n>>>> Now searching for "{searchTerm}" <<<<\n\n')
-
-        if search_location.strip():
-            print_lg(f'Setting search location as: "{search_location.strip()}"')
-            search_location_ele = try_xp(driver, "//input[@aria-label='City, state, or zip code'and not(@disabled)]", False) #  and not(@aria-hidden='true')]")
-            search_location_ele.clear()
-            search_location_ele.send_keys(search_location.strip())
-            sleep(2)
-            actions.send_keys(Keys.ENTER).perform()
 
         apply_filters()
 
@@ -741,7 +812,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                 next_counter = 0
                                 while next_button:
                                     next_counter += 1
-                                    if next_counter >= 6: 
+                                    if next_counter >= 15: 
                                         if pause_at_failed_question:
                                             screenshot(driver, job_id, "Needed manual intervention for failed question")
                                             pyautogui.alert("Couldn't answer one or more questions.\nPlease click \"Continue\" once done.\nDO NOT CLICK Back, Next or Review button in LinkedIn.\n\n\n\n\nYou can turn off \"Pause at failed question\" setting in config.py", "Help Needed", "Continue")

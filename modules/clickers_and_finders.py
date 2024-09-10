@@ -117,6 +117,8 @@ def company_search_click(driver: WebDriver, actions: ActionChains, x: str) -> No
 
 def text_input(actions: ActionChains, textInputEle: WebElement | bool, value: str, textFieldName: str = "Text") -> None | Exception:
     if textInputEle:
+        sleep(1)
+        # actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).perform()
         textInputEle.clear()
         textInputEle.send_keys(value.strip())
         sleep(2)

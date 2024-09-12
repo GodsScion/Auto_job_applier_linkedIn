@@ -50,6 +50,8 @@ def validate_personals() -> None | ValueError | TypeError:
     check_string(last_name, "last_name", min_length=1)
 
     check_string(phone_number, "phone_number", min_length=10)
+
+    check_string(current_city, "current_city")
     
     check_string(street, "street")
     check_string(state, "state")
@@ -68,7 +70,6 @@ def validate_questions() -> None | ValueError | TypeError:
     check_string(default_resume_path, "default_resume_path")
     check_string(years_of_experience, "years_of_experience")
     check_string(require_visa, "require_visa", ["Yes", "No"])
-    check_string(current_city, "current_city")
     check_string(website, "website")
     check_string(linkedIn, "linkedIn")
     check_int(desired_salary, "desired_salary")

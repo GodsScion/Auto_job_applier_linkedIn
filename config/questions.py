@@ -26,9 +26,6 @@ years_of_experience = "5"          # A number in quotes Eg: "0","1","2","3","4",
 # Do you need visa sponsorship now or in future?
 require_visa = "No"               # "Yes" or "No"
 
-# What is your current city? If left empty as "", the bot will fill in location of jobs location.
-current_city = ""                  # Los Angeles, San Francisco, etc.
-
 # What is the link to your portfolio website, leave it empty as "", if you want to leave this question unanswered
 website = "https://github.com/GodsScion"                        # "www.example.bio" or "" and so on....
 

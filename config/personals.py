@@ -25,6 +25,12 @@ last_name = "Golla"                # Your last name in quotes Eg: "Last", "Golla
 # Phone number (required), make sure it's valid.
 phone_number = "9876543210"        # Enter your 10 digit number in quotes Eg: "9876543210"
 
+# What is your current city?
+current_city = ""                  # Los Angeles, San Francisco, etc.
+'''
+Note: If left empty as "", the bot will fill in location of jobs location.
+'''
+
 # Address, not so common question but some job applications make it required!
 street = "123 Main Street"
 state = "STATE"

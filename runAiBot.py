@@ -666,7 +666,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
     applied_jobs = get_applied_job_ids()
     rejected_jobs = set()
     blacklisted_companies = set()
-    global current_city, failed_count, skip_count, easy_applied_count, external_jobs_count, tabs_count, pause_before_submit, pause_at_failed_question, follow_applied_companies
+    global current_city, failed_count, skip_count, easy_applied_count, external_jobs_count, tabs_count, pause_before_submit, pause_at_failed_question, useNewResume, follow_applied_companies
     current_city = current_city.strip()
 
     if randomize_search_order:  shuffle(search_terms)

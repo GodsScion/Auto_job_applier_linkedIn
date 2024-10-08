@@ -100,7 +100,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - Customize resume for every job using LLMs ChatGPT (In Development). (Halted decision pending, will probably implement api or utilize other LLMs or Web Scrape)
 
 #### Currently Broken 🥲😭: 
-- All ChatGPT features (depends on Undetected Chrome driver):
+- All ChatGPT features:
     - ChatGPT Login 
     - ChatGPT resume chat window opener
       

@@ -59,7 +59,7 @@ click_gap = 0                      # Enter max allowed secs to wait approximatel
 run_in_background = False          # True or False ,   If True, this will make pause_at_failed_question, pause_before_submit and run_in_background as False
 
 # If you want to disable extensions then set disable_extensions as True (Better for performance)
-disable_extensions = True          # True or False
+disable_extensions = False         # True or False
 
 # Run in safe mode. Set this true if chrome is taking too long to open or if you have multiple profiles in browser. This will open chrome in guest profile!
 safe_mode = False                  # True or False

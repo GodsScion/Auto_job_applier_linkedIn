@@ -76,7 +76,8 @@ def find_by_class(driver: WebDriver, class_name: str, time: float=5.0) -> WebEle
 
 # Scroll functions
 def scroll_to_view(driver: WebDriver, element: WebElement, top: bool = False, smooth_scroll: bool = smooth_scroll) -> None:
-    if top: return driver.execute_script('arguments[0].scrollIntoView();', element)
+    if top:
+        return driver.execute_script('arguments[0].scrollIntoView();', element)
     behavior = "smooth" if smooth_scroll else "instant"
     return driver.execute_script('arguments[0].scrollIntoView({block: "center", behavior: "'+behavior+'" });', element)
 

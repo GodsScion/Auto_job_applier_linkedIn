@@ -22,41 +22,59 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.action_chains import ActionChains
 
 # Click Functions
-def wait_span_click(driver: WebDriver, x: str, time: float=5.0, click: bool=True, scroll: bool=True, scrollTop: bool=False) -> WebElement | bool:
-    if x:
+def wait_span_click(driver: WebDriver, text: str, time: float=5.0, click: bool=True, scroll: bool=True, scrollTop: bool=False) -> WebElement | bool:
+    '''
+    Finds the span element with the given `text`.
+    - Returns `WebElement` if found, else `False` if not found.
+    - Clicks on it if `click = True`.
+    - Will spend a max of `time` seconds in searching for each element.
+    - Will scroll to the element if `scroll = True`.
+    - Will scroll to the top if `scrollTop = True`.
+    '''
+    if text:
         try:
-            button = WebDriverWait(driver,time).until(EC.presence_of_element_located((By.XPATH, './/span[normalize-space(.)="'+x+'"]')))
+            button = WebDriverWait(driver,time).until(EC.presence_of_element_located((By.XPATH, './/span[normalize-space(.)="'+text+'"]')))
             if scroll:  scroll_to_view(driver, button, scrollTop)
             if click:
                 button.click()
                 buffer(click_gap)
             return button
         except Exception as e:
-            print_lg("Click Failed! Didn't find '"+x+"'")
+            print_lg("Click Failed! Didn't find '"+text+"'")
             # print_lg(e)
             return False
 
-def multi_sel(driver: WebDriver, l: list, time: float=5.0) -> None:
-    for x in l:
+def multi_sel(driver: WebDriver, texts: list, time: float=5.0) -> None:
+    '''
+    - For each html class in the `classesList`, tries to find and click `span` element with that class.
+    - Will spend a max of `time` seconds in searching for each element.
+    '''
+    for text in texts:
+        wait_span_click(driver, text, time)
         try:
-            button = WebDriverWait(driver,time).until(EC.presence_of_element_located((By.XPATH, './/span[normalize-space(.)="'+x+'"]')))
+            button = WebDriverWait(driver,time).until(EC.presence_of_element_located((By.XPATH, './/span[normalize-space(.)="'+text+'"]')))
             scroll_to_view(driver, button)
             button.click()
             buffer(click_gap)
         except Exception as e:
-            print_lg("Click Failed! Didn't find '"+x+"'")
+            print_lg("Click Failed! Didn't find '"+text+"'")
             # print_lg(e)
 
-def multi_sel_noWait(driver: WebDriver, l: list, actions: bool=False) -> None:
-    for x in l:
+def multi_sel_noWait(driver: WebDriver, names: list, actions: ActionChains = None) -> None:
+    '''
+    - For each name in the `names`, tries to find and click `span` element with that class.
+    - Tries to search and Add the company to company filters list.
+    - Won't wait to search for each element, assumes that element is rendered.
+    '''
+    for name in names:
         try:
-            button = driver.find_element(By.XPATH, './/span[normalize-space(.)="'+x+'"]')
+            button = driver.find_element(By.XPATH, './/span[normalize-space(.)="'+name+'"]')
             scroll_to_view(driver, button)
             button.click()
             buffer(click_gap)
         except Exception as e:
-            if actions: company_search_click(driver,actions,x)
-            else:   print_lg("Click Failed! Didn't find '"+x+"'")
+            if actions: company_search_click(driver,actions,name)
+            else:   print_lg("Click Failed! Didn't find '"+name+"'")
             # print_lg(e)
 
 def boolean_button_click(driver: WebDriver, actions, x: str) -> None:
@@ -106,15 +124,18 @@ def try_find_by_classes(driver: WebDriver, classes: list[str]) -> WebElement | V
         except: pass
     raise ValueError("Failed to find an element with given classes")
 
-def company_search_click(driver: WebDriver, actions: ActionChains, x: str) -> None:
+def company_search_click(driver: WebDriver, actions: ActionChains, companyName: str) -> None:
+    '''
+    Tries to search and Add the company to company filters list.
+    '''
     wait_span_click(driver,"Add a company",1)
     search = driver.find_element(By.XPATH,"(.//input[@placeholder='Add a company'])[1]")
     search.send_keys(Keys.CONTROL + "a")
-    search.send_keys(x)
+    search.send_keys(companyName)
     buffer(3)
     actions.send_keys(Keys.DOWN).perform()
     actions.send_keys(Keys.ENTER).perform()
-    print_lg(f'Tried searching and adding "{x}"')
+    print_lg(f'Tried searching and adding "{companyName}"')
 
 def text_input(actions: ActionChains, textInputEle: WebElement | bool, value: str, textFieldName: str = "Text") -> None | Exception:
     if textInputEle:

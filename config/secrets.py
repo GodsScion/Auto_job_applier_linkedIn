@@ -16,13 +16,23 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 
 # Login Credentials for LinkedIn (Optional)
-username = "username@example.com"  # Enter your username in the quotes
-password = "example_password"      # Enter your password in the quotes
+username = "username@example.com"       # Enter your username in the quotes
+password = "example_password"           # Enter your password in the quotes
 
 
-# # Your OPEN AI API key 
-# api_key = ""      # COMING SOON
+## Artificial Intelligence (Recommended)
+# Your Local LLM url or other AI api url and port
+llm_api_url = "http://127.0.0.1:6000"       # Examples: "https://api.openai.com/v1/"
 
+# Your local LLM model name or other AI model name
+llm_model = "llama-3.2-3b-instruct"     # Examples: "gpt-3.5-turbo", "gpt-4o"
+
+# Yor local embedding model name or other AI Embedding model name
+llm_embedding_model = "nomic-embed-text-v1.5"
+
+# Your Local LLM API key or other AI API key 
+llm_api_key = ""
+##
 
 
 

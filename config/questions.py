@@ -83,17 +83,21 @@ then it will divide by 30 or 7 and answer respectively. Examples:
 # Your LinkedIn headline in quotes Eg: "Software Engineer @ Google, Masters in Computer Science", "Recent Grad Student @ MIT, Computer Science"
 linkedin_headline = "Full Stack Developer with Masters in Computer Science and 4+ years of experience" # "Headline" or "" to leave this question unanswered
 
-# Your summary in quotes, use \n to add line breaks
+# Your summary in quotes, use \n to add line breaks if using single quotes "Summary".You can skip \n if using triple quotes """Summary"""
 linkedin_summary = """
-            I'm a Senior Software Engineer at Amazon with Masters in CS and 4+ years of experience in developing and maintaining Full Stack Web applications and cloud solutions. 
-            Specialized in React, Node.js, and Python.
-          """
+I'm a Senior Software Engineer at Amazon with Masters in CS and 4+ years of experience in developing and maintaining Full Stack Web applications and cloud solutions. 
+Specialized in React, Node.js, and Python.
+"""
+
 '''
 Note: If left empty as "", the tool will not answer the question. However, note that some companies make it compulsory to be answered. Use \n to add line breaks.
 ''' 
 
-# Your cover letter in quotes, use \n to add line breaks (This question makes sense though)
-cover_letter = """Cover Letter"""
+# Your cover letter in quotes, use \n to add line breaks if using single quotes "Cover Letter".You can skip \n if using triple quotes """Cover Letter""" (This question makes sense though)
+cover_letter = """
+Cover Letter
+"""
+
 '''
 Note: If left empty as "", the tool will not answer the question. However, note that some companies make it compulsory to be answered. Use \n to add line breaks.
 ''' 

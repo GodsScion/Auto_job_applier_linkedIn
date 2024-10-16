@@ -17,25 +17,33 @@ import os
 import csv
 import re
 import pyautogui
-pyautogui.FAILSAFE = False
+
 from random import choice, shuffle, randint
 from datetime import datetime
-from modules.open_chrome import *
-from selenium.webdriver.remote.webelement import WebElement
+
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.select import Select
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, NoSuchWindowException, ElementNotInteractableException
+
 from config.personals import *
 from config.questions import *
 from config.search import *
 from config.secrets import *
 from config.settings import *
+
+from modules.open_chrome import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
+from modules.ai.openaiConnections import *
+
 from typing import Literal
+
+
+pyautogui.FAILSAFE = False
 # if use_resume_generator:    from resume_generator import is_logged_in_GPT, login_GPT, open_resume_chat, create_custom_resume
 
 

@@ -11,11 +11,20 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 '''
 
+
+# Imports
+
 import os
+import json
+
 from time import sleep
 from random import randint
 from datetime import datetime, timedelta
-from config.settings import logs_folder_path 
+from pyautogui import alert
+from pprint import pprint
+
+from config.settings import logs_folder_path
+
 
 
 #### Common functions ####
@@ -57,21 +66,25 @@ def critical_error_log(possible_reason: str, stack_trace: Exception) -> None:
     '''
     Function to log and print critical errors along with datetime stamp
     '''
-    print_lg(possible_reason, stack_trace, datetime.now())
+    print_lg(possible_reason, stack_trace, datetime.now(), from_critical=True)
 
 
-def print_lg(*msgs: str) -> None:
+def print_lg(*msgs: str | dict, end: str = "\n", pretty: bool = False, from_critical: bool = False) -> None:
     '''
-    Function to log and print
+    Function to log and print. **Note that, `end` parameter will ignored if `pretty = True`**
     '''
     try:
-        message = "\n".join(str(msg) for msg in msgs)
         path = logs_folder_path+"/log.txt"
-        with open(path.replace("//","/"), 'a+', encoding="utf-8") as file:
-            file.write(message + '\n')
-        print(message)
+        path = path.replace("//","/")
+        for message in msgs:
+            pprint(message) if pretty else print(message, end=end)
+            with open(path, 'a+', encoding="utf-8") as file:
+                file.write(str(message) + end)
     except Exception as e:
-        critical_error_log("Log.txt is open or is occupied by another program!", e)
+        trail = f'Skipped saving this message: "{message}" to log.txt!' if not from_critical else "We'll try one more time"
+        alert(f"log.txt in {logs_folder_path} is open or is occupied by another program! Please close it! {trail}", "Failed Logging")
+        if not from_critical:
+            critical_error_log("Log.txt is open or is occupied by another program!", e)
 #>
 
 
@@ -175,7 +188,12 @@ def convert_to_lakhs(value: str) -> str:
     return value
 
 
-
-
-
-
+def convert_to_json(data) -> dict:
+    '''
+    Function to convert data to JSON, if unsuccessful, returns `{"error": "Unable to parse the response as JSON", "data": data}`
+    '''
+    try:
+        result_json = json.loads(data)
+        return result_json
+    except json.JSONDecodeError:
+        return {"error": "Unable to parse the response as JSON", "data": data}

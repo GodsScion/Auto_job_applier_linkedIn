@@ -331,6 +331,56 @@ def extract_years_of_experience(text: str) -> int:
 
 
 
+def get_job_description() -> tuple[Union[str, Literal['Unknown']], Union[int, Literal['Unknown']], bool, Union[str, None], Union[str, None]]:
+    '''
+    # Job Description
+    Function to extract job description from About the Job.
+    ### Returns:
+    - `jobDescription: str | 'Unknown'`
+    - `experience_required: int | 'Unknown'`
+    - `skip: bool`
+    - `skipReason: str | None`
+    - `skipMessage: str | None`
+    '''
+    try:
+        jobDescription = "Unknown"
+        experience_required = "Unknown"
+        found_masters = 0
+        jobDescription = find_by_class(driver, "jobs-box__html-content").text
+        jobDescriptionLow = jobDescription.lower()
+        skip = False
+        skipReason = None
+        skipMessage = None
+        for word in bad_words:
+            if word.lower() in jobDescriptionLow:
+                skipMessage = f'\n{jobDescription}\n\nContains bad word "{word}". Skipping this job!\n'
+                skipReason = "Found a Bad Word in About Job"
+                skip = True
+                break
+        if not skip and security_clearance == False and ('polygraph' in jobDescriptionLow or 'clearance' in jobDescriptionLow or 'secret' in jobDescriptionLow):
+            skipMessage = f'\n{jobDescription}\n\nFound "Clearance" or "Polygraph". Skipping this job!\n'
+            skipReason = "Asking for Security clearance"
+            skip = True
+        if not skip:
+            if did_masters and 'master' in jobDescriptionLow:
+                print_lg(f'Found the word "master" in \n{jobDescription}')
+                found_masters = 2
+            experience_required = extract_years_of_experience(jobDescription)
+            if current_experience > -1 and experience_required > current_experience + found_masters:
+                skipMessage = f'\n{jobDescription}\n\nExperience required {experience_required} > Current Experience {current_experience + found_masters}. Skipping this job!\n'
+                skipReason = "Required experience is high"
+                skip = True
+    except Exception as e:
+        if jobDescription == "Unknown":    print_lg("Unable to extract job description!")
+        else:
+            experience_required = "Error in extraction"
+            print_lg("Unable to extract years of experience required!")
+            # print_lg(e)
+    finally:
+        return jobDescription, experience_required, skip, skipReason, skipMessage
+        
+
+
 # Function to upload resume
 def upload_resume(modal: WebElement, resume: str) -> tuple[bool, str]:
     try:
@@ -722,9 +772,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     hr_name = "Unknown"
                     connect_request = "In Development" # Still in development
                     date_listed = "Unknown"
-                    description = "Unknown"
-                    experience_required = "Unknown"
-                    skills = "In Development" # Still in development
+                    skills = "Needs an AI" # Still in development
                     resume = "Pending"
                     reposted = False
                     questions_list = None
@@ -782,43 +830,18 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     except Exception as e:
                         print_lg("Failed to calculate the date posted!",e)
 
-                    # Get job description
-                    try:
-                        found_masters = 0
-                        description = find_by_class(driver, "jobs-box__html-content").text
-                        descriptionLow = description.lower()
-                        skip = False
-                        for word in bad_words:
-                            if word.lower() in descriptionLow:
-                                message = f'\n{description}\n\nContains bad word "{word}". Skipping this job!\n'
-                                reason = "Found a Bad Word in About Job"
-                                skip = True
-                                break
-                        if not skip and security_clearance == False and ('polygraph' in descriptionLow or 'clearance' in descriptionLow or 'secret' in descriptionLow):
-                            message = f'\n{description}\n\nFound "Clearance" or "Polygraph". Skipping this job!\n'
-                            reason = "Asking for Security clearance"
-                            skip = True
-                        if not skip:
-                            if did_masters and 'master' in descriptionLow:
-                                print_lg(f'Found the word "master" in \n{description}')
-                                found_masters = 2
-                            experience_required = extract_years_of_experience(description)
-                            if current_experience > -1 and experience_required > current_experience + found_masters:
-                                message = f'\n{description}\n\nExperience required {experience_required} > Current Experience {current_experience + found_masters}. Skipping this job!\n'
-                                reason = "Required experience is high"
-                                skip = True
-                        if skip:
-                            print_lg(message)
-                            failed_job(job_id, job_link, resume, date_listed, reason, message, "Skipped", screenshot_name)
-                            rejected_jobs.add(job_id)
-                            skip_count += 1
-                            continue
-                    except Exception as e:
-                        if description == "Unknown":    print_lg("Unable to extract job description!")
-                        else:
-                            experience_required = "Error in extraction"
-                            print_lg("Unable to extract years of experience required!")
-                        # print_lg(e)
+
+                    description, experience_required, skip, reason, message = get_job_description()
+                    if skip:
+                        print_lg(message)
+                        failed_job(job_id, job_link, resume, date_listed, reason, message, "Skipped", screenshot_name)
+                        rejected_jobs.add(job_id)
+                        skip_count += 1
+                        continue
+
+                    
+                    if use_AI and description != "Unknown":
+                        skills = extract_skills(description)
 
                     uploaded = False
                     # Case 1: Easy Apply Button

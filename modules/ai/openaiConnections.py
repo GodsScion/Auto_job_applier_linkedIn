@@ -1,6 +1,6 @@
 from config.secrets import *
 
-from modules.helpers import print_lg, convert_to_json
+from modules.helpers import print_lg, convert_to_json, alert
 from modules.ai.prompts import *
 from modules.ai.responseFormats import *
 
@@ -56,6 +56,9 @@ def extract_skills(
     """
     print_lg("Extracting skills from job description...")
     try:
+        if not use_AI:
+            raise ValueError("AI is not enabled! Please enable it by setting `use_AI = True` in `secrets.py` in `config` folder.")
+
         prompt = extract_skills_prompt.format(job_description)
 
         completion = client.chat.completions.create(
@@ -70,4 +73,5 @@ def extract_skills(
 
         return format_results(completion, stream)
     except Exception as e:
+        alert("Error occurred while extracting skills.\n1. Make sure your AI API connection details like url, key, models, etc are correct.\n2. If you're using an local LLM, please check if it's started and running correctly.", "AI Connection Error")
         print_lg(e)

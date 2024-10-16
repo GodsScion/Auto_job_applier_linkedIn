@@ -494,7 +494,7 @@ def answer_questions(questions_list: set, work_location: str) -> set:
                 elif 'linkedin' in label: answer = linkedIn
                 elif 'website' in label or 'blog' in label or 'portfolio' in label or 'link' in label: answer = website
                 elif 'scale of 1-10' in label: answer = confidence_level
-                elif 'headline' in label: answer = headline
+                elif 'headline' in label: answer = linkedin_headline
                 elif ('hear' in label or 'come across' in label) and 'this' in label and ('job' in label or 'position' in label): answer = "https://github.com/GodsScion/Auto_job_applier_linkedIn"
                 elif 'state' in label or 'province' in label: answer = state
                 elif 'zip' in label or 'postal' in label or 'code' in label: answer = zipcode
@@ -521,7 +521,7 @@ def answer_questions(questions_list: set, work_location: str) -> set:
             answer = ""
             prev_answer = text_area.get_attribute("value")
             if not prev_answer or overwrite_previous_answers:
-                if 'summary' in label: answer = summary
+                if 'summary' in label: answer = linkedin_summary
                 elif 'cover' in label: answer = cover_letter
                 text_area.clear()
                 text_area.send_keys(answer)

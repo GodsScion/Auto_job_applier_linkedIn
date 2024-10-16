@@ -81,16 +81,19 @@ then it will divide by 30 or 7 and answer respectively. Examples:
 '''
 
 # Your LinkedIn headline in quotes Eg: "Software Engineer @ Google, Masters in Computer Science", "Recent Grad Student @ MIT, Computer Science"
-headline = "Full Stack Developer with Masters in Computer Science and 4+ years of experience" # "Headline" or "" to leave this question unanswered
+linkedin_headline = "Full Stack Developer with Masters in Computer Science and 4+ years of experience" # "Headline" or "" to leave this question unanswered
 
 # Your summary in quotes, use \n to add line breaks
-summary = "I'm a Senior Software Engineer at Amazon with Masters in CS and 4+ years of experience in developing and maintaining Full Stack Web applications and cloud solutions.\n Specialized in React, Node.js, and Python."
+linkedin_summary = """
+            I'm a Senior Software Engineer at Amazon with Masters in CS and 4+ years of experience in developing and maintaining Full Stack Web applications and cloud solutions. 
+            Specialized in React, Node.js, and Python.
+          """
 '''
 Note: If left empty as "", the tool will not answer the question. However, note that some companies make it compulsory to be answered. Use \n to add line breaks.
 ''' 
 
 # Your cover letter in quotes, use \n to add line breaks (This question makes sense though)
-cover_letter = "Cover Letter"
+cover_letter = """Cover Letter"""
 '''
 Note: If left empty as "", the tool will not answer the question. However, note that some companies make it compulsory to be answered. Use \n to add line breaks.
 ''' 
@@ -117,6 +120,7 @@ pause_at_failed_question = True    # True or False ,   Will be treated as False 
 
 # Do you want to overwrite previous answers?
 overwrite_previous_answers = False # True or False
+
 
 
 

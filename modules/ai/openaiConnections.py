@@ -1,12 +1,69 @@
 from config.secrets import *
 
-from modules.helpers import print_lg, convert_to_json, alert
+from modules.helpers import print_lg, critical_error_log, convert_to_json, alert
 from modules.ai.prompts import *
 from modules.ai.responseFormats import *
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from typing import Union, Iterator
+
+
+def create_openai_client() -> OpenAI:
+    """
+    Function to create an OpenAI client.
+    * Takes no arguments
+    * Returns an `OpenAI` object
+    """
+    try:
+        if not use_AI:
+            raise ValueError("AI is not enabled! Please enable it by setting `use_AI = True` in `secrets.py` in `config` folder.")
+            
+        client = OpenAI(base_url=llm_api_url, api_key=llm_api_key)
+
+        models = get_models_list(client)
+        if models.get("error"):
+            raise ValueError(models.get("error"))
+
+        return client 
+    except Exception as e:
+        message = "Error occurred while creating OpenAI client.\n1. Make sure your AI API connection details like url, key, models, etc are correct.\n2. If you're using an local LLM, please check if the server, and models have started, and are running correctly."
+        alert(message, "AI Connection Error")
+        critical_error_log(message, e)
+
+
+def close_openai_client(client: OpenAI) -> None:
+    """
+    Function to close an OpenAI client.
+    * Takes in `client` of type `OpenAI`
+    * Returns no value
+    """
+    try:
+        if client:
+            client.close()
+
+    except Exception as e:
+        critical_error_log("Error occurred while closing OpenAI client.", e)
+
+
+
+def get_models_list(client: OpenAI) -> list:
+    """
+    Function to get list of models available in OpenAI API.
+    * Takes in `client` of type `OpenAI`
+    * Returns a `list` object
+    """
+    try:
+        models = client.models.list()
+        if models.model_extra.get("error"):
+            raise ValueError(
+                f'Error occurred with API: "{models.model_extra.get("error")}"'
+            )
+        return models
+    except Exception as e:
+        critical_error_log("Error occurred while getting models list.", e)
+        return {"error": e}
+
 
 
 def format_results(
@@ -45,7 +102,7 @@ def format_results(
 
 
 def extract_skills(
-    client: OpenAI, job_description: str, stream: bool = False
+    client: OpenAI, job_description: str, stream: bool = stream_output
 ) -> Union[dict, ValueError]:
     """
     Function to extract skills from job description using OpenAI API.
@@ -55,10 +112,7 @@ def extract_skills(
     * Returns a `dict` object representing JSON response
     """
     print_lg("Extracting skills from job description...")
-    try:
-        if not use_AI:
-            raise ValueError("AI is not enabled! Please enable it by setting `use_AI = True` in `secrets.py` in `config` folder.")
-
+    try:        
         prompt = extract_skills_prompt.format(job_description)
 
         completion = client.chat.completions.create(

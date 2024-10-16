@@ -31,7 +31,7 @@ from selenium.common.exceptions import NoSuchElementException, ElementClickInter
 from config.personals import *
 from config.questions import *
 from config.search import *
-from config.secrets import *
+from config.secrets import use_AI
 from config.settings import *
 
 from modules.open_chrome import *
@@ -82,6 +82,8 @@ current_ctc = str(current_ctc)
 notice_period_months = str(notice_period//30)
 notice_period_weeks = str(notice_period//7)
 notice_period = str(notice_period)
+
+aiClient = None
 #>
 
 
@@ -841,7 +843,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
                     
                     if use_AI and description != "Unknown":
-                        skills = extract_skills(description)
+                        skills = extract_skills(aiClient, description)
 
                     uploaded = False
                     # Case 1: Easy Apply Button
@@ -970,7 +972,7 @@ linkedIn_tab = False
 
 def main() -> None:
     try:
-        global linkedIn_tab, tabs_count, useNewResume
+        global linkedIn_tab, tabs_count, useNewResume, aiClient
         alert_title = "Error Occurred. Closing Browser!"
         total_runs = 1        
         validate_config()
@@ -997,6 +999,8 @@ def main() -> None:
         #         chatGPT_tab = driver.current_window_handle
         #     except Exception as e:
         #         print_lg("Opening OpenAI chatGPT tab failed!")
+        if use_AI:
+            aiClient = create_openai_client()
 
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)
@@ -1050,6 +1054,7 @@ def main() -> None:
             msg = "NOTE: IF YOU HAVE MORE THAN 10 TABS OPENED, PLEASE CLOSE OR BOOKMARK THEM!\n\nOr it's highly likely that application will just open browser and not do anything next time!" 
             pyautogui.alert(msg,"Info")
             print_lg("\n"+msg)
+        close_openai_client(aiClient)
         try: driver.quit()
         except Exception as e: critical_error_log("When quitting...", e)
 

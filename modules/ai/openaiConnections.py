@@ -115,7 +115,7 @@ def format_results(
             chunkMessage = chunk.choices[0].delta.content
             if chunkMessage != None:
                 result += chunkMessage
-            print_lg(chunkMessage, end="")
+            print_lg(chunkMessage, end="", flush=True)
         print_lg("\n--STREAMING COMPLETE")
     else:
         if completion.model_extra and completion.model_extra.get("error"):

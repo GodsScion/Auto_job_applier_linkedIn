@@ -69,15 +69,15 @@ def critical_error_log(possible_reason: str, stack_trace: Exception) -> None:
     print_lg(possible_reason, stack_trace, datetime.now(), from_critical=True)
 
 
-def print_lg(*msgs: str | dict, end: str = "\n", pretty: bool = False, from_critical: bool = False) -> None:
+def print_lg(*msgs: str | dict, end: str = "\n", pretty: bool = False, flush: bool = False, from_critical: bool = False) -> None:
     '''
-    Function to log and print. **Note that, `end` parameter will ignored if `pretty = True`**
+    Function to log and print. **Note that, `end` and `flush` parameters are ignored if `pretty = True`**
     '''
     try:
         path = logs_folder_path+"/log.txt"
         path = path.replace("//","/")
         for message in msgs:
-            pprint(message) if pretty else print(message, end=end)
+            pprint(message) if pretty else print(message, end=end, flush=flush)
             with open(path, 'a+', encoding="utf-8") as file:
                 file.write(str(message) + end)
     except Exception as e:

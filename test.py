@@ -68,7 +68,9 @@ Exact compensation may vary based on several factors, including skills, experien
 """
 
 def main() -> None:
-    extract_skills(job_description, stream=True)
+    client = create_openai_client()
+    extract_skills(client ,job_description, stream=True)
+    close_openai_client(client)
 
 
 if __name__ == "__main__":

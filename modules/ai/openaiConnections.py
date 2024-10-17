@@ -1,12 +1,38 @@
-from config.secrets import *
+from config.secrets import use_AI, llm_api_url, llm_api_key, llm_model, stream_output
+from config.settings import showAiErrorAlerts
 
-from modules.helpers import print_lg, critical_error_log, convert_to_json, alert
+from modules.helpers import print_lg, critical_error_log, convert_to_json
 from modules.ai.prompts import *
 from modules.ai.responseFormats import *
 
+from pyautogui import confirm
 from openai import OpenAI
+from openai.types.model import Model
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from typing import Union, Iterator
+
+
+apiCheckInstructions = """
+
+1. Make sure your AI API connection details like url, key, model names, etc are correct.
+2. If you're using an local LLM, please check if the server is running.
+3. Check if appropriate LLM and Embedding models are loaded and running.
+
+Open `secret.py` in `/config` folder to configure your AI API connections.
+
+ERROR:
+"""
+
+
+def errorAlertAI(message: str, stackTrace: str, title: str = "AI Connection Error") -> None:
+    """
+    Function to show an AI error alert and log it.
+    """
+    global showAiErrorAlerts
+    if showAiErrorAlerts:
+        if "Pause AI error alerts" == confirm(f"{message}{stackTrace}\n", title, ["Pause AI error alerts", "Okay Continue"]):
+            showAiErrorAlerts = False
+    critical_error_log(message, stackTrace)
 
 
 def create_openai_client() -> OpenAI:
@@ -16,20 +42,21 @@ def create_openai_client() -> OpenAI:
     * Returns an `OpenAI` object
     """
     try:
+        print_lg("Creating OpenAI client...")
         if not use_AI:
             raise ValueError("AI is not enabled! Please enable it by setting `use_AI = True` in `secrets.py` in `config` folder.")
-            
+        
         client = OpenAI(base_url=llm_api_url, api_key=llm_api_key)
 
         models = get_models_list(client)
-        if models.get("error"):
-            raise ValueError(models.get("error"))
+        if "error" in models:
+            raise ValueError(models[1])
+        if len(models) == 0:
+            raise ValueError("No models are available!")
 
-        return client 
+        return client
     except Exception as e:
-        message = "Error occurred while creating OpenAI client.\n1. Make sure your AI API connection details like url, key, models, etc are correct.\n2. If you're using an local LLM, please check if the server, and models have started, and are running correctly."
-        alert(message, "AI Connection Error")
-        critical_error_log(message, e)
+        errorAlertAI(f"Error occurred while creating OpenAI client. {apiCheckInstructions}", e)
 
 
 def close_openai_client(client: OpenAI) -> None:
@@ -40,29 +67,33 @@ def close_openai_client(client: OpenAI) -> None:
     """
     try:
         if client:
+            print_lg("Closing OpenAI client...")
             client.close()
-
     except Exception as e:
-        critical_error_log("Error occurred while closing OpenAI client.", e)
+        errorAlertAI("Error occurred while closing OpenAI client.", e)
 
 
 
-def get_models_list(client: OpenAI) -> list:
+def get_models_list(client: OpenAI) -> list[Union[Model, str]]:
     """
     Function to get list of models available in OpenAI API.
     * Takes in `client` of type `OpenAI`
     * Returns a `list` object
     """
     try:
+        print_lg("Getting AI models list...")
+        if not client: raise ValueError("Client is not available!")
         models = client.models.list()
         if models.model_extra.get("error"):
             raise ValueError(
                 f'Error occurred with API: "{models.model_extra.get("error")}"'
             )
-        return models
+        print_lg("Available models:")
+        print_lg(models.data, pretty=True)
+        return models.data
     except Exception as e:
-        critical_error_log("Error occurred while getting models list.", e)
-        return {"error": e}
+        critical_error_log("Error occurred while getting models list!", e)
+        return ["error", e]
 
 
 
@@ -113,6 +144,8 @@ def extract_skills(
     """
     print_lg("Extracting skills from job description...")
     try:        
+        if not client: raise ValueError("Client is not available!")
+    
         prompt = extract_skills_prompt.format(job_description)
 
         completion = client.chat.completions.create(
@@ -127,5 +160,4 @@ def extract_skills(
 
         return format_results(completion, stream)
     except Exception as e:
-        alert("Error occurred while extracting skills.\n1. Make sure your AI API connection details like url, key, models, etc are correct.\n2. If you're using an local LLM, please check if it's started and running correctly.", "AI Connection Error")
-        print_lg(e)
+        errorAlertAI(f"Error occurred while extracting skills from job description. {apiCheckInstructions}", e)

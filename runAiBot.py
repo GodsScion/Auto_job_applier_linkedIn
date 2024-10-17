@@ -31,7 +31,7 @@ from selenium.common.exceptions import NoSuchElementException, ElementClickInter
 from config.personals import *
 from config.questions import *
 from config.search import *
-from config.secrets import use_AI
+from config.secrets import use_AI, username, password
 from config.settings import *
 
 from modules.open_chrome import *

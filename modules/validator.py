@@ -123,6 +123,7 @@ def validate_search() -> None | ValueError | TypeError:
     check_boolean(security_clearance, "security_clearance")
     check_boolean(did_masters, "did_masters")
     check_int(current_experience, "current_experience", -1)
+    check_string(preferred_work_style, "preferred_work_style")
 
 
 

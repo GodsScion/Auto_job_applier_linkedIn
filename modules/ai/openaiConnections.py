@@ -35,6 +35,18 @@ def errorAlertAI(message: str, stackTrace: str, title: str = "AI Connection Erro
     critical_error_log(message, stackTrace)
 
 
+def check_error(response: Union[ChatCompletion, ChatCompletionChunk]) -> None:
+    """
+    Function to check if an error occurred.
+    * Takes in `response` of type `ChatCompletion` or `ChatCompletionChunk`
+    * Raises a `ValueError` if an error is found
+    """
+    if response.model_extra.get("error"):
+        raise ValueError(
+            f'Error occurred with API: "{response.model_extra.get("error")}"'
+        )
+
+
 def create_openai_client() -> OpenAI:
     """
     Function to create an OpenAI client.
@@ -84,10 +96,7 @@ def get_models_list(client: OpenAI) -> list[Union[Model, str]]:
         print_lg("Getting AI models list...")
         if not client: raise ValueError("Client is not available!")
         models = client.models.list()
-        if models.model_extra.get("error"):
-            raise ValueError(
-                f'Error occurred with API: "{models.model_extra.get("error")}"'
-            )
+        check_error(models)
         print_lg("Available models:")
         print_lg(models.data, pretty=True)
         return models.data
@@ -112,16 +121,14 @@ def format_results(
     if stream:
         print_lg("--STREAMING STARTED")
         for chunk in completion:
+            check_error(chunk)
             chunkMessage = chunk.choices[0].delta.content
             if chunkMessage != None:
                 result += chunkMessage
             print_lg(chunkMessage, end="", flush=True)
         print_lg("\n--STREAMING COMPLETE")
     else:
-        if completion.model_extra and completion.model_extra.get("error"):
-            raise ValueError(
-                f'Error occurred with API: "{completion.model_extra.get("error")}"'
-            )
+        check_error(completion)
         result = completion.choices[0].message.content
     
     if jsonFormat:
@@ -161,3 +168,5 @@ def extract_skills(
         return format_results(completion, stream)
     except Exception as e:
         errorAlertAI(f"Error occurred while extracting skills from job description. {apiCheckInstructions}", e)
+
+    

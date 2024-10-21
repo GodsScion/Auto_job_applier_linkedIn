@@ -16,8 +16,14 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 # >>>>>>>>>>> LinkedIn Settings <<<<<<<<<<<
 
-# Keep the External Application tabs open? (Note: RECOMMENDED TO LEAVE IT AS TRUE, if you set it false, be sure to CLOSE ALL TABS BEFORE CLOSING THE BROWSER!!!)
-close_tabs = True                   # True or False
+# Keep the External Application tabs open?
+close_tabs = False                  # True or False
+'''
+Note: RECOMMENDED TO LEAVE IT AS `True`, if you set it `False`, be sure to CLOSE ALL TABS BEFORE CLOSING THE BROWSER!!!
+'''
+
+# Follow easy applied companies
+follow_companies = False            # True or False
 
 ## Upcoming features (In Development)
 # # Send connection requests to HR's 

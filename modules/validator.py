@@ -142,6 +142,7 @@ def validate_secrets() -> None | ValueError | TypeError:
 from config.settings import *
 def validate_settings() -> None | ValueError | TypeError:
     check_boolean(close_tabs, "close_tabs")
+    check_boolean(follow_companies, "follow_companies")
     # check_boolean(connect_hr, "connect_hr")
     # check_string(connect_request_message, "connect_request_message", min_length=10)
 

@@ -655,6 +655,18 @@ def external_apply(pagination_element: WebElement, job_id: str, job_link: str, r
 
 
 
+def follow_company(modal: WebDriver = driver) -> None:
+    '''
+    Function to follow or un-follow easy applied companies based om `follow_companies`
+    '''
+    try:
+        follow_checkbox_input = try_xp(modal, ".//input[@id='follow-company-checkbox' and @type='checkbox']", False)
+        if follow_checkbox_input and follow_checkbox_input.is_selected() != follow_companies:
+            try_xp(modal, ".//label[@for='follow-company-checkbox']")
+    except Exception as e:
+        print_lg("Failed to update follow companies checkbox!", e)
+    
+
 
 #< Failed attempts logging
 def failed_job(job_id: str, job_link: str, resume: str, date_listed, error: str, exception: Exception, application_link: str, screenshot_name: str) -> None:
@@ -890,7 +902,8 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                     decision = pyautogui.confirm('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py\nTo TEMPORARILY disable pausing, click "Disable Pause"', "Confirm your information",["Disable Pause", "Discard Application", "Submit Application"])
                                     if decision == "Discard Application": raise Exception("Job application discarded by user!")
                                     pause_before_submit = False if "Disable Pause" == decision else True
-                                    try_xp(modal, ".//span[normalize-space(.)='Review']")
+                                    # try_xp(modal, ".//span[normalize-space(.)='Review']")
+                                follow_company(modal)
                                 if wait_span_click(driver, "Submit application", 2, scrollTop=True): 
                                     date_applied = datetime.now()
                                     if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()

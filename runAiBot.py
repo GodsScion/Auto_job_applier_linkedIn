@@ -778,7 +778,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     try:
                         found_masters = 0
                         description = find_by_class(driver, "jobs-box__html-content").text
-                        descriptionLow = description.lower()
+                        descriptionLow = normalize_text(description).lower()
                         skip = False
                         for word in bad_words:
                             if word.lower() in descriptionLow:

@@ -174,7 +174,8 @@ def convert_to_lakhs(value: str) -> str:
             value = "0." + "0"*(5-l) + value[:2]
     return value
 
-
+def normalize_text(value: str) -> str:
+    return '\n'.join([' '.join(line.split()) for line in value.splitlines()]).strip()
 
 
 

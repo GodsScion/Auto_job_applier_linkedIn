@@ -94,7 +94,9 @@ did_masters = True                 # True or False
 current_experience = 5             # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
 ##
 
-
+# Job style preference?
+preferred_work_style = 'remote'           # ('on-site', 'hybrid', 'remote')
+##
 
 
 

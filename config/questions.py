@@ -118,6 +118,8 @@ pause_at_failed_question = True    # True or False ,   Will be treated as False 
 # Do you want to overwrite previous answers?
 overwrite_previous_answers = False # True or False
 
+# Follow the comapnies you've applied?
+follow_applied_companies = True
 
 
 

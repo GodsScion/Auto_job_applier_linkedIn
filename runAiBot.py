@@ -667,7 +667,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
     applied_jobs = get_applied_job_ids()
     rejected_jobs = set()
     blacklisted_companies = set()
-    global current_city, failed_count, skip_count, easy_applied_count, external_jobs_count, tabs_count, pause_before_submit, pause_at_failed_question, useNewResume
+    global current_city, failed_count, skip_count, easy_applied_count, external_jobs_count, tabs_count, pause_before_submit, pause_at_failed_question, useNewResume, follow_applied_companies
     current_city = current_city.strip()
 
     if randomize_search_order:  shuffle(search_terms)
@@ -858,6 +858,8 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                     if decision == "Discard Application": raise Exception("Job application discarded by user!")
                                     pause_before_submit = False if "Disable Pause" == decision else True
                                     try_xp(modal, ".//span[normalize-space(.)='Review']")
+                                if not follow_applied_companies: 
+                                    unfollow_company(modal)
                                 if wait_span_click(driver, "Submit application", 2, scrollTop=True): 
                                     date_applied = datetime.now()
                                     if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
@@ -914,7 +916,15 @@ def apply_to_jobs(search_terms: list[str]) -> None:
             critical_error_log("In Applier", e)
             # print_lg(e)
 
-        
+def unfollow_company(modal: WebElement) -> None:
+    try: 
+        unfollow_company_button = try_xp(modal, './/label[@for="follow-company-checkbox"]')
+        if unfollow_company_button:
+            scroll_to_view(modal, unfollow_company_button)
+            unfollow_company_button.click()
+    except Exception as e:
+        print_lg("Failed to unfollow company")
+
 def run(total_runs: int) -> int:
     if dailyEasyApplyLimitReached:
         return total_runs

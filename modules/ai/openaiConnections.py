@@ -65,6 +65,13 @@ def create_openai_client() -> OpenAI:
             raise ValueError(models[1])
         if len(models) == 0:
             raise ValueError("No models are available!")
+        if llm_model not in [model.id for model in models]:
+            raise ValueError(f"Model `{llm_model}` is not available!")
+        
+        print_lg("---- SUCCESSFULLY CREATED OPENAI CLIENT! ----")
+        print_lg(f"Using API URL: {llm_api_url}")
+        print_lg(f"Using Model: {llm_model}")
+        print_lg("Check './config/secrets.py' for more details.\n")
 
         return client
     except Exception as e:
@@ -162,7 +169,7 @@ def extract_skills(
             ],
             temperature=0,
             stream=stream,
-            response_format=extract_skills_response_format,
+            response_format=extract_skills_response_format
         )
 
         return format_results(completion, stream)

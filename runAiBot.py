@@ -265,7 +265,7 @@ def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_j
     * work_style: Work style of this job (Remote, On-site, Hybrid)
     * skip: A boolean flag to skip this job
     '''
-    job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
+    job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")  # Problem in India
     scroll_to_view(driver, job_details_button, True)
     title = job_details_button.text
     company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
@@ -958,6 +958,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
         except Exception as e:
             print_lg("Failed to find Job listings!")
             critical_error_log("In Applier", e)
+            print_lg(driver.page_source, pretty=True)
             # print_lg(e)
 
         

@@ -19,8 +19,8 @@ Response schema to represent array of strings `["string1", "string2"]`
 extract_skills_response_format = {
     "type": "json_schema",
     "json_schema": {
-        "name": "Skills Extraction Response",
-        "strict": "true",
+        "name": "Skills_Extraction_Response",
+        "strict": True,
         "schema": {
             "type": "object",
             "properties": {
@@ -35,6 +35,7 @@ extract_skills_response_format = {
                 "other_skills",
                 "nice_to_have",
             ],
+            "additionalProperties": False
         },
     },
 }

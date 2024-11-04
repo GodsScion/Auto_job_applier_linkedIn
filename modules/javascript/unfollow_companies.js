@@ -1,4 +1,14 @@
-const clickGap = 150;
+function clickFollowingButtons() {
+    const buttons = Array.from(document.querySelectorAll('button'))
+        .filter(button => button.textContent.trim() === 'Following' && button.checkVisibility());
+
+    if (buttons.length) {
+        buttons.forEach(button => setTimeout(() => button.click(), 150));
+        buttons[buttons.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(clickFollowingButtons, buttons.length * 150);
+    }
+};
+
 
 function clickFollowingButtonsExpanded() {
     const allButtons = document.querySelectorAll('button');
@@ -24,16 +34,7 @@ function clickFollowingButtonsExpanded() {
 }
 
 
-function clickFollowingButtons() {
-    const buttons = Array.from(document.querySelectorAll('button'))
-        .filter(button => button.textContent.trim() === 'Following' && button.checkVisibility());
 
-    if (buttons.length) {
-        buttons.forEach(button => setTimeout(() => button.click(), 150));
-        buttons[buttons.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(clickFollowingButtons, 10000);
-    }
-}
 
 
 function clickFollowingButtons2() {
@@ -45,7 +46,7 @@ function clickFollowingButtons2() {
 
             setTimeout(() => {
                 button.click();
-            }, clickGap);
+            }, 150);
         }
     });
 }
@@ -63,7 +64,7 @@ function clickFollowingButtons3() {
             button.click();
             index++;
         }
-    }, clickGap);
+    }, 150);
 }
 
 

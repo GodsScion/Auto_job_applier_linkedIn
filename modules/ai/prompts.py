@@ -11,18 +11,30 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 """
 
+
+##> Common Response Formats
+array_of_strings = {"type": "array", "items": {"type": "string"}}
+"""
+Response schema to represent array of strings `["string1", "string2"]`
+"""
+#<
+
+
+##> Extract Skills
 extract_skills_prompt = """
-You are a job requirements extractor, your job is to extract all the skills given in the job description. Skills must be classified into 
-1. "tech_stack" - All skills mentioned for ideal candidates. Examples: Python, React.js, Node.js, Elastic Search, Algolia, MongoDB, Spring Boot, .NET, etc.
-2. "technical_skills" - Examples: System Architecture, Data Engineering, System Design, Micro Services, Distributed Systems, etc.
-3. "other_skills" - Examples: Communication skills, Managerial roles, Cross-team collaborations, etc. 
-4. "nice_to_have" - All skills mentioned in Nice to have.
-Return the output in JSON format given below, without any preamble or explanation
-JSON format: {{
-    "tech_stack": [ ],
-    "technical_skills": [ ],
-    "other_skills": [ ],
-    "nice_to_have": [ ]
+You are a job requirements extractor and classifier. Your task is to extract all skills mentioned in a job description and classify them into five categories:
+1. "tech_stack": Identify all skills related to programming languages, frameworks, libraries, databases, and other technologies used in software development. Examples include Python, React.js, Node.js, Elasticsearch, Algolia, MongoDB, Spring Boot, .NET, etc.
+2. "technical_skills": Capture skills related to technical expertise beyond specific tools, such as architectural design or specialized fields within engineering. Examples include System Architecture, Data Engineering, System Design, Microservices, Distributed Systems, etc.
+3. "other_skills": Include non-technical skills like interpersonal, leadership, and teamwork abilities. Examples include Communication skills, Managerial roles, Cross-team collaboration, etc.
+4. "required_skills": All skills specifically listed as required or expected from an ideal candidate. Include both technical and non-technical skills.
+5. "nice_to_have": Any skills or qualifications listed as preferred or beneficial for the role but not mandatory.
+Return the output in the following JSON format with no additional commentary:
+{{
+    "tech_stack": [],
+    "technical_skills": [],
+    "other_skills": [],
+    "required_skills": [],
+    "nice_to_have": []
 }}
 
 JOB DESCRIPTION:
@@ -31,3 +43,31 @@ JOB DESCRIPTION:
 """
 Use `extract_skills_prompt.format(job_description)` to insert `job_description`.
 """
+
+extract_skills_response_format = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "Skills_Extraction_Response",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "tech_stack": array_of_strings,
+                "technical_skills": array_of_strings,
+                "other_skills": array_of_strings,
+                "nice_to_have": array_of_strings,
+            },
+            "required": [
+                "tech_stack",
+                "technical_skills",
+                "other_skills",
+                "nice_to_have",
+            ],
+            "additionalProperties": False
+        },
+    },
+}
+"""
+Response schema for `extract_skills` function
+"""
+#<

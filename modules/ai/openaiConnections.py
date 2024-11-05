@@ -3,7 +3,6 @@ from config.settings import showAiErrorAlerts
 
 from modules.helpers import print_lg, critical_error_log, convert_to_json
 from modules.ai.prompts import *
-from modules.ai.responseFormats import *
 
 from pyautogui import confirm
 from openai import OpenAI
@@ -72,6 +71,7 @@ def create_openai_client() -> OpenAI:
         print_lg(f"Using API URL: {llm_api_url}")
         print_lg(f"Using Model: {llm_model}")
         print_lg("Check './config/secrets.py' for more details.\n")
+        print_lg("---------------------------------------------")
 
         return client
     except Exception as e:
@@ -113,13 +113,13 @@ def get_models_list(client: OpenAI) -> list[Union[Model, str]]:
 
 
 
-def format_results(
-    completion: Union[ChatCompletion, Iterator[ChatCompletionChunk]], stream: bool, jsonFormat: bool = True
+def get_results(
+    completion: Union[ChatCompletion, Iterator[ChatCompletionChunk]], stream: bool = stream_output, convert_to_JSON: bool = True
 ) -> Union[dict, ValueError]:
     """
     Function that prints and formats the results of the OpenAI API calls.
-    * Takes in `completion` of type `ChatCompletion` or `Stream[ChatCompletionChunk]`
-    * Takes in `stream` of type `bool` to indicate if it's a streaming call
+    * Takes in `completion` of type `ChatCompletion` or `Iterator[ChatCompletionChunk]`
+    * Takes in `stream` of type `bool` to indicate if it's a streaming call or not
     * Returns a `dict` object representing JSON response
     """
     
@@ -138,11 +138,11 @@ def format_results(
         check_error(completion)
         result = completion.choices[0].message.content
     
-    if jsonFormat:
+    if convert_to_JSON:
         result = convert_to_json(result)
     
     print_lg("\n\nSKILLS FOUND:\n")
-    print_lg(result, pretty=jsonFormat)
+    print_lg(result, pretty=convert_to_JSON)
     return result
 
 
@@ -159,7 +159,8 @@ def extract_skills(
     print_lg("Extracting skills from job description...")
     try:        
         if not client: raise ValueError("Client is not available!")
-    
+
+
         prompt = extract_skills_prompt.format(job_description)
 
         completion = client.chat.completions.create(
@@ -172,7 +173,7 @@ def extract_skills(
             response_format=extract_skills_response_format
         )
 
-        return format_results(completion, stream)
+        return get_results(completion, stream)
     except Exception as e:
         errorAlertAI(f"Error occurred while extracting skills from job description. {apiCheckInstructions}", e)
 

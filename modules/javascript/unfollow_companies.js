@@ -3,7 +3,7 @@ function clickFollowingButtons() {
         .filter(button => button.textContent.trim() === 'Following' && button.checkVisibility());
 
     if (buttons.length) {
-        buttons.forEach(button => setTimeout(() => button.click(), 150));
+        buttons.forEach((button, i) => setTimeout(() => button.click(), i * 150));
         buttons[buttons.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
         setTimeout(clickFollowingButtons, buttons.length * 150);
     }

@@ -1,3 +1,5 @@
+
+
 function clickFollowingButtons() {
     const buttons = Array.from(document.querySelectorAll('button'))
         .filter(button => button.textContent.trim() === 'Following' && button.checkVisibility());

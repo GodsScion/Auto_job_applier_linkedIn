@@ -855,7 +855,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
                     
                     if use_AI and description != "Unknown":
-                        skills = extract_skills(aiClient, description)
+                        skills = ai_extract_skills(aiClient, description)
 
                     uploaded = False
                     # Case 1: Easy Apply Button
@@ -1014,7 +1014,7 @@ def main() -> None:
         #     except Exception as e:
         #         print_lg("Opening OpenAI chatGPT tab failed!")
         if use_AI:
-            aiClient = create_openai_client()
+            aiClient = ai_create_openai_client()
 
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)
@@ -1068,7 +1068,7 @@ def main() -> None:
             msg = "NOTE: IF YOU HAVE MORE THAN 10 TABS OPENED, PLEASE CLOSE OR BOOKMARK THEM!\n\nOr it's highly likely that application will just open browser and not do anything next time!" 
             pyautogui.alert(msg,"Info")
             print_lg("\n"+msg)
-        close_openai_client(aiClient)
+        ai_close_openai_client(aiClient)
         try: driver.quit()
         except Exception as e: critical_error_log("When quitting...", e)
 

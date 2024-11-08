@@ -55,12 +55,14 @@ extract_skills_response_format = {
                 "tech_stack": array_of_strings,
                 "technical_skills": array_of_strings,
                 "other_skills": array_of_strings,
+                "required_skills": array_of_strings,
                 "nice_to_have": array_of_strings,
             },
             "required": [
                 "tech_stack",
                 "technical_skills",
                 "other_skills",
+                "required_skills",
                 "nice_to_have",
             ],
             "additionalProperties": False
@@ -70,4 +72,9 @@ extract_skills_response_format = {
 """
 Response schema for `extract_skills` function
 """
+#<
+
+
+##> Answer Questions
+
 #<

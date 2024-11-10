@@ -1,4 +1,4 @@
-from config.secrets import use_AI, llm_api_url, llm_api_key, llm_model, stream_output
+from config.secrets import *
 from config.settings import showAiErrorAlerts
 
 from modules.helpers import print_lg, critical_error_log, convert_to_json
@@ -8,7 +8,7 @@ from pyautogui import confirm
 from openai import OpenAI
 from openai.types.model import Model
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
-from typing import Union, Iterator
+from typing import Iterator, Literal
 
 
 apiCheckInstructions = """
@@ -22,8 +22,8 @@ Open `secret.py` in `/config` folder to configure your AI API connections.
 ERROR:
 """
 
-
-def errorAlertAI(message: str, stackTrace: str, title: str = "AI Connection Error") -> None:
+# Function to show an AI error alert
+def ai_error_alert(message: str, stackTrace: str, title: str = "AI Connection Error") -> None:
     """
     Function to show an AI error alert and log it.
     """
@@ -34,7 +34,8 @@ def errorAlertAI(message: str, stackTrace: str, title: str = "AI Connection Erro
     critical_error_log(message, stackTrace)
 
 
-def check_error(response: Union[ChatCompletion, ChatCompletionChunk]) -> None:
+# Function to check if an error occurred
+def ai_check_error(response: ChatCompletion | ChatCompletionChunk) -> None:
     """
     Function to check if an error occurred.
     * Takes in `response` of type `ChatCompletion` or `ChatCompletionChunk`
@@ -46,7 +47,8 @@ def check_error(response: Union[ChatCompletion, ChatCompletionChunk]) -> None:
         )
 
 
-def create_openai_client() -> OpenAI:
+# Function to create an OpenAI client
+def ai_create_openai_client() -> OpenAI:
     """
     Function to create an OpenAI client.
     * Takes no arguments
@@ -59,13 +61,13 @@ def create_openai_client() -> OpenAI:
         
         client = OpenAI(base_url=llm_api_url, api_key=llm_api_key)
 
-        models = get_models_list(client)
+        models = ai_get_models_list(client)
         if "error" in models:
             raise ValueError(models[1])
         if len(models) == 0:
             raise ValueError("No models are available!")
         if llm_model not in [model.id for model in models]:
-            raise ValueError(f"Model `{llm_model}` is not available!")
+            raise ValueError(f"Model `{llm_model}` is not found!")
         
         print_lg("---- SUCCESSFULLY CREATED OPENAI CLIENT! ----")
         print_lg(f"Using API URL: {llm_api_url}")
@@ -75,10 +77,11 @@ def create_openai_client() -> OpenAI:
 
         return client
     except Exception as e:
-        errorAlertAI(f"Error occurred while creating OpenAI client. {apiCheckInstructions}", e)
+        ai_error_alert(f"Error occurred while creating OpenAI client. {apiCheckInstructions}", e)
 
 
-def close_openai_client(client: OpenAI) -> None:
+# Function to close an OpenAI client
+def ai_close_openai_client(client: OpenAI) -> None:
     """
     Function to close an OpenAI client.
     * Takes in `client` of type `OpenAI`
@@ -89,11 +92,12 @@ def close_openai_client(client: OpenAI) -> None:
             print_lg("Closing OpenAI client...")
             client.close()
     except Exception as e:
-        errorAlertAI("Error occurred while closing OpenAI client.", e)
+        ai_error_alert("Error occurred while closing OpenAI client.", e)
 
 
 
-def get_models_list(client: OpenAI) -> list[Union[Model, str]]:
+# Function to get list of models available in OpenAI API
+def ai_get_models_list(client: OpenAI) -> list[ Model | str]:
     """
     Function to get list of models available in OpenAI API.
     * Takes in `client` of type `OpenAI`
@@ -103,7 +107,7 @@ def get_models_list(client: OpenAI) -> list[Union[Model, str]]:
         print_lg("Getting AI models list...")
         if not client: raise ValueError("Client is not available!")
         models = client.models.list()
-        check_error(models)
+        ai_check_error(models)
         print_lg("Available models:")
         print_lg(models.data, pretty=True)
         return models.data
@@ -113,42 +117,62 @@ def get_models_list(client: OpenAI) -> list[Union[Model, str]]:
 
 
 
-def get_results(
-    completion: Union[ChatCompletion, Iterator[ChatCompletionChunk]], stream: bool = stream_output, convert_to_JSON: bool = True
-) -> Union[dict, ValueError]:
+# Function to get chat completion from OpenAI API
+def ai_completion(client: OpenAI, messages: list[dict], response_format: dict = None, temperature: float = 0, stream: bool = stream_output) -> dict | ValueError:
     """
-    Function that prints and formats the results of the OpenAI API calls.
-    * Takes in `completion` of type `ChatCompletion` or `Iterator[ChatCompletionChunk]`
+    Function that completes a chat and prints and formats the results of the OpenAI API calls.
+    * Takes in `client` of type `OpenAI`
+    * Takes in `messages` of type `list[dict]`. Example: `[{"role": "user", "content": "Hello"}]`
+    * Takes in `response_format` of type `dict` for JSON representation, default is `None`
+    * Takes in `temperature` of type `float` for temperature, default is `0`
     * Takes in `stream` of type `bool` to indicate if it's a streaming call or not
-    * Returns a `dict` object representing JSON response
+    * Returns a `dict` object representing JSON response, will try to convert to JSON if `response_format` is given
     """
-    
+    if not client: raise ValueError("Client is not available!")
+
+    # Select appropriate client
+    completion: ChatCompletion | Iterator[ChatCompletionChunk]
+    if response_format and llm.get("spec") in ["openai", "openai-like"]:
+        completion = client.chat.completions.create(
+                model=llm_model,
+                messages=messages,
+                temperature=temperature,
+                stream=stream,
+                response_format=response_format
+            )
+    else:
+        completion = client.chat.completions.create(
+                model=llm_model,
+                messages=messages,
+                temperature=temperature,
+                stream=stream
+            )
+
     result = ""
     
+    # Log response
     if stream:
         print_lg("--STREAMING STARTED")
         for chunk in completion:
-            check_error(chunk)
+            ai_check_error(chunk)
             chunkMessage = chunk.choices[0].delta.content
             if chunkMessage != None:
                 result += chunkMessage
             print_lg(chunkMessage, end="", flush=True)
         print_lg("\n--STREAMING COMPLETE")
     else:
-        check_error(completion)
+        ai_check_error(completion)
         result = completion.choices[0].message.content
     
-    if convert_to_JSON:
+    if response_format:
         result = convert_to_json(result)
     
-    print_lg("\n\nSKILLS FOUND:\n")
-    print_lg(result, pretty=convert_to_JSON)
+    print_lg("\nSKILLS FOUND:\n")
+    print_lg(result, pretty=response_format)
     return result
 
 
-def extract_skills(
-    client: OpenAI, job_description: str, stream: bool = stream_output
-) -> Union[dict, ValueError]:
+def ai_extract_skills(client: OpenAI, job_description: str, stream: bool = stream_output) -> dict | ValueError:
     """
     Function to extract skills from job description using OpenAI API.
     * Takes in `client` of type `OpenAI`
@@ -156,25 +180,83 @@ def extract_skills(
     * Takes in `stream` of type `bool` to indicate if it's a streaming call
     * Returns a `dict` object representing JSON response
     """
-    print_lg("Extracting skills from job description...")
+    print_lg("-- EXTRACTING SKILLS FROM JOB DESCRIPTION")
     try:        
-        if not client: raise ValueError("Client is not available!")
-
-
         prompt = extract_skills_prompt.format(job_description)
 
-        completion = client.chat.completions.create(
-            model=llm_model,
-            messages=[
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0,
-            stream=stream,
-            response_format=extract_skills_response_format
-        )
+        messages = [{"role": "user", "content": extract_skills_prompt}]
 
-        return get_results(completion, stream)
+        return ai_completion(client, messages, response_format=extract_skills_response_format, stream=stream)
     except Exception as e:
-        errorAlertAI(f"Error occurred while extracting skills from job description. {apiCheckInstructions}", e)
+        ai_error_alert(f"Error occurred while extracting skills from job description. {apiCheckInstructions}", e)
 
-    
+
+
+def ai_answer_question(
+    client: OpenAI, 
+    question: str, options: list[str] | None = None, question_type: Literal['text', 'textarea', 'single_select', 'multiple_select'] = 'text', 
+    job_description: str = None, about_company: str = None,
+    stream: bool = stream_output
+) -> dict | ValueError:
+    print_lg("-- ANSWERING QUESTION")
+    try:
+        prompt = answer_question_prompt.format(question, options, job_description, about_company)
+        messages = [{"role": "user", "content": prompt}]
+        return ai_completion(client, messages, stream)
+    except Exception as e:
+        ai_error_alert(f"Error occurred while answering question. {apiCheckInstructions}", e)
+
+
+
+def ai_generate_resume(
+    client: OpenAI, 
+    job_description: str, about_company: str, required_skills: dict,
+    stream: bool = stream_output
+) -> dict | ValueError:
+    '''
+    Function to generate resume. Takes in user experience and template info from config.
+    '''
+    pass
+
+
+
+def ai_generate_coverletter(
+    client: OpenAI, 
+    job_description: str, about_company: str, required_skills: dict,
+    stream: bool = stream_output
+) -> dict | ValueError:
+    '''
+    Function to generate resume. Takes in user experience and template info from config.
+    '''
+    pass
+
+
+
+##< Evaluation Agents
+def ai_evaluate_resume(
+    client: OpenAI, 
+    job_description: str, about_company: str, required_skills: dict,
+    resume: str,
+    stream: bool = stream_output
+) -> dict | ValueError:
+    pass
+
+
+
+def ai_evaluate_resume(
+    client: OpenAI, 
+    job_description: str, about_company: str, required_skills: dict,
+    resume: str,
+    stream: bool = stream_output
+) -> dict | ValueError:
+    pass
+
+
+
+def ai_check_job_relevance(
+    client: OpenAI, 
+    job_description: str, about_company: str,
+    stream: bool = stream_output
+) -> dict:
+    pass
+#>

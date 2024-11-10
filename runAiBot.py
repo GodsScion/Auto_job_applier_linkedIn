@@ -333,7 +333,14 @@ def extract_years_of_experience(text: str) -> int:
 
 
 
-def get_job_description() -> tuple[Union[str, Literal['Unknown']], Union[int, Literal['Unknown']], bool, Union[str, None], Union[str, None]]:
+def get_job_description(
+) -> tuple[
+    str | Literal['Unknown'],
+    int | Literal['Unknown'],
+    bool,
+    str | None,
+    str | None
+    ]:
     '''
     # Job Description
     Function to extract job description from About the Job.

@@ -21,6 +21,9 @@ Response schema to represent array of strings `["string1", "string2"]`
 
 
 ##> Extract Skills
+
+# Structure of messages = `[{"role": "user", "content": extract_skills_prompt}]`
+
 extract_skills_prompt = """
 You are a job requirements extractor and classifier. Your task is to extract all skills mentioned in a job description and classify them into five categories:
 1. "tech_stack": Identify all skills related to programming languages, frameworks, libraries, databases, and other technologies used in software development. Examples include Python, React.js, Node.js, Elasticsearch, Algolia, MongoDB, Spring Boot, .NET, etc.
@@ -43,6 +46,7 @@ JOB DESCRIPTION:
 """
 Use `extract_skills_prompt.format(job_description)` to insert `job_description`.
 """
+
 
 extract_skills_response_format = {
     "type": "json_schema",
@@ -76,5 +80,13 @@ Response schema for `extract_skills` function
 
 
 ##> Answer Questions
+# Structure of messages = `[{"role": "user", "content": answer_questions_prompt}]`
 
+text_questions_prompt = """
+Please answer the following job application question, with no additional commentary, based on the context provided.
+Question:
+{}
+User Info:
+{}
+"""
 #<

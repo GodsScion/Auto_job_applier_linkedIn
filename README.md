@@ -144,6 +144,11 @@ With heartfelt appreciation, <br>
 
 
 ## 🗓️ Update History:
+### Nov 28, 2024
+- Users can now select to follow or not follow companies when submitting application.
+- Frameworks for future AI Developments have been added.
+- AI can now be used to extract skills from job description. 
+
 ### Oct 16, 2024
 - Framework for OpenAI API and Local LLMs
 - Framework for RAG

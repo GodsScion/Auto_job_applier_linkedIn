@@ -145,6 +145,7 @@ With heartfelt appreciation, <br>
 
 ## 🗓️ Update History:
 ### Nov 28, 2024
+- Patched to work for latest changes in Linkedin.
 - Users can now select to follow or not follow companies when submitting application.
 - Frameworks for future AI Developments have been added.
 - AI can now be used to extract skills from job description. 

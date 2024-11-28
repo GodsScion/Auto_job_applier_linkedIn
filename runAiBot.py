@@ -17,25 +17,33 @@ import os
 import csv
 import re
 import pyautogui
-pyautogui.FAILSAFE = False
+
 from random import choice, shuffle, randint
 from datetime import datetime
-from modules.open_chrome import *
-from selenium.webdriver.remote.webelement import WebElement
+
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.select import Select
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, NoSuchWindowException, ElementNotInteractableException
+
 from config.personals import *
 from config.questions import *
 from config.search import *
-from config.secrets import *
+from config.secrets import use_AI, username, password
 from config.settings import *
+
+from modules.open_chrome import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
+from modules.ai.openaiConnections import *
+
 from typing import Literal
+
+
+pyautogui.FAILSAFE = False
 # if use_resume_generator:    from resume_generator import is_logged_in_GPT, login_GPT, open_resume_chat, create_custom_resume
 
 
@@ -74,6 +82,8 @@ current_ctc = str(current_ctc)
 notice_period_months = str(notice_period//30)
 notice_period_weeks = str(notice_period//7)
 notice_period = str(notice_period)
+
+aiClient = None
 #>
 
 
@@ -255,14 +265,20 @@ def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_j
     * work_style: Work style of this job (Remote, On-site, Hybrid)
     * skip: A boolean flag to skip this job
     '''
-    job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")
+    job_details_button = job.find_element(By.TAG_NAME, 'a')  # job.find_element(By.CLASS_NAME, "job-card-list__title")  # Problem in India
     scroll_to_view(driver, job_details_button, True)
-    title = job_details_button.text
-    company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
     job_id = job.get_dom_attribute('data-occludable-job-id')
-    work_location = job.find_element(By.CLASS_NAME, "job-card-container__metadata-item").text
+    title = job_details_button.text
+    title = title[:title.find("\n")]
+    # company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
+    # work_location = job.find_element(By.CLASS_NAME, "job-card-container__metadata-item").text
+    other_details = job.find_element(By.CLASS_NAME, 'artdeco-entity-lockup__subtitle').text
+    index = other_details.find(' · ')
+    company = other_details[:index]
+    work_location = other_details[index+3:]
     work_style = work_location[work_location.rfind('(')+1:work_location.rfind(')')]
     work_location = work_location[:work_location.rfind('(')].strip()
+    
     # Skip if previously rejected due to blacklist or already applied
     skip = False
     if company in blacklisted_companies:
@@ -323,6 +339,63 @@ def extract_years_of_experience(text: str) -> int:
 
 
 
+def get_job_description(
+) -> tuple[
+    str | Literal['Unknown'],
+    int | Literal['Unknown'],
+    bool,
+    str | None,
+    str | None
+    ]:
+    '''
+    # Job Description
+    Function to extract job description from About the Job.
+    ### Returns:
+    - `jobDescription: str | 'Unknown'`
+    - `experience_required: int | 'Unknown'`
+    - `skip: bool`
+    - `skipReason: str | None`
+    - `skipMessage: str | None`
+    '''
+    try:
+        jobDescription = "Unknown"
+        experience_required = "Unknown"
+        found_masters = 0
+        jobDescription = find_by_class(driver, "jobs-box__html-content").text
+        jobDescriptionLow = jobDescription.lower()
+        skip = False
+        skipReason = None
+        skipMessage = None
+        for word in bad_words:
+            if word.lower() in jobDescriptionLow:
+                skipMessage = f'\n{jobDescription}\n\nContains bad word "{word}". Skipping this job!\n'
+                skipReason = "Found a Bad Word in About Job"
+                skip = True
+                break
+        if not skip and security_clearance == False and ('polygraph' in jobDescriptionLow or 'clearance' in jobDescriptionLow or 'secret' in jobDescriptionLow):
+            skipMessage = f'\n{jobDescription}\n\nFound "Clearance" or "Polygraph". Skipping this job!\n'
+            skipReason = "Asking for Security clearance"
+            skip = True
+        if not skip:
+            if did_masters and 'master' in jobDescriptionLow:
+                print_lg(f'Found the word "master" in \n{jobDescription}')
+                found_masters = 2
+            experience_required = extract_years_of_experience(jobDescription)
+            if current_experience > -1 and experience_required > current_experience + found_masters:
+                skipMessage = f'\n{jobDescription}\n\nExperience required {experience_required} > Current Experience {current_experience + found_masters}. Skipping this job!\n'
+                skipReason = "Required experience is high"
+                skip = True
+    except Exception as e:
+        if jobDescription == "Unknown":    print_lg("Unable to extract job description!")
+        else:
+            experience_required = "Error in extraction"
+            print_lg("Unable to extract years of experience required!")
+            # print_lg(e)
+    finally:
+        return jobDescription, experience_required, skip, skipReason, skipMessage
+        
+
+
 # Function to upload resume
 def upload_resume(modal: WebElement, resume: str) -> tuple[bool, str]:
     try:
@@ -337,9 +410,13 @@ def answer_common_questions(label: str, answer: str) -> str:
 
 
 # Function to answer the questions for Easy Apply
-def answer_questions(questions_list: set, work_location: str) -> set:
+def answer_questions(modal: WebElement, questions_list: set, work_location: str) -> set:
     # Get all questions from the page
-    all_questions = driver.find_elements(By.CLASS_NAME, "jobs-easy-apply-form-element")
+     
+    all_questions = modal.find_elements(By.CLASS_NAME, "jobs-easy-apply-form-element")
+    all_list_questions = modal.find_elements(By.XPATH, ".//div[@data-test-text-entity-list-form-component]")
+    all_single_line_questions = modal.find_elements(By.XPATH, ".//div[@data-test-single-line-text-form-component]")
+    all_questions = all_questions + all_list_questions + all_single_line_questions
 
     for Question in all_questions:
         # Check if it's a select Question
@@ -494,7 +571,7 @@ def answer_questions(questions_list: set, work_location: str) -> set:
                 elif 'linkedin' in label: answer = linkedIn
                 elif 'website' in label or 'blog' in label or 'portfolio' in label or 'link' in label: answer = website
                 elif 'scale of 1-10' in label: answer = confidence_level
-                elif 'headline' in label: answer = headline
+                elif 'headline' in label: answer = linkedin_headline
                 elif ('hear' in label or 'come across' in label) and 'this' in label and ('job' in label or 'position' in label): answer = "https://github.com/GodsScion/Auto_job_applier_linkedIn"
                 elif 'state' in label or 'province' in label: answer = state
                 elif 'zip' in label or 'postal' in label or 'code' in label: answer = zipcode
@@ -521,7 +598,7 @@ def answer_questions(questions_list: set, work_location: str) -> set:
             answer = ""
             prev_answer = text_area.get_attribute("value")
             if not prev_answer or overwrite_previous_answers:
-                if 'summary' in label: answer = summary
+                if 'summary' in label: answer = linkedin_summary
                 elif 'cover' in label: answer = cover_letter
                 text_area.clear()
                 text_area.send_keys(answer)
@@ -594,6 +671,18 @@ def external_apply(pagination_element: WebElement, job_id: str, job_link: str, r
         return True, application_link, tabs_count
 
 
+
+def follow_company(modal: WebDriver = driver) -> None:
+    '''
+    Function to follow or un-follow easy applied companies based om `follow_companies`
+    '''
+    try:
+        follow_checkbox_input = try_xp(modal, ".//input[@id='follow-company-checkbox' and @type='checkbox']", False)
+        if follow_checkbox_input and follow_checkbox_input.is_selected() != follow_companies:
+            try_xp(modal, ".//label[@for='follow-company-checkbox']")
+    except Exception as e:
+        print_lg("Failed to update follow companies checkbox!", e)
+    
 
 
 #< Failed attempts logging
@@ -682,13 +771,13 @@ def apply_to_jobs(search_terms: list[str]) -> None:
         try:
             while current_count < switch_number:
                 # Wait until job listings are loaded
-                wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'jobs-search-results__list-item')]")))
+                wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[@data-occludable-job-id]")))
 
                 pagination_element, current_page = get_page_info()
 
                 # Find all job listings in current page
                 buffer(3)
-                job_listings = driver.find_elements(By.CLASS_NAME, "jobs-search-results__list-item")  
+                job_listings = driver.find_elements(By.XPATH, "//li[@data-occludable-job-id]")  
 
             
                 for job in job_listings:
@@ -714,9 +803,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     hr_name = "Unknown"
                     connect_request = "In Development" # Still in development
                     date_listed = "Unknown"
-                    description = "Unknown"
-                    experience_required = "Unknown"
-                    skills = "In Development" # Still in development
+                    skills = "Needs an AI" # Still in development
                     resume = "Pending"
                     reposted = False
                     questions_list = None
@@ -774,43 +861,18 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     except Exception as e:
                         print_lg("Failed to calculate the date posted!",e)
 
-                    # Get job description
-                    try:
-                        found_masters = 0
-                        description = find_by_class(driver, "jobs-box__html-content").text
-                        descriptionLow = description.lower()
-                        skip = False
-                        for word in bad_words:
-                            if word.lower() in descriptionLow:
-                                message = f'\n{description}\n\nContains bad word "{word}". Skipping this job!\n'
-                                reason = "Found a Bad Word in About Job"
-                                skip = True
-                                break
-                        if not skip and security_clearance == False and ('polygraph' in descriptionLow or 'clearance' in descriptionLow or 'secret' in descriptionLow):
-                            message = f'\n{description}\n\nFound "Clearance" or "Polygraph". Skipping this job!\n'
-                            reason = "Asking for Security clearance"
-                            skip = True
-                        if not skip:
-                            if did_masters and 'master' in descriptionLow:
-                                print_lg(f'Found the word "master" in \n{description}')
-                                found_masters = 2
-                            experience_required = extract_years_of_experience(description)
-                            if current_experience > -1 and experience_required > current_experience + found_masters:
-                                message = f'\n{description}\n\nExperience required {experience_required} > Current Experience {current_experience + found_masters}. Skipping this job!\n'
-                                reason = "Required experience is high"
-                                skip = True
-                        if skip:
-                            print_lg(message)
-                            failed_job(job_id, job_link, resume, date_listed, reason, message, "Skipped", screenshot_name)
-                            rejected_jobs.add(job_id)
-                            skip_count += 1
-                            continue
-                    except Exception as e:
-                        if description == "Unknown":    print_lg("Unable to extract job description!")
-                        else:
-                            experience_required = "Error in extraction"
-                            print_lg("Unable to extract years of experience required!")
-                        # print_lg(e)
+
+                    description, experience_required, skip, reason, message = get_job_description()
+                    if skip:
+                        print_lg(message)
+                        failed_job(job_id, job_link, resume, date_listed, reason, message, "Skipped", screenshot_name)
+                        rejected_jobs.add(job_id)
+                        skip_count += 1
+                        continue
+
+                    
+                    if use_AI and description != "Unknown":
+                        skills = ai_extract_skills(aiClient, description)
 
                     uploaded = False
                     # Case 1: Easy Apply Button
@@ -838,7 +900,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                         screenshot_name = screenshot(driver, job_id, "Failed at questions")
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
-                                    questions_list = answer_questions(questions_list, work_location)
+                                    questions_list = answer_questions(modal, questions_list, work_location)
                                     if useNewResume and not uploaded: uploaded, resume = upload_resume(modal, default_resume_path)
                                     try: next_button = modal.find_element(By.XPATH, './/span[normalize-space(.)="Review"]') 
                                     except NoSuchElementException:  next_button = modal.find_element(By.XPATH, './/button[contains(span, "Next")]')
@@ -857,7 +919,8 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                     decision = pyautogui.confirm('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py\nTo TEMPORARILY disable pausing, click "Disable Pause"', "Confirm your information",["Disable Pause", "Discard Application", "Submit Application"])
                                     if decision == "Discard Application": raise Exception("Job application discarded by user!")
                                     pause_before_submit = False if "Disable Pause" == decision else True
-                                    try_xp(modal, ".//span[normalize-space(.)='Review']")
+                                    # try_xp(modal, ".//span[normalize-space(.)='Review']")
+                                follow_company(modal)
                                 if wait_span_click(driver, "Submit application", 2, scrollTop=True): 
                                     date_applied = datetime.now()
                                     if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
@@ -912,6 +975,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
         except Exception as e:
             print_lg("Failed to find Job listings!")
             critical_error_log("In Applier", e)
+            print_lg(driver.page_source, pretty=True)
             # print_lg(e)
 
         
@@ -939,7 +1003,7 @@ linkedIn_tab = False
 
 def main() -> None:
     try:
-        global linkedIn_tab, tabs_count, useNewResume
+        global linkedIn_tab, tabs_count, useNewResume, aiClient
         alert_title = "Error Occurred. Closing Browser!"
         total_runs = 1        
         validate_config()
@@ -966,6 +1030,8 @@ def main() -> None:
         #         chatGPT_tab = driver.current_window_handle
         #     except Exception as e:
         #         print_lg("Opening OpenAI chatGPT tab failed!")
+        if use_AI:
+            aiClient = ai_create_openai_client()
 
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)
@@ -1019,6 +1085,7 @@ def main() -> None:
             msg = "NOTE: IF YOU HAVE MORE THAN 10 TABS OPENED, PLEASE CLOSE OR BOOKMARK THEM!\n\nOr it's highly likely that application will just open browser and not do anything next time!" 
             pyautogui.alert(msg,"Info")
             print_lg("\n"+msg)
+        ai_close_openai_client(aiClient)
         try: driver.quit()
         except Exception as e: critical_error_log("When quitting...", e)
 

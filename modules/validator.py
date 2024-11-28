@@ -74,10 +74,10 @@ def validate_questions() -> None | ValueError | TypeError:
     check_string(linkedIn, "linkedIn")
     check_int(desired_salary, "desired_salary")
     check_string(us_citizenship, "us_citizenship", ["U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident", "Other"])
-    check_string(headline, "headline")
+    check_string(linkedin_headline, "linkedin_headline")
     check_int(notice_period, "notice_period")
     check_int(current_ctc, "current_ctc")
-    check_string(summary, "summary")
+    check_string(linkedin_summary, "linkedin_summary")
     check_string(cover_letter, "cover_letter")
     check_string(recent_employer, "recent_employer")
     check_string(confidence_level, "confidence_level")
@@ -131,13 +131,18 @@ def validate_secrets() -> None | ValueError | TypeError:
     check_string(username, "username", min_length=5)
     check_string(password, "password", min_length=5)
 
-    # check_string(api_key, "api_key", min_length=10)
-
+    check_boolean(use_AI, "use_AI")
+    check_string(llm_api_url, "llm_api_url", min_length=5)
+    check_string(llm_api_key, "llm_api_key")
+    check_string(llm_model, "llm_model")
+    # check_string(llm_embedding_model, "llm_embedding_model")
+    check_boolean(stream_output, "stream_output")
 
 
 from config.settings import *
 def validate_settings() -> None | ValueError | TypeError:
     check_boolean(close_tabs, "close_tabs")
+    check_boolean(follow_companies, "follow_companies")
     # check_boolean(connect_hr, "connect_hr")
     # check_string(connect_request_message, "connect_request_message", min_length=10)
 

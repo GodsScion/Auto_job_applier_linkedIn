@@ -1,10 +1,22 @@
+'''
+Author:     Sai Vignesh Golla
+LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
+
+Copyright (C) 2024 Sai Vignesh Golla
+
+License:    GNU Affero General Public License
+            https://www.gnu.org/licenses/agpl-3.0.en.html
+            
+GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
+
+'''
+
+
 from config.secrets import *
 from config.settings import showAiErrorAlerts
 from config.personals import ethnicity, gender, disability_status, veteran_status
 from config.questions import *
 from config.search import security_clearance, did_masters
-
-
 
 from modules.helpers import print_lg, critical_error_log, convert_to_json
 from modules.ai.prompts import *

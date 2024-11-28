@@ -265,14 +265,20 @@ def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_j
     * work_style: Work style of this job (Remote, On-site, Hybrid)
     * skip: A boolean flag to skip this job
     '''
-    job_details_button = job.find_element(By.CLASS_NAME, "job-card-list__title")  # Problem in India
+    job_details_button = job.find_element(By.TAG_NAME, 'a')  # job.find_element(By.CLASS_NAME, "job-card-list__title")  # Problem in India
     scroll_to_view(driver, job_details_button, True)
-    title = job_details_button.text
-    company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
     job_id = job.get_dom_attribute('data-occludable-job-id')
-    work_location = job.find_element(By.CLASS_NAME, "job-card-container__metadata-item").text
+    title = job_details_button.text
+    title = title[:title.find("\n")]
+    # company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
+    # work_location = job.find_element(By.CLASS_NAME, "job-card-container__metadata-item").text
+    other_details = job.find_element(By.CLASS_NAME, 'artdeco-entity-lockup__subtitle').text
+    index = other_details.find(' · ')
+    company = other_details[:index]
+    work_location = other_details[index+3:]
     work_style = work_location[work_location.rfind('(')+1:work_location.rfind(')')]
     work_location = work_location[:work_location.rfind('(')].strip()
+    
     # Skip if previously rejected due to blacklist or already applied
     skip = False
     if company in blacklisted_companies:
@@ -404,9 +410,13 @@ def answer_common_questions(label: str, answer: str) -> str:
 
 
 # Function to answer the questions for Easy Apply
-def answer_questions(questions_list: set, work_location: str) -> set:
+def answer_questions(modal: WebElement, questions_list: set, work_location: str) -> set:
     # Get all questions from the page
-    all_questions = driver.find_elements(By.CLASS_NAME, "jobs-easy-apply-form-element")
+     
+    all_questions = modal.find_elements(By.CLASS_NAME, "jobs-easy-apply-form-element")
+    all_list_questions = modal.find_elements(By.XPATH, ".//div[@data-test-text-entity-list-form-component]")
+    all_single_line_questions = modal.find_elements(By.XPATH, ".//div[@data-test-single-line-text-form-component]")
+    all_questions = all_questions + all_list_questions + all_single_line_questions
 
     for Question in all_questions:
         # Check if it's a select Question
@@ -761,13 +771,13 @@ def apply_to_jobs(search_terms: list[str]) -> None:
         try:
             while current_count < switch_number:
                 # Wait until job listings are loaded
-                wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'jobs-search-results__list-item')]")))
+                wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[@data-occludable-job-id]")))
 
                 pagination_element, current_page = get_page_info()
 
                 # Find all job listings in current page
                 buffer(3)
-                job_listings = driver.find_elements(By.CLASS_NAME, "jobs-search-results__list-item")  
+                job_listings = driver.find_elements(By.XPATH, "//li[@data-occludable-job-id]")  
 
             
                 for job in job_listings:
@@ -890,7 +900,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                         screenshot_name = screenshot(driver, job_id, "Failed at questions")
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
-                                    questions_list = answer_questions(questions_list, work_location)
+                                    questions_list = answer_questions(modal, questions_list, work_location)
                                     if useNewResume and not uploaded: uploaded, resume = upload_resume(modal, default_resume_path)
                                     try: next_button = modal.find_element(By.XPATH, './/span[normalize-space(.)="Review"]') 
                                     except NoSuchElementException:  next_button = modal.find_element(By.XPATH, './/button[contains(span, "Next")]')

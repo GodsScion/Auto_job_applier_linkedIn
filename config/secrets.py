@@ -22,7 +22,7 @@ password = "example_password"           # Enter your password in the quotes
 
 ## Artificial Intelligence (Recommended)
 # Use AI
-use_AI = True
+use_AI = False
 '''
 Note: Set it as True only if you want to use AI, and If you either have a
 1. Local LLM model running on your local machine, with it's APIs exposed. Example softwares to achieve it are:
@@ -34,26 +34,29 @@ Note: Set it as True only if you want to use AI, and If you either have a
 CHECK THE OPENAI API PIRCES AT THEIR WEBSITE (https://openai.com/api/pricing/). 
 '''
 
+# from config.apikeys import *
+# llm: dict = lmstudio
+
 # Your Local LLM url or other AI api url and port
-llm_api_url = "http://127.0.0.1:1234/v1/"       # Examples: "https://api.openai.com/v1/", "http://localhost:1234/v1/"
+llm_api_url = "https://api.openai.com/v1/"       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/"
 '''
 Note: Don't forget to add / at the end of your url
 '''
 
 # Your Local LLM API key or other AI API key 
-llm_api_key = "not-needed"              # Enter your API key in the quotes, make sure it's valid, if not will result in error.
+llm_api_key = "ojjnawuogjuio;ewhfuioweh*********"              # Enter your API key in the quotes, make sure it's valid, if not will result in error.
 '''
 Note: Leave it empyt as "" or "not-needed" if not needed. Else will result in error!
 '''
 
 # Your local LLM model name or other AI model name
-llm_model = "llama-3.2-3b-instruct"     # Examples: "gpt-3.5-turbo", "gpt-4o"
+llm_model = "gpt-4o-mini"          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct"
 
 # # Yor local embedding model name or other AI Embedding model name
 # llm_embedding_model = "nomic-embed-text-v1.5"
 
 # Do you want to stream AI output?
-stream_output = True                    # Examples: True or False.
+stream_output = False                    # Examples: True or False. (False is recommended for performance, True is recommended for user experience!)
 '''
 Set `stream_output = True` if you want to stream AI output or `stream_output = False` if not.
 '''

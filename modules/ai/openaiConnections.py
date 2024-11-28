@@ -1,5 +1,10 @@
 from config.secrets import *
 from config.settings import showAiErrorAlerts
+from config.personals import ethnicity, gender, disability_status, veteran_status
+from config.questions import *
+from config.search import security_clearance, did_masters
+
+
 
 from modules.helpers import print_lg, critical_error_log, convert_to_json
 from modules.ai.prompts import *
@@ -200,11 +205,21 @@ def ai_answer_question(
 ) -> dict | ValueError:
     print_lg("-- ANSWERING QUESTION")
     try:
-        prompt = answer_question_prompt.format(question, options, job_description, about_company)
+        prompt = text_questions_prompt.format(question, __user_info)
         messages = [{"role": "user", "content": prompt}]
         return ai_completion(client, messages, stream)
     except Exception as e:
         ai_error_alert(f"Error occurred while answering question. {apiCheckInstructions}", e)
+
+
+
+def ai_gen_experience(
+    client: OpenAI, 
+    job_description: str, about_company: str, 
+    required_skills: dict, user_experience: dict,
+    stream: bool = stream_output
+) -> dict | ValueError:
+    pass
 
 
 

@@ -1,5 +1,5 @@
 # LinkedIn AI Auto Job Applier 🤖
-This is an web scraping bot that automates the process of job applications on LinkedIn. It searches for jobs relevant to you, answers all questions in application form, customizes your resume based on the collected job information, such as skills required, description, about company, etc. and applies to the job. Can apply 100+ jobs in less than 1 hour.
+This is an web scraping bot that automates the process of job applications on LinkedIn. It searches for jobs relevant to you, answers all questions in application form, customizes your resume based on the collected job information, such as skills required, description, about company, etc. and applies to the job. Can apply 100+ jobs in less than 1 hour. 
 
 
 ## 📽️ See it in Action
@@ -37,6 +37,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
   <br> <br>
   If you are using Windows, click on `windows-setup.bat` available in the `/setup` folder, this will install the latest chromedriver automatically.
 6. If you have questions or need help setting it up or to talk in general, join the github server: https://discord.gg/fFp7uUzWCY
+
 
 ## 🔧 How to configure
 1. Open `personals.py` file in `/config` folder and enter your details like name, phone number, address, etc. Whatever you want to fill in your applications.
@@ -260,8 +261,8 @@ See [AGPLv3 LICENSE](LICENSE) for more info.
     - [Support Q&A](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/support-q-a)
 
 
-## Version
-2024.11.28.16.00 stable
+#### ℹ️ Version: 2024.11.28.16.00 Stable
+
 ---
 
 [back to the top](#linkedin-ai-auto-job-applier-)

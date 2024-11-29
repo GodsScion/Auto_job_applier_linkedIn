@@ -9,6 +9,7 @@ License:    GNU Affero General Public License
             
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
+version:    2024.11.28.16.00
 '''
 
 from modules.helpers import make_directories

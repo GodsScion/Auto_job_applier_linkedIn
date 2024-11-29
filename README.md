@@ -247,6 +247,7 @@ See [AGPLv3 LICENSE](LICENSE) for more info.
 - **X/Twitter**: https://x.com/gods_scion
 - **Discord**  : godsscion
 
+
 ## 🙌 Community Support and Discussions
 - **Discord Server** : https://discord.gg/fFp7uUzWCY
 - **GitHub**
@@ -258,6 +259,9 @@ See [AGPLv3 LICENSE](LICENSE) for more info.
     - [Community Flex](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/community-flex)
     - [Support Q&A](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/support-q-a)
 
+
+## Version
+2024.11.28.16.00 stable
 ---
 
 [back to the top](#linkedin-ai-auto-job-applier-)

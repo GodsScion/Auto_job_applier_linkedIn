@@ -9,6 +9,7 @@ License:    GNU Affero General Public License
             
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
+version:    2024.11.28.16.00
 '''
 
 
@@ -413,10 +414,11 @@ def answer_common_questions(label: str, answer: str) -> str:
 def answer_questions(modal: WebElement, questions_list: set, work_location: str) -> set:
     # Get all questions from the page
      
-    all_questions = modal.find_elements(By.CLASS_NAME, "jobs-easy-apply-form-element")
-    all_list_questions = modal.find_elements(By.XPATH, ".//div[@data-test-text-entity-list-form-component]")
-    all_single_line_questions = modal.find_elements(By.XPATH, ".//div[@data-test-single-line-text-form-component]")
-    all_questions = all_questions + all_list_questions + all_single_line_questions
+    all_questions = modal.find_elements(By.XPATH, ".//div[@data-test-form-element]")
+    # all_questions = modal.find_elements(By.CLASS_NAME, "jobs-easy-apply-form-element")
+    # all_list_questions = modal.find_elements(By.XPATH, ".//div[@data-test-text-entity-list-form-component]")
+    # all_single_line_questions = modal.find_elements(By.XPATH, ".//div[@data-test-single-line-text-form-component]")
+    # all_questions = all_questions + all_list_questions + all_single_line_questions
 
     for Question in all_questions:
         # Check if it's a select Question

@@ -29,26 +29,26 @@ logs_folder_path = "logs/"
 click_gap = 0                      # Enter max allowed secs to wait approximately. (Only Non Negative Integers Eg: 0,1,2,3,....)
 
 # If you want to see Chrome running then set run_in_background as False (May reduce performance). 
-run_in_background = False          # True or False ,   If True, this will make pause_at_failed_question, pause_before_submit and run_in_background as False
+run_in_background = False          # True or False, Note: True or False are case-sensitive ,   If True, this will make pause_at_failed_question, pause_before_submit and run_in_background as False
 
 # If you want to disable extensions then set disable_extensions as True (Better for performance)
-disable_extensions = True          # True or False
+disable_extensions = True          # True or False, Note: True or False are case-sensitive
 
 # Run in safe mode. Set this true if chrome is taking too long to open or if you have multiple profiles in browser. This will open chrome in guest profile!
-safe_mode = False                  # True or False
+safe_mode = False                  # True or False, Note: True or False are case-sensitive
 
 # Do you want scrolling to be smooth or instantaneous? (Can reduce performance if True)
-smooth_scroll = False              # True or False
+smooth_scroll = False              # True or False, Note: True or False are case-sensitive
 
 # If enabled (True), the program would keep your screen active and prevent PC from sleeping. Instead you could disable this feature (set it to false) and adjust your PC sleep settings to Never Sleep or a preferred time. 
-keep_screen_awake = True           # True or False (Note: Will temporarily deactivate when any application dialog boxes are present (Eg: Pause before submit, Help needed for a question..))
+keep_screen_awake = True           # True or False, Note: True or False are case-sensitive (Note: Will temporarily deactivate when any application dialog boxes are present (Eg: Pause before submit, Help needed for a question..))
 
 # Run in undetected mode to bypass anti-bot protections (Preview Feature, UNSTABLE. Recommended to leave it as False)
-undetected_mode = True             # True or False
+undetected_mode = True             # True or False, Note: True or False are case-sensitive
 # Now called as stealth_mode
 
 # Use ChatGPT for resume building (Experimental Feature can break the application. Recommended to leave it as False) 
-use_resume_generator = False       # True or False ,   This feature may only work with 'undetected_mode' = True. As ChatGPT website is hosted by CloudFlare which is protected by Anti-bot protections!
+use_resume_generator = False       # True or False, Note: True or False are case-sensitive ,   This feature may only work with 'undetected_mode' = True. As ChatGPT website is hosted by CloudFlare which is protected by Anti-bot protections!
 
 
 
@@ -80,7 +80,7 @@ sort_by = ""                       # "Most recent", "Most relevant" or ("" to no
 date_posted = "Past month"         # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                        # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
-easy_apply_only = True             # True or False
+easy_apply_only = True             # True or False, Note: True or False are case-sensitive
 
 experience_level = []              # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
 job_type = []                      # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
@@ -95,9 +95,9 @@ job_titles = []                    # (dynamic multiple select)
 benefits = []                      # (dynamic multiple select)
 commitments = []                   # (dynamic multiple select)
 
-under_10_applicants = False        # True or False
-in_your_network = False            # True or False
-fair_chance_employer = False       # True or False
+under_10_applicants = False        # True or False, Note: True or False are case-sensitive
+in_your_network = False            # True or False, Note: True or False are case-sensitive
+fair_chance_employer = False       # True or False, Note: True or False are case-sensitive
 
 
 
@@ -175,7 +175,7 @@ veteran_status = "Decline"         # "Yes", "No", "Decline"
 randomize_search_order = False     # True of False
 
 # Do you want to overwrite previous answers?
-overwrite_previous_answers = False # True or False
+overwrite_previous_answers = False # True or False, Note: True or False are case-sensitive
 
 
 ## Skip irrelevant jobs
@@ -190,10 +190,10 @@ about_company_good_words = []      # (dynamic multiple search) or leave empty as
 bad_words = ["US Citizen","USA Citizen","No C2C", "No Corp2Corp", ".NET", "Embedded Programming", "PHP", "Ruby"]                     # (dynamic multiple search) or leave empty as []. Case Insensitive. Ex: ["word_1", "phrase 1", "word word", "polygraph", "US Citizenship", "Security Clearance"]
 
 # Do you have an active Security Clearance? (True for Yes and False for No)
-security_clearance = False         # True or False
+security_clearance = False         # True or False, Note: True or False are case-sensitive
 
 # Do you have a Masters degree? (True for Yes and False for No). If True, the tool will apply to jobs containing the word 'master' in their job description and if it's experience required <= current_experience + 2 and current_experience is not set as -1. 
-did_masters = True                 # True or False
+did_masters = True                 # True or False, Note: True or False are case-sensitive
 
 # Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
 current_experience = 5             # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
@@ -202,31 +202,40 @@ current_experience = 5             # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
 
 ## Allow Manual Inputs
 # Should the tool pause before every submit application during easy apply to let you check the information?
-pause_before_submit = True         # True or False ,   Will be treated as False if run_in_background is True
+pause_before_submit = True         # True or False, Note: True or False are case-sensitive
+'''
+Note: Will be treated as False if `run_in_background = True`
+'''
 
 # Should the tool pause if it needs help in answering questions during easy apply?
 # Note: If set as False will answer randomly...
-pause_at_failed_question = True    # True or False ,   Will be treated as False if run_in_background is True
+pause_at_failed_question = True    # True or False, Note: True or False are case-sensitive
+'''
+Note: Will be treated as False if `run_in_background = True`
+'''
 ##
 
 # Keep the External Application tabs open? (Note: RECOMMENDED TO LEAVE IT AS TRUE, if you set it false, be sure to CLOSE ALL TABS BEFORE CLOSING THE BROWSER!!!)
-close_tabs = True                  # True or False
+close_tabs = True                  # True or False, Note: True or False are case-sensitive
 
 # After how many number of applications in current search should the bot switch to next search? 
 switch_number = 30                 # Only numbers greater than 0... Don't put in quotes
 
 ## Upcoming features (In Development)
 # Send connection requests to HR's
-connect_hr = True                  # True or False
+connect_hr = True                  # True or False, Note: True or False are case-sensitive
 
 # What message do you want to send during connection request? (Max. 200 Characters)
 connect_request_message = ""       # Leave Empty to send connection request without personalized invitation (recommended to leave it empty, since you only get 10 per month without LinkedIn Premium*)
 
 # Do you want the program to run continuously until you stop it? (Beta)
-run_non_stop = False               # True or False ,   Will be treated as False if run_in_background is True
-alternate_sortby = True            # True or False
-cycle_date_posted = True           # True or False
-stop_date_cycle_at_24hr = True     # True or False
+run_non_stop = False               # True or False, Note: True or False are case-sensitive
+'''
+Note: Will be treated as False if `run_in_background = True`
+'''
+alternate_sortby = True            # True or False, Note: True or False are case-sensitive
+cycle_date_posted = True           # True or False, Note: True or False are case-sensitive
+stop_date_cycle_at_24hr = True     # True or False, Note: True or False are case-sensitive
 ##
 
 

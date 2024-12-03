@@ -23,7 +23,7 @@ password = "example_password"           # Enter your password in the quotes
 
 ## Artificial Intelligence (Recommended)
 # Use AI
-use_AI = False
+use_AI = False                          # True or False, Note: True or False are case-sensitive
 '''
 Note: Set it as True only if you want to use AI, and If you either have a
 1. Local LLM model running on your local machine, with it's APIs exposed. Example softwares to achieve it are:

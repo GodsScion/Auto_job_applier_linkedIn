@@ -150,7 +150,7 @@ def ai_completion(client: OpenAI, messages: list[dict], response_format: dict = 
 
     # Select appropriate client
     completion: ChatCompletion | Iterator[ChatCompletionChunk]
-    if response_format and llm.get("spec") in ["openai", "openai-like"]:
+    if response_format and llm_spec in ["openai", "openai-like"]:
         completion = client.chat.completions.create(
                 model=llm_model,
                 messages=messages,

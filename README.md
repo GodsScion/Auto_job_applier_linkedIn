@@ -261,7 +261,7 @@ See [AGPLv3 LICENSE](LICENSE) for more info.
     - [Support Q&A](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/support-q-a)
 
 
-#### ℹ️ Version: 24.12.3.10.30 Stable
+#### ℹ️ Version: 24.12.3.14.00 Stable Preview
 
 ---
 

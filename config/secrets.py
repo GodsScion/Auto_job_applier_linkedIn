@@ -21,7 +21,7 @@ username = "username@example.com"       # Enter your username in the quotes
 password = "example_password"           # Enter your password in the quotes
 
 
-## Artificial Intelligence (Recommended)
+## Artificial Intelligence (Beta Not-Recommended)
 # Use AI
 use_AI = False                          # True or False, Note: True or False are case-sensitive
 '''
@@ -34,9 +34,6 @@ Note: Set it as True only if you want to use AI, and If you either have a
 2. OR you have a valid OpenAI API Key, and money to spare, and you don't mind spending it.
 CHECK THE OPENAI API PIRCES AT THEIR WEBSITE (https://openai.com/api/pricing/). 
 '''
-
-# from config.apikeys import *
-# llm: dict = lmstudio
 
 # Your Local LLM url or other AI api url and port
 llm_api_url = "https://api.openai.com/v1/"       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/"
@@ -52,6 +49,13 @@ Note: Leave it empyt as "" or "not-needed" if not needed. Else will result in er
 
 # Your local LLM model name or other AI model name
 llm_model = "gpt-4o-mini"          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct"
+
+
+#
+llm_spec = "openai"                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"
+'''
+Note: Currently "openai" and "openai-like" api endpoints are supported.
+'''
 
 # # Yor local embedding model name or other AI Embedding model name
 # llm_embedding_model = "nomic-embed-text-v1.5"

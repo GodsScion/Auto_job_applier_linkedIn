@@ -9,7 +9,7 @@ License:    GNU Affero General Public License
             
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
-version:    2024.11.28.16.00
+version:    24.12.3.10.30
 '''
 
 from personals import *

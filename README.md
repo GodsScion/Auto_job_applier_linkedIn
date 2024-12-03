@@ -144,7 +144,7 @@ With heartfelt appreciation, <br>
 
 
 
-## 🗓️ Update History:
+## 🗓️ Major Updates History:
 ### Nov 28, 2024
 - Patched to work for latest changes in Linkedin.
 - Users can now select to follow or not follow companies when submitting application.
@@ -261,7 +261,7 @@ See [AGPLv3 LICENSE](LICENSE) for more info.
     - [Support Q&A](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/support-q-a)
 
 
-#### ℹ️ Version: 2024.11.28.16.00 Stable
+#### ℹ️ Version: 24.12.3.10.30 Stable
 
 ---
 

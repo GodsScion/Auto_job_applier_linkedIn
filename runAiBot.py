@@ -362,7 +362,7 @@ def get_job_description(
         jobDescription = "Unknown"
         experience_required = "Unknown"
         found_masters = 0
-        jobDescription = find_by_class(driver, "jobs-box__html-content").text
+        jobDescription = find_by_class(driver, "job-details-about-the-job-module__description").text
         jobDescriptionLow = jobDescription.lower()
         skip = False
         skipReason = None

@@ -9,7 +9,7 @@ License:    GNU Affero General Public License
             
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
-version:    24.12.3.10.30
+version:    24.12.29.12.30
 '''
 
 from config.settings import click_gap, smooth_scroll

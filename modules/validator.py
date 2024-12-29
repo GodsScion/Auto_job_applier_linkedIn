@@ -47,6 +47,9 @@ def check_list(var: list, var_name: str, options: list=[], min_length: int=0) ->
 
 from config.personals import *
 def validate_personals() -> None | ValueError | TypeError:
+    '''
+    Validates all variables in the `/config/personals.py` file.
+    '''
     global __validation_file_path
     __validation_file_path = "config/personals.py"
 
@@ -72,6 +75,9 @@ def validate_personals() -> None | ValueError | TypeError:
 
 from config.questions import *
 def validate_questions() -> None | ValueError | TypeError:
+    '''
+    Validates all variables in the `/config/questions.py` file.
+    '''
     global __validation_file_path
     __validation_file_path = "config/questions.py"
 
@@ -97,6 +103,9 @@ def validate_questions() -> None | ValueError | TypeError:
 
 from config.search import *
 def validate_search() -> None | ValueError | TypeError:
+    '''
+    Validates all variables in the `/config/search.py` file.
+    '''
     global __validation_file_path
     __validation_file_path = "config/search.py"
 
@@ -141,6 +150,9 @@ def validate_search() -> None | ValueError | TypeError:
 
 from config.secrets import *
 def validate_secrets() -> None | ValueError | TypeError:
+    '''
+    Validates all variables in the `/config/secrets.py` file.
+    '''
     global __validation_file_path
     __validation_file_path = "config/secrets.py"
 
@@ -157,6 +169,9 @@ def validate_secrets() -> None | ValueError | TypeError:
 
 from config.settings import *
 def validate_settings() -> None | ValueError | TypeError:
+    '''
+    Validates all variables in the `/config/settings.py` file.
+    '''
     global __validation_file_path
     __validation_file_path = "config/settings.py"
 
@@ -189,6 +204,9 @@ def validate_settings() -> None | ValueError | TypeError:
 
 
 def validate_config() -> bool | ValueError | TypeError:
+    '''
+    Runs all validation functions to validate all variables in the config files.
+    '''
     validate_personals()
     validate_questions()
     validate_search()

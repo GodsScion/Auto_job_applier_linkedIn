@@ -20,7 +20,7 @@ version:    24.12.3.10.30
 search_terms = ["Software Engineer", "Software Developer", "Python Developer", "Selenium Developer", "React Developer", "Java Developer", "Front End Developer", "Full Stack Developer", "Web Developer", "Nodejs Developer"]
 
 # Search location, this will be filled in "City, state, or zip code" search box. If left empty as "", tool will not fill it.
-search_location = ""               # Some valid examples: "", "United States", "India", "Chicago, Illinois, United States", "90001, Los Angeles, California, United States", "Bengaluru, Karnataka, India", etc.
+search_location = "United States"               # Some valid examples: "", "United States", "India", "Chicago, Illinois, United States", "90001, Los Angeles, California, United States", "Bengaluru, Karnataka, India", etc.
 
 # After how many number of applications in current search should the bot switch to next search? 
 switch_number = 30                 # Only numbers greater than 0... Don't put in quotes
@@ -50,7 +50,7 @@ sort_by = ""                       # "Most recent", "Most relevant" or ("" to no
 date_posted = "Past week"         # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                        # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
-easy_apply_only = False             # True or False, Note: True or False are case-sensitive
+easy_apply_only = True             # True or False, Note: True or False are case-sensitive
 
 experience_level = []              # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
 job_type = []                      # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
@@ -70,6 +70,12 @@ in_your_network = False            # True or False, Note: True or False are case
 fair_chance_employer = False       # True or False, Note: True or False are case-sensitive
 
 
+## >>>>>>>>>>> RELATED SETTING <<<<<<<<<<<
+
+# Pause after applying filters to let you modify the search results and filters?
+pause_after_filters = True         # True or False, Note: True or False are case-sensitive
+
+##
 
 
 
@@ -94,8 +100,6 @@ did_masters = True                 # True or False, Note: True or False are case
 # Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
 current_experience = 5             # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
 ##
-
-
 
 
 

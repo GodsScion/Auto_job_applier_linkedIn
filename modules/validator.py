@@ -127,6 +127,8 @@ def validate_search() -> None | ValueError | TypeError:
     check_boolean(in_your_network, "in_your_network")
     check_boolean(fair_chance_employer, "fair_chance_employer")
 
+    check_boolean(pause_after_filters, "pause_after_filters")
+
     check_list(about_company_bad_words, "about_company_bad_words")
     check_list(about_company_good_words, "about_company_good_words")
     check_list(bad_words, "bad_words")

@@ -13,6 +13,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - [Index](#-content)
 - [Install](#%EF%B8%8F-how-to-install)
 - [Configure](#-how-to-configure)
+- [Contributor Guidelines](#-contributor-guidelines)
 - [Features](#-feature-list)
 - [My letter for YOU ❤️](#%EF%B8%8F-my-heartfelt-letter-to-you-%EF%B8%8F)
 - [Updates](#%EF%B8%8F-update-history)
@@ -22,6 +23,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - [Socials](#-socials)
 - [Support and Discussions](#-community-support-and-discussions)
 
+<br>
 
 ## ⚙️ How to install
 1. [Python 3.10](https://www.python.org/) or above. Visit https://www.python.org/downloads/ to download and install Python, or for windows you could visit Microsoft Store and search for "Python". **Please make sure Python is added to Path in System Environment Variables**.
@@ -38,6 +40,9 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
   If you are using Windows, click on `windows-setup.bat` available in the `/setup` folder, this will install the latest chromedriver automatically.
 6. If you have questions or need help setting it up or to talk in general, join the github server: https://discord.gg/fFp7uUzWCY
 
+[back to index](#-content)
+
+<br>
 
 ## 🔧 How to configure
 1. Open `personals.py` file in `/config` folder and enter your details like name, phone number, address, etc. Whatever you want to fill in your applications.
@@ -48,6 +53,10 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 6. (Optional) Don't forget to add you default resume in the location you mentioned in `default_resume_path = "all resumes/default/resume.pdf"` given in `/config/questions.py`. If one is not provided, it will use your previous resume submitted in LinkedIn or (In Development) generate custom resume if OpenAI APT key is provided!
 7. Run `runAiBot.py` and see the magic happen.
 8. If you have questions or need help setting it up or to talk in general, join the github server: https://discord.gg/fFp7uUzWCY
+
+[back to index](#-content)
+
+<br>
 
 
 ## 🧑‍💻 Contributor Guidelines
@@ -109,6 +118,7 @@ Once your code is tested, your changes will be merged to the `main` branch in ne
       ```python
       localBufferTime: float | int = 5.5
       ```
+  
   #### Configuration variables
   1. All config variables are treated as global variables. They have some extra guidelines.
   2. Must have variable setting explanation, and examples of valid values. Examples:
@@ -139,6 +149,8 @@ Once your code is tested, your changes will be merged to the `main` branch in ne
           '''
           check_string(search_location, "search_location")
       ```
+
+  [back to index](#-content)
   
   ### Attestation
   1. All contributions require proper attestion. Format for attestation:
@@ -174,6 +186,9 @@ Once your code is tested, your changes will be merged to the `main` branch in ne
   ##<
   ```
 
+[back to index](#-content)
+
+<br>
 
 ## 🤩 Feature List
 (I'm yet to complete the documentation, I'm adding in more features, still in development)
@@ -268,9 +283,9 @@ With heartfelt appreciation, <br>
 <br>
 <br>
 
+[back to index](#-content)
 
-
-
+<br>
 
 ## 🗓️ Major Updates History:
 ### Nov 28, 2024
@@ -367,6 +382,10 @@ You should have received a copy of the GNU Affero General Public License along w
 
 See [AGPLv3 LICENSE](LICENSE) for more info.
 
+
+<br>
+
+[back to index](#-content)
 
 <br>
 

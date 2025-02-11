@@ -200,12 +200,12 @@ def apply_filters() -> None:
         wait_span_click(driver, date_posted)
         buffer(recommended_wait)
 
-        multi_sel(driver, experience_level) 
+        multi_sel_noWait(driver, experience_level) 
         multi_sel_noWait(driver, companies, actions)
         if experience_level or companies: buffer(recommended_wait)
 
-        multi_sel(driver, job_type)
-        multi_sel(driver, on_site)
+        multi_sel_noWait(driver, job_type)
+        multi_sel_noWait(driver, on_site)
         if job_type or on_site: buffer(recommended_wait)
 
         if easy_apply_only: boolean_button_click(driver, actions, "Easy Apply")

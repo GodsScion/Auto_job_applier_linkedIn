@@ -24,8 +24,6 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - [Support and Discussions](#-community-support-and-discussions)
 
 <br>
-<meta name="google-site-verification" content="abdRkcXimrkrF0FRkr4jU58qHhcWdu_Mgew2IeTEv24" />
-
 
 ## ⚙️ How to install
 1. [Python 3.10](https://www.python.org/) or above. Visit https://www.python.org/downloads/ to download and install Python, or for windows you could visit Microsoft Store and search for "Python". **Please make sure Python is added to Path in System Environment Variables**.

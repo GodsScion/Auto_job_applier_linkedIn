@@ -16,7 +16,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - [Contributor Guidelines](#-contributor-guidelines)
 - [Features](#-feature-list)
 - [My letter for YOU ❤️](#%EF%B8%8F-my-heartfelt-letter-to-you-%EF%B8%8F)
-- [Updates](update-history)
+- [Updates](%EF%B8%8F-major-updates-history)
 - [Disclaimer](#-disclaimer)
 - [Terms and Conditions](#%EF%B8%8F-terms-and-conditions)
 - [License](#%EF%B8%8F-license)

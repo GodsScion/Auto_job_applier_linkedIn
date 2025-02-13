@@ -16,7 +16,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - [Contributor Guidelines](#-contributor-guidelines)
 - [Features](#-feature-list)
 - [My letter for YOU ❤️](#%EF%B8%8F-my-heartfelt-letter-to-you-%EF%B8%8F)
-- [Updates](#%EF%B8%8F-update-history)
+- [Updates](update-history)
 - [Disclaimer](#-disclaimer)
 - [Terms and Conditions](#%EF%B8%8F-terms-and-conditions)
 - [License](#%EF%B8%8F-license)
@@ -24,6 +24,8 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - [Support and Discussions](#-community-support-and-discussions)
 
 <br>
+<meta name="google-site-verification" content="abdRkcXimrkrF0FRkr4jU58qHhcWdu_Mgew2IeTEv24" />
+
 
 ## ⚙️ How to install
 1. [Python 3.10](https://www.python.org/) or above. Visit https://www.python.org/downloads/ to download and install Python, or for windows you could visit Microsoft Store and search for "Python". **Please make sure Python is added to Path in System Environment Variables**.

@@ -398,6 +398,7 @@ See [AGPLv3 LICENSE](LICENSE) for more info.
 
 ## 🙌 Community Support and Discussions
 - **Discord Server** : https://discord.gg/fFp7uUzWCY
+alternate link: https://discord.gg/ykfDjRFB
 - **GitHub**
     - [All Discussions](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions)
     - [Announcements](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/announcements)

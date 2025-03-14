@@ -202,9 +202,10 @@ def ai_extract_skills(client: OpenAI, job_description: str, stream: bool = strea
     try:        
         prompt = extract_skills_prompt.format(job_description)
 
-        messages = [{"role": "user", "content": extract_skills_prompt}]
-
+        messages = [{"role": "user", "content": prompt}]
+        ##> ------ Dheeraj Deshwal : dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Bug fix ------
         return ai_completion(client, messages, response_format=extract_skills_response_format, stream=stream)
+    ##<
     except Exception as e:
         ai_error_alert(f"Error occurred while extracting skills from job description. {apiCheckInstructions}", e)
 

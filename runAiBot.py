@@ -583,9 +583,18 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str)
                 elif 'zip' in label or 'postal' in label or 'code' in label: answer = zipcode
                 elif 'country' in label: answer = country
                 else: answer = answer_common_questions(label,answer)
+                ##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
                 if answer == "":
-                    randomly_answered_questions.add((label_org, "text"))
-                    answer = years_of_experience
+                    if use_AI and aiClient:
+                        try:
+                             answer = ai_answer_question(aiClient, label_org, question_type="text" , user_information_all = user_information_all)
+                            #  print_lg(f'AI Answered recived  "{label_org}" as "{answer}"')
+                        except Exception as e:
+                            print_lg("Failed to get AI answer!", e)
+                    else:
+                        randomly_answered_questions.add((label_org, "text"))
+                        answer = years_of_experience
+                 ##<   
                 text.clear()
                 text.send_keys(answer)
                 if do_actions:

@@ -210,21 +210,46 @@ def ai_extract_skills(client: OpenAI, job_description: str, stream: bool = strea
         ai_error_alert(f"Error occurred while extracting skills from job description. {apiCheckInstructions}", e)
 
 
-
+##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
 def ai_answer_question(
     client: OpenAI, 
     question: str, options: list[str] | None = None, question_type: Literal['text', 'textarea', 'single_select', 'multiple_select'] = 'text', 
-    job_description: str = None, about_company: str = None,
+    job_description: str = None, about_company: str = None, user_information_all: str = None,
     stream: bool = stream_output
 ) -> dict | ValueError:
-    print_lg("-- ANSWERING QUESTION")
+    """
+    Function to generate AI-based answers for questions in a form.
+    
+    Parameters:
+    - `client`: OpenAI client instance.
+    - `question`: The question being answered.
+    - `options`: List of options (for `single_select` or `multiple_select` questions).
+    - `job_description`: Optional job description for context.
+    - `about_company`: Optional company details for context.
+    - `user_information_all`: information about you, AI cna use to answer question eg: Resume-like user information.
+    - `stream`: Whether to use streaming AI completion.
+    
+    Returns:
+    - `str`: The AI-generated answer.
+    """
+
+    print_lg("-- ANSWERING QUESTION using AI")
     try:
-        prompt = text_questions_prompt.format(question, __user_info)
+        prompt = ai_answer_prompt.format(user_information_all or "N/A", question)
+         # Append optional details if provided
+        if job_description:
+            prompt += f"\nJob Description:\n{job_description}"
+        if about_company:
+            prompt += f"\nAbout the Company:\n{about_company}"
+
         messages = [{"role": "user", "content": prompt}]
-        return ai_completion(client, messages, stream)
+        # print_lg("Prompt we are passing to AI: ", prompt)
+        response =  ai_completion(client, messages, stream=stream)
+        # print_lg("Response from AI: ", response)
+        return response
     except Exception as e:
         ai_error_alert(f"Error occurred while answering question. {apiCheckInstructions}", e)
-
+##<
 
 
 def ai_gen_experience(

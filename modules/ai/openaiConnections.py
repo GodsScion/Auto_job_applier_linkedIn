@@ -185,7 +185,7 @@ def ai_completion(client: OpenAI, messages: list[dict], response_format: dict = 
     if response_format:
         result = convert_to_json(result)
     
-    print_lg("\nSKILLS FOUND:\n")
+    print_lg("\nAI Answer to Question:\n")
     print_lg(result, pretty=response_format)
     return result
 
@@ -243,7 +243,7 @@ def ai_answer_question(
             prompt += f"\nAbout the Company:\n{about_company}"
 
         messages = [{"role": "user", "content": prompt}]
-        # print_lg("Prompt we are passing to AI: ", prompt)
+        print_lg("Prompt we are passing to AI: ", prompt)
         response =  ai_completion(client, messages, stream=stream)
         # print_lg("Response from AI: ", response)
         return response

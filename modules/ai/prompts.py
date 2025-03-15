@@ -90,7 +90,7 @@ Respond concisely based on the type of question:
 1. If the question asks for **years of experience, duration, or numeric value**, return **only a number** (e.g., "2", "5", "10").
 2. If the question is **a Yes/No question**, return **only "Yes" or "No"**.
 3. If the question requires a **short description**, give a **single-sentence response**.
-4. If the question requires a **detailed response**, provide a **well-structured and human-like answer**.
+4. If the question requires a **detailed response**, provide a **well-structured and human-like answer and keep no of character <350 for answering**.
 5. Do **not** repeat the question in your answer.
 6. here is user information to answer the questions if needed:
 **User Information:** 

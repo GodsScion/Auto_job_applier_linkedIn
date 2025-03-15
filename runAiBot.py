@@ -85,6 +85,11 @@ notice_period_weeks = str(notice_period//7)
 notice_period = str(notice_period)
 
 aiClient = None
+##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
+job_description_for_ai = None
+about_company_for_ai = None # TODO extract about company for AI
+##<
+
 #>
 
 
@@ -363,7 +368,9 @@ def get_job_description(
     - `skipMessage: str | None`
     '''
     try:
-        jobDescription = "Unknown"
+        ##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
+        jobDescription = job_description_for_ai = "Unknown"
+        ##<
         experience_required = "Unknown"
         found_masters = 0
         jobDescription = find_by_class(driver, "jobs-box__html-content").text
@@ -397,6 +404,9 @@ def get_job_description(
             print_lg("Unable to extract years of experience required!")
             # print_lg(e)
     finally:
+        ##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
+        job_description_for_ai = jobDescription
+        ##<
         return jobDescription, experience_required, skip, skipReason, skipMessage
         
 
@@ -587,8 +597,8 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str)
                 if answer == "":
                     if use_AI and aiClient:
                         try:
-                             answer = ai_answer_question(aiClient, label_org, question_type="text" , user_information_all = user_information_all)
-                            #  print_lg(f'AI Answered recived  "{label_org}" as "{answer}"')
+                             answer = ai_answer_question(aiClient, label_org, question_type="text" ,job_description=job_description_for_ai, about_company=about_company_for_ai, user_information_all = user_information_all)
+                             print_lg(f'AI Answered recived for question"{label_org}" \nhere is answer : "{answer}"')
                         except Exception as e:
                             print_lg("Failed to get AI answer!", e)
                     else:

@@ -224,6 +224,7 @@ def ai_answer_question(
     - `client`: OpenAI client instance.
     - `question`: The question being answered.
     - `options`: List of options (for `single_select` or `multiple_select` questions).
+    - `question_type`: Type of question (text, textarea, single_select, multiple_select) It is restricted to one of four possible values.
     - `job_description`: Optional job description for context.
     - `about_company`: Optional company details for context.
     - `user_information_all`: information about you, AI cna use to answer question eg: Resume-like user information.

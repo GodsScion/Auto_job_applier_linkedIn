@@ -238,9 +238,9 @@ def ai_answer_question(
     try:
         prompt = ai_answer_prompt.format(user_information_all or "N/A", question)
          # Append optional details if provided
-        if job_description:
+        if job_description and job_description != "Unknown":
             prompt += f"\nJob Description:\n{job_description}"
-        if about_company:
+        if about_company and about_company != "Unknown":
             prompt += f"\nAbout the Company:\n{about_company}"
 
         messages = [{"role": "user", "content": prompt}]

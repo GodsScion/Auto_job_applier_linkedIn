@@ -71,7 +71,7 @@ def update_applied_date(job_id):
         # Read current CSV content
         with open(csvPath, 'r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
-            fieldNames = reader.fieldNames
+            fieldNames = reader.fieldnames
             found = False
             for row in reader:
                 if row['Job ID'] == job_id:

@@ -450,6 +450,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 options = "".join([f' "{option}",' for option in optionsText])
             prev_answer = selected_option
             if overwrite_previous_answers or selected_option == "Select an option":
+                ##> ------ WINDY_WINDWARD Email:karthik.sarode23@gmail.com - Added fuzzy logic to answer location based questions ------
                 if 'email' in label or 'phone' in label: 
                     answer = prev_answer
                 elif 'gender' in label or 'sex' in label: 
@@ -489,7 +490,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         possible_answer_phrases.append(answer.upper())
                         # Try without special characters
                         possible_answer_phrases.append(''.join(c for c in answer if c.isalnum()))
-                        
+                    ##<
                     foundOption = False
                     for phrase in possible_answer_phrases:
                         for option in optionsText:

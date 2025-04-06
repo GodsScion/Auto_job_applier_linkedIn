@@ -85,6 +85,10 @@ notice_period_weeks = str(notice_period//7)
 notice_period = str(notice_period)
 
 aiClient = None
+##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
+about_company_for_ai = None # TODO extract about company for AI
+##<
+
 #>
 
 
@@ -363,7 +367,9 @@ def get_job_description(
     - `skipMessage: str | None`
     '''
     try:
+        ##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
         jobDescription = "Unknown"
+        ##<
         experience_required = "Unknown"
         found_masters = 0
         jobDescription = find_by_class(driver, "jobs-box__html-content").text
@@ -415,7 +421,7 @@ def answer_common_questions(label: str, answer: str) -> str:
 
 
 # Function to answer the questions for Easy Apply
-def answer_questions(modal: WebElement, questions_list: set, work_location: str) -> set:
+def answer_questions(modal: WebElement, questions_list: set, work_location: str, job_description: str | None = None ) -> set:
     # Get all questions from the page
      
     all_questions = modal.find_elements(By.XPATH, ".//div[@data-test-form-element]")
@@ -462,6 +468,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str)
                                 break
                         if foundOption: break
                     if not foundOption:
+                        #TODO: Use AI to answer the question need to be implemented logic to extract the options for the question
                         print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
                         select.select_by_index(randint(1, len(select.options)-1))
                         answer = select.first_selected_option.text
@@ -583,9 +590,18 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str)
                 elif 'zip' in label or 'postal' in label or 'code' in label: answer = zipcode
                 elif 'country' in label: answer = country
                 else: answer = answer_common_questions(label,answer)
+                ##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
                 if answer == "":
-                    randomly_answered_questions.add((label_org, "text"))
-                    answer = years_of_experience
+                    if use_AI and aiClient:
+                        try:
+                             answer = ai_answer_question(aiClient, label_org, question_type="text" ,job_description=job_description, user_information_all = user_information_all)
+                             print_lg(f'AI Answered recived for question"{label_org}" \nhere is answer : "{answer}"')
+                        except Exception as e:
+                            print_lg("Failed to get AI answer!", e)
+                    else:
+                        randomly_answered_questions.add((label_org, "text"))
+                        answer = years_of_experience
+                 ##<   
                 text.clear()
                 text.send_keys(answer)
                 if do_actions:
@@ -606,11 +622,24 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str)
             if not prev_answer or overwrite_previous_answers:
                 if 'summary' in label: answer = linkedin_summary
                 elif 'cover' in label: answer = cover_letter
-                text_area.clear()
-                text_area.send_keys(answer)
-                if answer == "": 
-                    randomly_answered_questions.add((label_org, "textarea"))
+                if answer == "":
+                ##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
+                    if use_AI and aiClient:
+                        try:
+                             answer = ai_answer_question(aiClient, label_org, question_type="textarea" ,job_description=job_description, user_information_all = user_information_all)
+                             print_lg(f'AI Answered recived for question"{label_org}" \nhere is answer : "{answer}"')
+                        except Exception as e:
+                            print_lg("Failed to get AI answer!", e)
+                    else:
+                        randomly_answered_questions.add((label_org, "textarea"))
+            text_area.clear()
+            text_area.send_keys(answer)
+            if do_actions:
+                    sleep(2)
+                    actions.send_keys(Keys.ARROW_DOWN)
+                    actions.send_keys(Keys.ENTER).perform()
             questions_list.add((label, text_area.get_attribute("value"), "textarea", prev_answer))
+            ##<
             continue
 
         # Check if it's a checkbox question
@@ -906,7 +935,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                         screenshot_name = screenshot(driver, job_id, "Failed at questions")
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
-                                    questions_list = answer_questions(modal, questions_list, work_location)
+                                    questions_list = answer_questions(modal, questions_list, work_location, job_description=description)
                                     if useNewResume and not uploaded: uploaded, resume = upload_resume(modal, default_resume_path)
                                     try: next_button = modal.find_element(By.XPATH, './/span[normalize-space(.)="Review"]') 
                                     except NoSuchElementException:  next_button = modal.find_element(By.XPATH, './/button[contains(span, "Next")]')

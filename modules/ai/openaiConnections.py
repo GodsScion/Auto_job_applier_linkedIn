@@ -186,7 +186,7 @@ def ai_completion(client: OpenAI, messages: list[dict], response_format: dict = 
     if response_format:
         result = convert_to_json(result)
     
-    print_lg("\nSKILLS FOUND:\n")
+    print_lg("\nAI Answer to Question:\n")
     print_lg(result, pretty=response_format)
     return result
 
@@ -203,28 +203,55 @@ def ai_extract_skills(client: OpenAI, job_description: str, stream: bool = strea
     try:        
         prompt = extract_skills_prompt.format(job_description)
 
-        messages = [{"role": "user", "content": extract_skills_prompt}]
-
+        messages = [{"role": "user", "content": prompt}]
+        ##> ------ Dheeraj Deshwal : dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Bug fix ------
         return ai_completion(client, messages, response_format=extract_skills_response_format, stream=stream)
+    ##<
     except Exception as e:
         ai_error_alert(f"Error occurred while extracting skills from job description. {apiCheckInstructions}", e)
 
 
-
+##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
 def ai_answer_question(
     client: OpenAI, 
     question: str, options: list[str] | None = None, question_type: Literal['text', 'textarea', 'single_select', 'multiple_select'] = 'text', 
-    job_description: str = None, about_company: str = None,
+    job_description: str = None, about_company: str = None, user_information_all: str = None,
     stream: bool = stream_output
 ) -> dict | ValueError:
-    print_lg("-- ANSWERING QUESTION")
+    """
+    Function to generate AI-based answers for questions in a form.
+    
+    Parameters:
+    - `client`: OpenAI client instance.
+    - `question`: The question being answered.
+    - `options`: List of options (for `single_select` or `multiple_select` questions).
+    - `question_type`: Type of question (text, textarea, single_select, multiple_select) It is restricted to one of four possible values.
+    - `job_description`: Optional job description for context.
+    - `about_company`: Optional company details for context.
+    - `user_information_all`: information about you, AI cna use to answer question eg: Resume-like user information.
+    - `stream`: Whether to use streaming AI completion.
+    
+    Returns:
+    - `str`: The AI-generated answer.
+    """
+
+    print_lg("-- ANSWERING QUESTION using AI")
     try:
-        prompt = text_questions_prompt.format(question, __user_info)
+        prompt = ai_answer_prompt.format(user_information_all or "N/A", question)
+         # Append optional details if provided
+        if job_description and job_description != "Unknown":
+            prompt += f"\nJob Description:\n{job_description}"
+        if about_company and about_company != "Unknown":
+            prompt += f"\nAbout the Company:\n{about_company}"
+
         messages = [{"role": "user", "content": prompt}]
-        return ai_completion(client, messages, stream)
+        print_lg("Prompt we are passing to AI: ", prompt)
+        response =  ai_completion(client, messages, stream=stream)
+        # print_lg("Response from AI: ", response)
+        return response
     except Exception as e:
         ai_error_alert(f"Error occurred while answering question. {apiCheckInstructions}", e)
-
+##<
 
 
 def ai_gen_experience(

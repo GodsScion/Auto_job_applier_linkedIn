@@ -51,7 +51,9 @@ def multi_sel(driver: WebDriver, texts: list, time: float=5.0) -> None:
     - Will spend a max of `time` seconds in searching for each element.
     '''
     for text in texts:
-        wait_span_click(driver, text, time)
+        ##> ------ Dheeraj Deshwal : dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Bug fix ------
+        wait_span_click(driver, text, time, False)
+        ##<
         try:
             button = WebDriverWait(driver,time).until(EC.presence_of_element_located((By.XPATH, './/span[normalize-space(.)="'+text+'"]')))
             scroll_to_view(driver, button)

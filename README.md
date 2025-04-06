@@ -16,7 +16,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 - [Contributor Guidelines](#-contributor-guidelines)
 - [Features](#-feature-list)
 - [My letter for YOU ❤️](#%EF%B8%8F-my-heartfelt-letter-to-you-%EF%B8%8F)
-- [Updates](#%EF%B8%8F-update-history)
+- [Updates](%EF%B8%8F-major-updates-history)
 - [Disclaimer](#-disclaimer)
 - [Terms and Conditions](#%EF%B8%8F-terms-and-conditions)
 - [License](#%EF%B8%8F-license)
@@ -398,6 +398,7 @@ See [AGPLv3 LICENSE](LICENSE) for more info.
 
 ## 🙌 Community Support and Discussions
 - **Discord Server** : https://discord.gg/fFp7uUzWCY
+alternate link: https://discord.gg/ykfDjRFB
 - **GitHub**
     - [All Discussions](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions)
     - [Announcements](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/announcements)

@@ -450,23 +450,55 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 options = "".join([f' "{option}",' for option in optionsText])
             prev_answer = selected_option
             if overwrite_previous_answers or selected_option == "Select an option":
-                if 'email' in label or 'phone' in label: answer = prev_answer
-                elif 'gender' in label or 'sex' in label: answer = gender
-                elif 'disability' in label: answer = disability_status
-                elif 'proficiency' in label: answer = 'Professional'
-                else: answer = answer_common_questions(label,answer)
-                try: select.select_by_visible_text(answer)
+                if 'email' in label or 'phone' in label: 
+                    answer = prev_answer
+                elif 'gender' in label or 'sex' in label: 
+                    answer = gender
+                elif 'disability' in label: 
+                    answer = disability_status
+                elif 'proficiency' in label: 
+                    answer = 'Professional'
+                # Add location handling
+                elif any(loc_word in label for loc_word in ['location', 'city', 'state', 'country']):
+                    if 'country' in label:
+                        answer = country 
+                    elif 'state' in label:
+                        answer = state
+                    elif 'city' in label:
+                        answer = current_city if current_city else work_location
+                    else:
+                        answer = work_location
+                else: 
+                    answer = answer_common_questions(label,answer)
+                try: 
+                    select.select_by_visible_text(answer)
                 except NoSuchElementException as e:
-                    possible_answer_phrases = ["Decline", "not wish", "don't wish", "Prefer not", "not want"] if answer == 'Decline' else [answer]
+                    # Define similar phrases for common answers
+                    possible_answer_phrases = []
+                    if answer == 'Decline':
+                        possible_answer_phrases = ["Decline", "not wish", "don't wish", "Prefer not", "not want"]
+                    elif 'yes' in answer.lower():
+                        possible_answer_phrases = ["Yes", "Agree", "I do", "I have"]
+                    elif 'no' in answer.lower():
+                        possible_answer_phrases = ["No", "Disagree", "I don't", "I do not"]
+                    else:
+                        # Try partial matching for any answer
+                        possible_answer_phrases = [answer]
+                        # Add lowercase and uppercase variants
+                        possible_answer_phrases.append(answer.lower())
+                        possible_answer_phrases.append(answer.upper())
+                        # Try without special characters
+                        possible_answer_phrases.append(''.join(c for c in answer if c.isalnum()))
+                        
                     foundOption = False
                     for phrase in possible_answer_phrases:
                         for option in optionsText:
-                            if phrase in option:
+                            # Check if phrase is in option or option is in phrase (bidirectional matching)
+                            if phrase.lower() in option.lower() or option.lower() in phrase.lower():
                                 select.select_by_visible_text(option)
-                                answer = f'Decline ({option})' if len(possible_answer_phrases) > 1 else option
+                                answer = option
                                 foundOption = True
                                 break
-                        if foundOption: break
                     if not foundOption:
                         #TODO: Use AI to answer the question need to be implemented logic to extract the options for the question
                         print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')

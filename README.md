@@ -52,6 +52,7 @@ Click on above image to watch the demo or use this link https://youtu.be/gMbB1fW
 5. Open `settings.py` file in `/config` folder to configure the bot settings like, keep screen awake, click intervals (click intervals are randomized to seem like human behavior), run in background, stealth mode (to avoid bot detection), etc. as per your needs.
 6. (Optional) Don't forget to add you default resume in the location you mentioned in `default_resume_path = "all resumes/default/resume.pdf"` given in `/config/questions.py`. If one is not provided, it will use your previous resume submitted in LinkedIn or (In Development) generate custom resume if OpenAI APT key is provided!
 7. Run `runAiBot.py` and see the magic happen.
+8. To run the Applied Jobs history UI, run `app.py` and open web browser on `http://localhost:5000`.
 8. If you have questions or need help setting it up or to talk in general, join the github server: https://discord.gg/fFp7uUzWCY
 
 [back to index](#-content)
@@ -225,6 +226,7 @@ Once your code is tested, your changes will be merged to the `main` branch in ne
 - Auto collects a looooooooooooooooooot of info about your jobs, check applied-jobs.excel and failed_jobs.excel for info after each run.
 - Optional pause before submit application.
 - Optional pause if stuck at a question.
+- UI to manage easy applied jobs and external links.
 
 
 

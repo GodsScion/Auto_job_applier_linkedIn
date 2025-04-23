@@ -165,8 +165,9 @@ def ai_completion(client: OpenAI, messages: list[dict], response_format: dict = 
     if response_format and llm_spec in ["openai", "openai-like"]:
         params["response_format"] = response_format
 
-    completion = client.chat.completions.create(params)
-
+    ##> ------ Kyxie : kyriexie@outlook.com - Bug fix ------
+    completion = client.chat.completions.create(**params)
+    ##<
     result = ""
     
     # Log response

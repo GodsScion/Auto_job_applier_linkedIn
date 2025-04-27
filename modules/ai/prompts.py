@@ -48,6 +48,33 @@ JOB DESCRIPTION:
 Use `extract_skills_prompt.format(job_description)` to insert `job_description`.
 """
 
+# DeepSeek-specific optimized prompt, emphasis on returning only JSON without using json_schema
+deepseek_extract_skills_prompt = """
+You are a job requirements extractor and classifier. Your task is to extract all skills mentioned in a job description and classify them into five categories:
+1. "tech_stack": Identify all skills related to programming languages, frameworks, libraries, databases, and other technologies used in software development. Examples include Python, React.js, Node.js, Elasticsearch, Algolia, MongoDB, Spring Boot, .NET, etc.
+2. "technical_skills": Capture skills related to technical expertise beyond specific tools, such as architectural design or specialized fields within engineering. Examples include System Architecture, Data Engineering, System Design, Microservices, Distributed Systems, etc.
+3. "other_skills": Include non-technical skills like interpersonal, leadership, and teamwork abilities. Examples include Communication skills, Managerial roles, Cross-team collaboration, etc.
+4. "required_skills": All skills specifically listed as required or expected from an ideal candidate. Include both technical and non-technical skills.
+5. "nice_to_have": Any skills or qualifications listed as preferred or beneficial for the role but not mandatory.
+
+IMPORTANT: You must ONLY return valid JSON object in the exact format shown below - no additional text, explanations, or commentary.
+Each category should contain an array of strings, even if empty.
+
+{{
+    "tech_stack": ["Example Skill 1", "Example Skill 2"],
+    "technical_skills": ["Example Skill 1", "Example Skill 2"],
+    "other_skills": ["Example Skill 1", "Example Skill 2"],
+    "required_skills": ["Example Skill 1", "Example Skill 2"],
+    "nice_to_have": ["Example Skill 1", "Example Skill 2"]
+}}
+
+JOB DESCRIPTION:
+{}
+"""
+"""
+DeepSeek optimized version, use `deepseek_extract_skills_prompt.format(job_description)` to insert `job_description`.
+"""
+
 
 extract_skills_response_format = {
     "type": "json_schema",

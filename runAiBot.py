@@ -32,14 +32,15 @@ from selenium.common.exceptions import NoSuchElementException, ElementClickInter
 from config.personals import *
 from config.questions import *
 from config.search import *
-from config.secrets import use_AI, username, password
+from config.secrets import use_AI, username, password, ai_provider
 from config.settings import *
 
 from modules.open_chrome import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
-from modules.ai.openaiConnections import *
+from modules.ai.openaiConnections import ai_create_openai_client, ai_extract_skills, ai_answer_question, ai_close_openai_client
+from modules.ai.deepseekConnections import deepseek_create_client, deepseek_extract_skills, deepseek_answer_question
 
 from typing import Literal
 
@@ -450,23 +451,56 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 options = "".join([f' "{option}",' for option in optionsText])
             prev_answer = selected_option
             if overwrite_previous_answers or selected_option == "Select an option":
-                if 'email' in label or 'phone' in label: answer = prev_answer
-                elif 'gender' in label or 'sex' in label: answer = gender
-                elif 'disability' in label: answer = disability_status
-                elif 'proficiency' in label: answer = 'Professional'
-                else: answer = answer_common_questions(label,answer)
-                try: select.select_by_visible_text(answer)
+                ##> ------ WINDY_WINDWARD Email:karthik.sarode23@gmail.com - Added fuzzy logic to answer location based questions ------
+                if 'email' in label or 'phone' in label: 
+                    answer = prev_answer
+                elif 'gender' in label or 'sex' in label: 
+                    answer = gender
+                elif 'disability' in label: 
+                    answer = disability_status
+                elif 'proficiency' in label: 
+                    answer = 'Professional'
+                # Add location handling
+                elif any(loc_word in label for loc_word in ['location', 'city', 'state', 'country']):
+                    if 'country' in label:
+                        answer = country 
+                    elif 'state' in label:
+                        answer = state
+                    elif 'city' in label:
+                        answer = current_city if current_city else work_location
+                    else:
+                        answer = work_location
+                else: 
+                    answer = answer_common_questions(label,answer)
+                try: 
+                    select.select_by_visible_text(answer)
                 except NoSuchElementException as e:
-                    possible_answer_phrases = ["Decline", "not wish", "don't wish", "Prefer not", "not want"] if answer == 'Decline' else [answer]
+                    # Define similar phrases for common answers
+                    possible_answer_phrases = []
+                    if answer == 'Decline':
+                        possible_answer_phrases = ["Decline", "not wish", "don't wish", "Prefer not", "not want"]
+                    elif 'yes' in answer.lower():
+                        possible_answer_phrases = ["Yes", "Agree", "I do", "I have"]
+                    elif 'no' in answer.lower():
+                        possible_answer_phrases = ["No", "Disagree", "I don't", "I do not"]
+                    else:
+                        # Try partial matching for any answer
+                        possible_answer_phrases = [answer]
+                        # Add lowercase and uppercase variants
+                        possible_answer_phrases.append(answer.lower())
+                        possible_answer_phrases.append(answer.upper())
+                        # Try without special characters
+                        possible_answer_phrases.append(''.join(c for c in answer if c.isalnum()))
+                    ##<
                     foundOption = False
                     for phrase in possible_answer_phrases:
                         for option in optionsText:
-                            if phrase in option:
+                            # Check if phrase is in option or option is in phrase (bidirectional matching)
+                            if phrase.lower() in option.lower() or option.lower() in phrase.lower():
                                 select.select_by_visible_text(option)
-                                answer = f'Decline ({option})' if len(possible_answer_phrases) > 1 else option
+                                answer = option
                                 foundOption = True
                                 break
-                        if foundOption: break
                     if not foundOption:
                         #TODO: Use AI to answer the question need to be implemented logic to extract the options for the question
                         print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
@@ -590,18 +624,30 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 elif 'zip' in label or 'postal' in label or 'code' in label: answer = zipcode
                 elif 'country' in label: answer = country
                 else: answer = answer_common_questions(label,answer)
-                ##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
+                ##> ------ Yang Li : MARKYangL - Feature ------
                 if answer == "":
                     if use_AI and aiClient:
                         try:
-                             answer = ai_answer_question(aiClient, label_org, question_type="text" ,job_description=job_description, user_information_all = user_information_all)
-                             print_lg(f'AI Answered recived for question"{label_org}" \nhere is answer : "{answer}"')
+                            if ai_provider.lower() == "openai":
+                                answer = ai_answer_question(aiClient, label_org, question_type="text", job_description=job_description, user_information_all=user_information_all)
+                            elif ai_provider.lower() == "deepseek":
+                                answer = deepseek_answer_question(aiClient, label_org, options=None, question_type="text", job_description=job_description, about_company=None, user_information_all=user_information_all)
+                            else:
+                                randomly_answered_questions.add((label_org, "text"))
+                                answer = years_of_experience
+                            if answer and isinstance(answer, str) and len(answer) > 0:
+                                print_lg(f'AI Answered received for question "{label_org}" \nhere is answer: "{answer}"')
+                            else:
+                                randomly_answered_questions.add((label_org, "text"))
+                                answer = years_of_experience
                         except Exception as e:
                             print_lg("Failed to get AI answer!", e)
+                            randomly_answered_questions.add((label_org, "text"))
+                            answer = years_of_experience
                     else:
                         randomly_answered_questions.add((label_org, "text"))
                         answer = years_of_experience
-                 ##<   
+                ##<
                 text.clear()
                 text.send_keys(answer)
                 if do_actions:
@@ -623,13 +669,25 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 if 'summary' in label: answer = linkedin_summary
                 elif 'cover' in label: answer = cover_letter
                 if answer == "":
-                ##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
+                ##> ------ Yang Li : MARKYangL - Feature ------
                     if use_AI and aiClient:
                         try:
-                             answer = ai_answer_question(aiClient, label_org, question_type="textarea" ,job_description=job_description, user_information_all = user_information_all)
-                             print_lg(f'AI Answered recived for question"{label_org}" \nhere is answer : "{answer}"')
+                            if ai_provider.lower() == "openai":
+                                answer = ai_answer_question(aiClient, label_org, question_type="textarea", job_description=job_description, user_information_all=user_information_all)
+                            elif ai_provider.lower() == "deepseek":
+                                answer = deepseek_answer_question(aiClient, label_org, options=None, question_type="textarea", job_description=job_description, about_company=None, user_information_all=user_information_all)
+                            else:
+                                randomly_answered_questions.add((label_org, "textarea"))
+                                answer = ""
+                            if answer and isinstance(answer, str) and len(answer) > 0:
+                                print_lg(f'AI Answered received for question "{label_org}" \nhere is answer: "{answer}"')
+                            else:
+                                randomly_answered_questions.add((label_org, "textarea"))
+                                answer = ""
                         except Exception as e:
                             print_lg("Failed to get AI answer!", e)
+                            randomly_answered_questions.add((label_org, "textarea"))
+                            answer = ""
                     else:
                         randomly_answered_questions.add((label_org, "textarea"))
             text_area.clear()
@@ -907,7 +965,19 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
                     
                     if use_AI and description != "Unknown":
-                        skills = ai_extract_skills(aiClient, description)
+                        ##> ------ Yang Li : MARKYangL - Feature ------
+                        try:
+                            if ai_provider.lower() == "openai":
+                                skills = ai_extract_skills(aiClient, description)
+                            elif ai_provider.lower() == "deepseek":
+                                skills = deepseek_extract_skills(aiClient, description)
+                            else:
+                                skills = "In Development"
+                            print_lg(f"Extracted skills using {ai_provider} AI")
+                        except Exception as e:
+                            print_lg("Failed to extract skills:", e)
+                            skills = "Error extracting skills"
+                        ##<
 
                     uploaded = False
                     # Case 1: Easy Apply Button
@@ -1066,8 +1136,16 @@ def main() -> None:
         #     except Exception as e:
         #         print_lg("Opening OpenAI chatGPT tab failed!")
         if use_AI:
-            aiClient = ai_create_openai_client()
-
+            ##> ------ Yang Li : MARKYangL - Feature ------
+            print_lg(f"Initializing AI client for {ai_provider}...")
+            if ai_provider.lower() == "openai":
+                aiClient = ai_create_openai_client()
+            elif ai_provider.lower() == "deepseek":
+                aiClient = deepseek_create_client()
+            else:
+                print_lg(f"Unknown AI provider: {ai_provider}. Supported providers are: openai, deepseek")
+                aiClient = None
+            ##<
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)
         total_runs = run(total_runs)
@@ -1120,7 +1198,17 @@ def main() -> None:
             msg = "NOTE: IF YOU HAVE MORE THAN 10 TABS OPENED, PLEASE CLOSE OR BOOKMARK THEM!\n\nOr it's highly likely that application will just open browser and not do anything next time!" 
             pyautogui.alert(msg,"Info")
             print_lg("\n"+msg)
-        ai_close_openai_client(aiClient)
+        ##> ------ Yang Li : MARKYangL - Feature ------
+        if use_AI and aiClient:
+            try:
+                if ai_provider.lower() == "openai":
+                    ai_close_openai_client(aiClient)
+                elif ai_provider.lower() == "deepseek":
+                    ai_close_openai_client(aiClient)  
+                print_lg(f"Closed {ai_provider} AI client.")
+            except Exception as e:
+                print_lg("Failed to close AI client:", e)
+        ##<
         try: driver.quit()
         except Exception as e: critical_error_log("When quitting...", e)
 

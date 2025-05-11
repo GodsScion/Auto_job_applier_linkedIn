@@ -133,7 +133,17 @@ def ai_get_models_list(client: OpenAI) -> list[ Model | str]:
         critical_error_log("Error occurred while getting models list!", e)
         return ["error", e]
 
-
+def model_supports_temperature(model_name: str) -> bool:
+    """
+    Checks if the specified model supports the temperature parameter.
+    
+    Args:
+        model_name (str): The name of the AI model.
+    
+    Returns:
+        bool: True if the model supports temperature adjustments, otherwise False.
+    """
+    return model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini"]
 
 # Function to get chat completion from OpenAI API
 def ai_completion(client: OpenAI, messages: list[dict], response_format: dict = None, temperature: float = 0, stream: bool = stream_output) -> dict | ValueError:
@@ -148,23 +158,14 @@ def ai_completion(client: OpenAI, messages: list[dict], response_format: dict = 
     """
     if not client: raise ValueError("Client is not available!")
 
-    # Select appropriate client
-    completion: ChatCompletion | Iterator[ChatCompletionChunk]
+    params = {"model": llm_model, "messages": messages, "stream": stream}
+
+    if model_supports_temperature(llm_model):
+        params["temperature"] = temperature
     if response_format and llm_spec in ["openai", "openai-like"]:
-        completion = client.chat.completions.create(
-                model=llm_model,
-                messages=messages,
-                temperature=temperature,
-                stream=stream,
-                response_format=response_format
-            )
-    else:
-        completion = client.chat.completions.create(
-                model=llm_model,
-                messages=messages,
-                temperature=temperature,
-                stream=stream
-            )
+        params["response_format"] = response_format
+
+    completion = client.chat.completions.create(params)
 
     result = ""
     

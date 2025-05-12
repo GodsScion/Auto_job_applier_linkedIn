@@ -17,6 +17,8 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 # REQUIRED IMPORTS
 from datetime import datetime
+#from modules.ai.openaiConnections import print_lg
+from modules.helpers import print_lg
 
 # TEST RELATED IMPORTS
 from modules.ai.openaiConnections import ai_create_openai_client, ai_extract_skills, ai_close_openai_client
@@ -106,7 +108,7 @@ def main() -> None:
         if client and hasattr(client, "close") and callable(getattr(client, "close")):
             try:
                 client.close()
-            except:
+            except Exception:
                 pass
 
 

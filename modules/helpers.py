@@ -2,6 +2,9 @@
 Author:     Sai Vignesh Golla
 LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
 
+contributor:    Alexander James
+LinkedIn:       https://www.linkedin.com/in/alexander-james-170797175/
+
 Copyright (C) 2024 Sai Vignesh Golla
 
 License:    GNU Affero General Public License
@@ -22,7 +25,7 @@ from time import sleep
 from random import randint
 from datetime import datetime, timedelta
 from pyautogui import alert
-from pprint import pprint
+from print_lg import print_lg
 
 from config.settings import logs_folder_path
 
@@ -85,21 +88,46 @@ def get_log_path():
 __logs_file_path = get_log_path()
 
 
+__logs_file_path = get_log_path()
+
 def print_lg(*msgs: str | dict, end: str = "\n", pretty: bool = False, flush: bool = False, from_critical: bool = False) -> None:
     '''
     Function to log and print. **Note that, `end` and `flush` parameters are ignored if `pretty = True`**
     '''
     try:
         for message in msgs:
-            pprint(message) if pretty else print(message, end=end, flush=flush)
-            with open(__logs_file_path, 'a+', encoding="utf-8") as file:
-                file.write(str(message) + end)
+            if pretty:
+                print_lg(message)  # Recursive call - be careful with this!
+            else:
+                print(message, end=end, flush=flush)
+                
+            try:
+                with open(__logs_file_path, 'a+', encoding="utf-8") as file:
+                    file.write(str(message) + end)
+            except FileNotFoundError:
+                # Create the directory if it doesn't exist
+                import os
+                logs_folder_path = os.path.dirname(__logs_file_path)
+                os.makedirs(logs_folder_path, exist_ok=True)
+                
+                # Try writing to the file again
+                with open(__logs_file_path, 'a+', encoding="utf-8") as file:
+                    file.write(str(message) + end)
+                    
+    except FileExistsError:
+        # This exception is unlikely to be raised in this context
+        # FileExistsError is for directory/file creation, not file operations
+        print(f"Error: File exists error with {__logs_file_path}")
+        return
+        
     except Exception as e:
-        trail = f'Skipped saving this message: "{message}" to log.txt!' if from_critical else "We'll try one more time to log..."
+        print(e)
+        logs_folder_path = os.path.dirname(__logs_file_path)
+        trail = f'Skipped saving this message: "{msgs}" to log.txt!' if from_critical else "We'll try one more time to log..."
         alert(f"log.txt in {logs_folder_path} is open or is occupied by another program! Please close it! {trail}", "Failed Logging")
+        
         if not from_critical:
             critical_error_log("Log.txt is open or is occupied by another program!", e)
-#>
 
 
 def buffer(speed: int=0) -> None:

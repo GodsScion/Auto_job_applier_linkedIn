@@ -25,7 +25,7 @@ from time import sleep
 from random import randint
 from datetime import datetime, timedelta
 from pyautogui import alert
-from print_lg import print_lg
+from pprint import pprint
 
 from config.settings import logs_folder_path
 

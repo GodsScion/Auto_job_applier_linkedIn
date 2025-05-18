@@ -252,8 +252,8 @@ def get_page_info() -> tuple[WebElement | None, int | None]:
     Function to get pagination element and current page number
     '''
     try:
+        ##> ------ Kyxie : kyriexie@outlook.com - Pagination problem fixed ------
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        sleep(2)
         pagination_element = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located(
                 (By.CSS_SELECTOR, "ul.artdeco-pagination__pages.artdeco-pagination__pages--number")
@@ -263,6 +263,7 @@ def get_page_info() -> tuple[WebElement | None, int | None]:
         current_page = int(
             pagination_element.find_element(By.CSS_SELECTOR, "li.active.selected button span").text
         )
+        ##<
     except Exception as e:
         print_lg("Failed to find Pagination element, hence couldn't scroll till end!")
         pagination_element = None

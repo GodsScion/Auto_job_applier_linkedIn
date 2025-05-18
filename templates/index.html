@@ -1,0 +1,201 @@
+<!-- ##> ------ Karthik Sarode : karthik.sarode23@gmail.com - UI for excel files ------ -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Applied Jobs</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { 
+            border-collapse: collapse; 
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 12px; 
+            text-align: left; 
+        }
+        th { 
+            background-color: #f4f4f4; 
+            font-weight: bold;
+        }
+        tr:nth-child(even) { background-color: #f8f8f8; }
+        a { 
+            color: #0066cc;
+            text-decoration: none;
+        }
+        a:hover { text-decoration: underline; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .sl-column {
+            width: 50px;
+            text-align: center;
+        }
+        .sort-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0 5px;
+            font-size: 12px;
+        }
+        .sort-button:hover {
+            color: #0066cc;
+        }
+        .applied-column {
+            width: 70px;
+            text-align: center;
+        }
+        .tick {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Applied Jobs History</h1>
+        <table id="jobsTable">
+            <thead>
+                <tr>
+                    <th class="sl-column">Sl No</th>
+                    <th>Job Title</th>
+                    <th>Company</th>  
+                    <th>HR Contact</th>
+                    <th>
+                        External Link
+                        <button class="sort-button" onclick="sortByExternalLink()">↕️</button>
+                    </th> 
+                    <th class="applied-column">Applied</th>
+                </tr>
+            </thead>
+            <tbody id="jobsBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        let sortOrder = 'asc';
+        let jobsData = [];
+        let appliedJobs = new Set();
+
+        // Replace the createTableRow function with this updated version
+        function createTableRow(job, index) {
+            const row = document.createElement('tr');
+            
+            // Serial Number
+            const slCell = document.createElement('td');
+            slCell.textContent = index + 1;
+            slCell.className = 'sl-column';
+            row.appendChild(slCell);
+            
+            // Job Title with link
+            const titleCell = document.createElement('td');
+            const titleLink = document.createElement('a');
+            titleLink.href = job.Job_Link;
+            titleLink.textContent = job.Title;
+            titleLink.target = '_blank';
+            titleCell.appendChild(titleLink);
+            row.appendChild(titleCell);
+            
+            // Company
+            const companyCell = document.createElement('td');
+            companyCell.textContent = job.Company;
+            row.appendChild(companyCell);
+            
+            // HR Name with link
+            const hrCell = document.createElement('td');
+            if (job.HR_Name && job.HR_Name !== 'Unknown') {
+                const hrLink = document.createElement('a');
+                hrLink.href = job.HR_Link;
+                hrLink.textContent = job.HR_Name;
+                hrLink.target = '_blank';
+                hrCell.appendChild(hrLink);
+            } else {
+                hrCell.textContent = 'N/A';
+            }
+            row.appendChild(hrCell);
+            
+            // External Job Link
+            const extCell = document.createElement('td');
+            const appliedCell = document.createElement('td');
+            appliedCell.className = 'applied-column';
+
+            if (job.External_Job_link === 'Easy Applied') {
+                extCell.textContent = 'Easy Applied';
+                appliedCell.innerHTML = '<span class="tick">✓</span>';
+            } else if (job.External_Job_link) {
+                const extLink = document.createElement('a');
+                extLink.href = job.External_Job_link;
+                extLink.textContent = 'External Link';
+                extLink.target = '_blank';
+                
+                // Add click handler for external link
+                extLink.addEventListener('click', async () => {
+                    try {
+                        const response = await fetch(`/applied-jobs/${job.Job_ID}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            appliedCell.innerHTML = '<span class="tick">✓</span>';
+                            job.Date_Applied = new Date().toISOString();
+                        }
+                    } catch (error) {
+                        console.error('Error updating applied date:', error);
+                    }
+                });
+                
+                extCell.appendChild(extLink);
+                // Show tick if already applied
+                if (job.Date_Applied !== 'Pending') {
+                    appliedCell.innerHTML = '<span class="tick">✓</span>';
+                }
+            } else {
+                extCell.textContent = 'N/A';
+            }
+            row.appendChild(extCell);
+            row.appendChild(appliedCell);
+            
+            return row;
+        }
+
+        function sortByExternalLink() {
+            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            
+            jobsData.sort((a, b) => {
+                const valueA = a.External_Job_link || '';
+                const valueB = b.External_Job_link || '';
+                
+                if (sortOrder === 'asc') {
+                    return valueA.localeCompare(valueB);
+                } else {
+                    return valueB.localeCompare(valueA);
+                }
+            });
+            
+            const tbody = document.getElementById('jobsBody');
+            tbody.innerHTML = '';
+            jobsData.forEach((job, index) => {
+                tbody.appendChild(createTableRow(job, index));
+            });
+        }
+
+        fetch('http://localhost:5000/applied-jobs')
+            .then(response => response.json())
+            .then(jobs => {
+                jobsData = jobs;
+                const tbody = document.getElementById('jobsBody');
+                jobs.forEach((job, index) => {
+                    tbody.appendChild(createTableRow(job, index));
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    </script>
+</body>
+</html>
+
+<!-- ##< -->

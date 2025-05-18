@@ -72,7 +72,7 @@ run_in_background = False           # True or False, Note: True or False are cas
 disable_extensions = False          # True or False, Note: True or False are case-sensitive
 
 # Run in safe mode. Set this true if chrome is taking too long to open or if you have multiple profiles in browser. This will open chrome in guest profile!
-safe_mode = False                   # True or False, Note: True or False are case-sensitive
+safe_mode = True                   # True or False, Note: True or False are case-sensitive
 
 # Do you want scrolling to be smooth or instantaneous? (Can reduce performance if True)
 smooth_scroll = False               # True or False, Note: True or False are case-sensitive
@@ -81,7 +81,7 @@ smooth_scroll = False               # True or False, Note: True or False are cas
 keep_screen_awake = True            # True or False, Note: True or False are case-sensitive (Note: Will temporarily deactivate when any application dialog boxes are present (Eg: Pause before submit, Help needed for a question..))
 
 # Run in undetected mode to bypass anti-bot protections (Preview Feature, UNSTABLE. Recommended to leave it as False)
-stealth_mode = True                 # True or False, Note: True or False are case-sensitive
+stealth_mode = False                # True or False, Note: True or False are case-sensitive
 
 # Do you want to get alerts on errors related to AI API connection?
 showAiErrorAlerts = True            # True or False, Note: True or False are case-sensitive

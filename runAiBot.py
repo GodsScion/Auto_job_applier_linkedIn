@@ -269,8 +269,10 @@ def find_job_listings() -> list[WebElement]:
     Tries multiple selectors to remain compatible with LinkedIn layout changes.
     '''
     selectors = [
-        (By.CSS_SELECTOR, "li[data-occludable-job-id]"),
+        (By.CSS_SELECTOR, "li[data-occludable-job-id]"), w7nm1l-codex/fix-css-selector-for-job-listings-detection
+
         (By.XPATH, "//li[@data-occludable-job-id]"),
+main
         (By.CSS_SELECTOR, "div.scaffold-layout__list ul > li.scaffold-layout__list-item")
     ]
     for selector in selectors:
@@ -975,16 +977,20 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
                     # Calculation of date posted
                     try:
-                        # try: time_posted_text = find_by_class(driver, "jobs-unified-top-card__posted-date", 2).text
-                        # except: 
-                        time_posted_text = jobs_top_card.find_element(By.XPATH, './/span[contains(normalize-space(), " ago")]').text
+                        try:
+                            time_posted_text = jobs_top_card.find_element(By.TAG_NAME, 'time').text
+                        except Exception:
+                            time_posted_text = jobs_top_card.find_element(
+                                By.XPATH,
+                                './/span[contains(normalize-space(), " ago")]'
+                            ).text
                         print("Time Posted: " + time_posted_text)
-                        if time_posted_text.__contains__("Reposted"):
+                        if "Reposted" in time_posted_text:
                             reposted = True
                             time_posted_text = time_posted_text.replace("Reposted", "")
                         date_listed = calculate_date_posted(time_posted_text)
                     except Exception as e:
-                        print_lg("Failed to calculate the date posted!",e)
+                        print_lg("Failed to calculate the date posted!", e)
 
 
                     description, experience_required, skip, reason, message = get_job_description()

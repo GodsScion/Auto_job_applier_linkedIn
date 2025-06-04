@@ -263,6 +263,26 @@ def get_page_info() -> tuple[WebElement | None, int | None]:
     return pagination_element, current_page
 
 
+def find_job_listings() -> list[WebElement]:
+    '''
+    Finds all job listing elements on the search result page.
+    Tries multiple selectors to remain compatible with LinkedIn layout changes.
+    '''
+    selectors = [
+        (By.CSS_SELECTOR, "li[data-occludable-job-id]"),
+        (By.CSS_SELECTOR, "div.scaffold-layout__list ul > li.scaffold-layout__list-item")
+    ]
+    for selector in selectors:
+        try:
+            wait.until(EC.presence_of_all_elements_located(selector))
+            listings = driver.find_elements(*selector)
+            if listings:
+                return listings
+        except Exception:
+            continue
+    raise ValueError("No job listings found")
+
+
 
 def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_jobs: set) -> tuple[str, str, str, str, str, bool]:
     '''
@@ -278,6 +298,18 @@ def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_j
     job_details_button = job.find_element(By.TAG_NAME, 'a')  # job.find_element(By.CLASS_NAME, "job-card-list__title")  # Problem in India
     scroll_to_view(driver, job_details_button, True)
     job_id = job.get_dom_attribute('data-occludable-job-id')
+    if not job_id:
+        job_id = job.get_dom_attribute('data-job-id')
+    if not job_id:
+        try:
+            job_id = job.find_element(By.CSS_SELECTOR, '[data-job-id]').get_dom_attribute('data-job-id')
+        except NoSuchElementException:
+            job_id = None
+    if not job_id:
+        href = job_details_button.get_attribute('href')
+        m = re.search(r"currentJobId=(\d+)", href or "")
+        if m:
+            job_id = m.group(1)
     title = job_details_button.text
     title = title[:title.find("\n")]
     # company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
@@ -863,14 +895,10 @@ def apply_to_jobs(search_terms: list[str]) -> None:
         current_count = 0
         try:
             while current_count < switch_number:
-                # Wait until job listings are loaded
-                wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[@data-occludable-job-id]")))
-
+                # Wait until job listings are loaded and collect them
+                job_listings = find_job_listings()
                 pagination_element, current_page = get_page_info()
-
-                # Find all job listings in current page
                 buffer(3)
-                job_listings = driver.find_elements(By.XPATH, "//li[@data-occludable-job-id]")  
 
             
                 for job in job_listings:
@@ -889,7 +917,10 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     except Exception as e:
                         print_lg(f'Trying to Apply to "{title} | {company}" job. Job ID: {job_id}')
 
-                    job_link = "https://www.linkedin.com/jobs/view/"+job_id
+                    if job_id:
+                        job_link = "https://www.linkedin.com/jobs/view/" + job_id
+                    else:
+                        job_link = job.find_element(By.TAG_NAME, 'a').get_attribute('href') or 'Unknown'
                     application_link = "Easy Applied"
                     date_applied = "Pending"
                     hr_link = "Unknown"

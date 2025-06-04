@@ -19,7 +19,7 @@ import json
 
 
 # # Give an relative path of your default resume to be uploaded. If file in not found, will continue using your previously uploaded resume in LinkedIn.
-# default_resume_path = "resume"      # (In Development)
+# default_resume_path = "Mauro Gonzalez Resume May2025.pdf"      # (In Development)
 
 '''
 YOU DON'T HAVE TO EDIT THIS FILE, IF YOU ADDED YOUR DEFAULT RESUME.

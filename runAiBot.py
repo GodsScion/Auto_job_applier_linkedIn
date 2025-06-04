@@ -263,6 +263,26 @@ def get_page_info() -> tuple[WebElement | None, int | None]:
     return pagination_element, current_page
 
 
+def find_job_listings() -> list[WebElement]:
+    '''
+    Finds all job listing elements on the search result page.
+    Tries multiple selectors to remain compatible with LinkedIn layout changes.
+    '''
+    selectors = [
+        (By.XPATH, "//li[@data-occludable-job-id]"),
+        (By.CSS_SELECTOR, "div.scaffold-layout__list ul > li.scaffold-layout__list-item")
+    ]
+    for selector in selectors:
+        try:
+            wait.until(EC.presence_of_all_elements_located(selector))
+            listings = driver.find_elements(*selector)
+            if listings:
+                return listings
+        except Exception:
+            continue
+    raise ValueError("No job listings found")
+
+
 
 def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_jobs: set) -> tuple[str, str, str, str, str, bool]:
     '''
@@ -863,14 +883,10 @@ def apply_to_jobs(search_terms: list[str]) -> None:
         current_count = 0
         try:
             while current_count < switch_number:
-                # Wait until job listings are loaded
-                wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[@data-occludable-job-id]")))
-
+                # Wait until job listings are loaded and collect them
+                job_listings = find_job_listings()
                 pagination_element, current_page = get_page_info()
-
-                # Find all job listings in current page
                 buffer(3)
-                job_listings = driver.find_elements(By.XPATH, "//li[@data-occludable-job-id]")  
 
             
                 for job in job_listings:

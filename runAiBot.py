@@ -269,7 +269,10 @@ def find_job_listings() -> list[WebElement]:
     Tries multiple selectors to remain compatible with LinkedIn layout changes.
     '''
     selectors = [
-        (By.CSS_SELECTOR, "li[data-occludable-job-id]"),
+        (By.CSS_SELECTOR, "li[data-occludable-job-id]"), w7nm1l-codex/fix-css-selector-for-job-listings-detection
+
+        (By.XPATH, "//li[@data-occludable-job-id]"),
+main
         (By.CSS_SELECTOR, "div.scaffold-layout__list ul > li.scaffold-layout__list-item")
     ]
     for selector in selectors:

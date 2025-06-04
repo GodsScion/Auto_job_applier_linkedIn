@@ -269,6 +269,7 @@ def find_job_listings() -> list[WebElement]:
     Tries multiple selectors to remain compatible with LinkedIn layout changes.
     '''
     selectors = [
+        (By.CSS_SELECTOR, "li[data-occludable-job-id]"),
         (By.XPATH, "//li[@data-occludable-job-id]"),
         (By.CSS_SELECTOR, "div.scaffold-layout__list ul > li.scaffold-layout__list-item")
     ]
@@ -298,6 +299,18 @@ def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_j
     job_details_button = job.find_element(By.TAG_NAME, 'a')  # job.find_element(By.CLASS_NAME, "job-card-list__title")  # Problem in India
     scroll_to_view(driver, job_details_button, True)
     job_id = job.get_dom_attribute('data-occludable-job-id')
+    if not job_id:
+        job_id = job.get_dom_attribute('data-job-id')
+    if not job_id:
+        try:
+            job_id = job.find_element(By.CSS_SELECTOR, '[data-job-id]').get_dom_attribute('data-job-id')
+        except NoSuchElementException:
+            job_id = None
+    if not job_id:
+        href = job_details_button.get_attribute('href')
+        m = re.search(r"currentJobId=(\d+)", href or "")
+        if m:
+            job_id = m.group(1)
     title = job_details_button.text
     title = title[:title.find("\n")]
     # company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
@@ -905,7 +918,10 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     except Exception as e:
                         print_lg(f'Trying to Apply to "{title} | {company}" job. Job ID: {job_id}')
 
-                    job_link = "https://www.linkedin.com/jobs/view/"+job_id
+                    if job_id:
+                        job_link = "https://www.linkedin.com/jobs/view/" + job_id
+                    else:
+                        job_link = job.find_element(By.TAG_NAME, 'a').get_attribute('href') or 'Unknown'
                     application_link = "Easy Applied"
                     date_applied = "Pending"
                     hr_link = "Unknown"

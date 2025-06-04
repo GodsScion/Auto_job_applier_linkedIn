@@ -140,47 +140,49 @@ def manual_login_retry(is_logged_in: callable, limit: int = 2) -> None:
 
 
 def calculate_date_posted(time_string: str) -> datetime | None | ValueError:
-    '''
-    Function to calculate date posted from string.
-    Returns datetime object | None if unable to calculate | ValueError if time_string is invalid
-    Valid time string examples:
-    * 10 seconds ago
-    * 15 minutes ago
-    * 2 hours ago
-    * 1 hour ago
-    * 1 day ago
-    * 10 days ago
-    * 1 week ago
-    * 1 month ago
-    * 1 year ago
-    '''
+    """
+    Convert a phrase like ``"2 weeks ago"`` into a :class:`datetime` object.
+
+    The string sometimes includes extra words (e.g. ``"Posted 5 days ago"`` or
+    ``"Dallas, TX · 1 week ago"``). This helper extracts the first number found
+    before a time unit and subtracts the appropriate amount from ``datetime.now``.
+
+    Returns ``None`` if no time information could be parsed.
+    """
+
     time_string = time_string.strip()
-    # print_lg(f"Trying to calculate date job was posted from '{time_string}'")
     now = datetime.now()
-    if "second" in time_string:
-        seconds = int(time_string.split()[0])
-        date_posted = now - timedelta(seconds=seconds)
-    elif "minute" in time_string:
-        minutes = int(time_string.split()[0])
-        date_posted = now - timedelta(minutes=minutes)
-    elif "hour" in time_string:
-        hours = int(time_string.split()[0])
-        date_posted = now - timedelta(hours=hours)
-    elif "day" in time_string:
-        days = int(time_string.split()[0])
-        date_posted = now - timedelta(days=days)
-    elif "week" in time_string:
-        weeks = int(time_string.split()[0])
-        date_posted = now - timedelta(weeks=weeks)
-    elif "month" in time_string:
-        months = int(time_string.split()[0])
-        date_posted = now - timedelta(days=months * 30)
-    elif "year" in time_string:
-        years = int(time_string.split()[0])
-        date_posted = now - timedelta(days=years * 365)
-    else:
-        date_posted = None
-    return date_posted
+
+    if not time_string:
+        return None
+
+    lower = time_string.lower()
+    if "just" in lower or "today" in lower:
+        return now
+
+    match = re.search(r"(\d+).*?(second|minute|hour|day|week|month|year)", lower)
+    if not match:
+        return None
+
+    value = int(match.group(1))
+    unit = match.group(2)
+
+    if "second" in unit:
+        return now - timedelta(seconds=value)
+    if "minute" in unit:
+        return now - timedelta(minutes=value)
+    if "hour" in unit:
+        return now - timedelta(hours=value)
+    if "day" in unit:
+        return now - timedelta(days=value)
+    if "week" in unit:
+        return now - timedelta(weeks=value)
+    if "month" in unit:
+        return now - timedelta(days=value * 30)
+    if "year" in unit:
+        return now - timedelta(days=value * 365)
+
+    return None
     
 
 def convert_to_lakhs(value: str) -> str:

@@ -17,7 +17,7 @@ version:    24.12.29.12.30
 
 # These Sentences are Searched in LinkedIn
 # Enter your search terms inside '[ ]' with quotes ' "searching title" ' for each search followed by comma ', ' Eg: ["Software Engineer", "Software Developer", "Selenium Developer"]
-search_terms = ["Solution Consultant", "CRM Business Solutions Consultant", "Analyst", "Senior Consultant", "Process Improvement", "Salesforce Consultant"]
+search_terms = ["Legal Technology Consultant", "Solution Consultant","Business Consultant", "Business Solutions Consultant", "Analyst", "Senior Consultant", "Process Improvement", "Salesforce Consultant"]
 
 # Search location, this will be filled in "City, state, or zip code" search box. If left empty as "", tool will not fill it.
 search_location = ""               # Some valid examples: "", "United States", "India", "Chicago, Illinois, United States", "90001, Los Angeles, California, United States", "Bengaluru, Karnataka, India", etc.
@@ -92,10 +92,10 @@ about_company_good_words = []      # (dynamic multiple search) or leave empty as
 bad_words = ["Lawmd"]                     # (dynamic multiple search) or leave empty as []. Case Insensitive. Ex: ["word_1", "phrase 1", "word word", "polygraph", "US Citizenship", "Security Clearance"]
 
 # Do you have an active Security Clearance? (True for Yes and False for No)
-security_clearance = True         # True or False, Note: True or False are case-sensitive
+security_clearance = False         # True or False, Note: True or False are case-sensitive
 
 # Do you have a Masters degree? (True for Yes and False for No). If True, the tool will apply to jobs containing the word 'master' in their job description and if it's experience required <= current_experience + 2 and current_experience is not set as -1. 
-did_masters = True                 # True or False, Note: True or False are case-sensitive
+did_masters = False                 # True or False, Note: True or False are case-sensitive
 
 # Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
 current_experience = -1             # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)

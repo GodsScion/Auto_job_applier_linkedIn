@@ -6,10 +6,10 @@
 # Your legal name
 first_name = "Mauro"                 # Your first name in quotes Eg: "First", "Sai"
 middle_name = ""            # Your name in quotes Eg: "Middle", "Vignesh", ""
-last_name = "Gonzalez"                # Your last name in quotes Eg: "Last", "Golla"
+last_name = ""                # Your last name in quotes Eg: "Last", "Golla"
 
 # Phone number (required), make sure it's valid.
-phone_number = "5713545974"        # Enter your 10 digit number in quotes Eg: "9876543210"
+phone_number = ""        # Enter your 10 digit number in quotes Eg: "9876543210"
 
 # What is your current city?
 current_city = "Arlington, Virginia, United States"                  # Los Angeles, San Francisco, etc.
@@ -18,9 +18,9 @@ Note: If left empty as "", the bot will fill in location of jobs location.
 '''
 
 # Address, not so common question but some job applications make it required!
-street = "2435 S Culpeper St"
-state = "VA"
-zipcode = "22204"
+street = ""
+state = ""
+zipcode = ""
 country = "United States"
 
 # Highest education attained (e.g., "Bachelor's")

@@ -1,0 +1,12 @@
+"""Example secrets configuration"""
+username = ""
+password = ""
+use_AI = False
+llm_api_url = ""
+llm_api_key = ""
+llm_model = ""
+stream_output = False
+ai_provider = "openai"
+deepseek_api_url = ""
+deepseek_api_key = ""
+deepseek_model = "deepseek-chat"

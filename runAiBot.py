@@ -489,14 +489,18 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     answer = prev_answer
                 elif 'gender' in label or 'sex' in label: 
                     answer = gender
-                elif 'disability' in label: 
+                elif 'disability' in label:
                     answer = disability_status
-                elif 'proficiency' in label: 
+                elif 'proficiency' in label:
                     answer = 'Professional'
+                elif any(word in label for word in ['university', 'college', 'school']):
+                    answer = university_name
+                elif 'education' in label or 'degree' in label:
+                    answer = education_level
                 # Add location handling
                 elif any(loc_word in label for loc_word in ['location', 'city', 'state', 'country']):
                     if 'country' in label:
-                        answer = country 
+                        answer = country
                     elif 'state' in label:
                         answer = state
                     elif 'city' in label:
@@ -568,8 +572,12 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
             if overwrite_previous_answers or prev_answer is None:
                 if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
                 elif 'veteran' in label or 'protected' in label: answer = veteran_status
-                elif 'disability' in label or 'handicapped' in label: 
+                elif 'disability' in label or 'handicapped' in label:
                     answer = disability_status
+                elif any(word in label for word in ['university', 'college', 'school']):
+                    answer = university_name
+                elif 'education' in label or 'degree' in label:
+                    answer = education_level
                 else: answer = answer_common_questions(label,answer)
                 foundOption = try_xp(radio, f".//label[normalize-space()='{answer}']", False)
                 if foundOption: 
@@ -627,6 +635,10 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     elif 'last' in label and 'first' not in label: answer = last_name
                     elif 'employer' in label: answer = recent_employer
                     else: answer = full_name
+                elif any(word in label for word in ['university', 'college', 'school']):
+                    answer = university_name
+                elif 'education' in label or 'degree' in label:
+                    answer = education_level
                 elif 'notice' in label:
                     if 'month' in label:
                         answer = notice_period_months

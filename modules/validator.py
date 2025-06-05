@@ -71,6 +71,9 @@ def validate_personals() -> None | ValueError | TypeError:
     check_string(disability_status, "disability_status", ["Yes", "No", "Decline"])
     check_string(veteran_status, "veteran_status", ["Yes", "No", "Decline"])
 
+    check_string(education_level, "education_level")
+    check_string(university_name, "university_name")
+
 
 
 from config.questions import *

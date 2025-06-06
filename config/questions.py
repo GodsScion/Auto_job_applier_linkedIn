@@ -37,6 +37,12 @@ linkedIn = "www.linkedin.com/in/mauro-gonzalez-bb5383269"       # "https://www.l
 # Valid options are: "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident" or "Other"
 us_citizenship = "U.S. Citizen/Permanent Resident"
 
+# Are you willing to undergo a background check?
+background_check = "Yes"           # "Yes" or "No"
+
+# Are you authorized to work in the specified country?
+authorized_to_work = "Yes"         # "Yes" or "No"
+
 
 
 ## SOME ANNOYING QUESTIONS BY COMPANIES 🫠 ##

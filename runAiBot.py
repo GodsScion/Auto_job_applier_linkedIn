@@ -784,10 +784,17 @@ def external_apply(pagination_element: WebElement, job_id: str, job_link: str, r
     '''
     global tabs_count, dailyEasyApplyLimitReached
     if easy_apply_only:
+        message = ""
         try:
-            if "exceeded the daily application limit" in driver.find_element(By.CLASS_NAME, "artdeco-inline-feedback__message").text: dailyEasyApplyLimitReached = True
-        except: pass
-        print_lg("Easy apply failed I guess!")
+            notice = driver.find_element(By.CLASS_NAME, "artdeco-inline-feedback__message").text
+            if "exceeded the daily application limit" in notice:
+                dailyEasyApplyLimitReached = True
+                message = "Daily application limit for Easy Apply is reached"
+        except Exception:
+            pass
+        if not message:
+            message = "Easy Apply unavailable or couldn't be clicked"
+        print_lg(message)
         if pagination_element != None: return True, application_link, tabs_count
     try:
         wait.until(EC.element_to_be_clickable((By.XPATH, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3')]"))).click() # './/button[contains(span, "Apply") and not(span[contains(@class, "disabled")])]'
@@ -1029,7 +1036,18 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
                     uploaded = False
                     # Case 1: Easy Apply Button
-                    if try_xp(driver, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3') and contains(@aria-label, 'Easy')]"):
+                    easy_apply_button = find_easy_apply_button(driver)
+                    if easy_apply_button:
+                        try:
+                            easy_apply_button.click()
+                        except Exception as e:
+                            print_lg("Failed to click Easy Apply button", e)
+                            skip, application_link, tabs_count = external_apply(pagination_element, job_id, job_link, resume, date_listed, application_link, screenshot_name)
+                            if dailyEasyApplyLimitReached:
+                                print_lg("\n###############  Daily application limit for Easy Apply is reached!  ###############\n")
+                                return
+                            if skip:
+                                continue
                         try: 
                             try:
                                 errored = ""

@@ -165,3 +165,19 @@ def text_input(actions: ActionChains, textInputEle: WebElement | bool, value: st
         actions.send_keys(Keys.ENTER).perform()
     else:
         print_lg(f'{textFieldName} input was not given!')
+
+# Utility to locate the Easy Apply button even if LinkedIn updates the
+# underlying HTML structure. Tries multiple XPath selectors and
+# returns the first match or ``False`` if none are found.
+def find_easy_apply_button(driver: WebDriver) -> WebElement | bool:
+    xpaths = [
+        ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3') and contains(@aria-label, 'Easy')]",
+        ".//button[contains(@id,'jobs-apply-button') and contains(@aria-label, 'Easy')]",
+        ".//button[@data-live-test-job-apply-button]",
+        ".//button[contains(., 'Easy Apply')]",
+    ]
+    for xp in xpaths:
+        btn = try_xp(driver, xp, False)
+        if btn:
+            return btn
+    return False

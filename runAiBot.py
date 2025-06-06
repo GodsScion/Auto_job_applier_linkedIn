@@ -1049,7 +1049,6 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     # Case 1: Easy Apply Button
                     easy_apply_button = find_easy_apply_button(driver)
                     if easy_apply_button:
-hpw54c-codex/investigate-why-easy-apply-failed
                         try:
                             easy_apply_button.click()
                         except Exception as e:
@@ -1062,7 +1061,6 @@ hpw54c-codex/investigate-why-easy-apply-failed
                                 continue
 
                         easy_apply_button.click()
-main
                         try: 
                             try:
                                 errored = ""

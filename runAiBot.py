@@ -1049,6 +1049,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     # Case 1: Easy Apply Button
                     easy_apply_button = find_easy_apply_button(driver)
                     if easy_apply_button:
+                        scroll_to_view(driver, easy_apply_button, True)
                         try:
                             easy_apply_button.click()
                         except Exception as e:

@@ -91,6 +91,8 @@ def validate_questions() -> None | ValueError | TypeError:
     check_string(linkedIn, "linkedIn")
     check_int(desired_salary, "desired_salary")
     check_string(us_citizenship, "us_citizenship", ["U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident", "Other"])
+    check_string(background_check, "background_check", ["Yes", "No"])
+    check_string(authorized_to_work, "authorized_to_work", ["Yes", "No"])
     check_string(linkedin_headline, "linkedin_headline")
     check_int(notice_period, "notice_period")
     check_int(current_ctc, "current_ctc")

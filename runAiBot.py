@@ -450,7 +450,18 @@ def upload_resume(modal: WebElement, resume: str) -> tuple[bool, str]:
 
 # Function to answer common questions for Easy Apply
 def answer_common_questions(label: str, answer: str) -> str:
-    if 'sponsorship' in label or 'visa' in label: answer = require_visa
+    label_low = label.lower()
+    if 'sponsorship' in label_low or 'visa' in label_low:
+        answer = require_visa
+    elif 'background' in label_low and 'check' in label_low:
+        answer = background_check
+    elif (
+        ('authorized' in label_low and 'work' in label_low)
+        or ('authorization' in label_low and 'work' in label_low)
+        or ('eligible' in label_low and 'work' in label_low)
+        or ('right to work' in label_low)
+    ):
+        answer = authorized_to_work
     return answer
 
 
@@ -1038,6 +1049,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     # Case 1: Easy Apply Button
                     easy_apply_button = find_easy_apply_button(driver)
                     if easy_apply_button:
+hpw54c-codex/investigate-why-easy-apply-failed
                         try:
                             easy_apply_button.click()
                         except Exception as e:
@@ -1048,6 +1060,9 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                 return
                             if skip:
                                 continue
+
+                        easy_apply_button.click()
+main
                         try: 
                             try:
                                 errored = ""

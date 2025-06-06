@@ -179,5 +179,6 @@ def find_easy_apply_button(driver: WebDriver) -> WebElement | bool:
     for xp in xpaths:
         btn = try_xp(driver, xp, False)
         if btn:
+            scroll_to_view(driver, btn, True)
             return btn
     return False

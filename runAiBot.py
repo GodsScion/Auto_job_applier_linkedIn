@@ -1029,7 +1029,9 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
                     uploaded = False
                     # Case 1: Easy Apply Button
-                    if try_xp(driver, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3') and contains(@aria-label, 'Easy')]"):
+                    easy_apply_button = find_easy_apply_button(driver)
+                    if easy_apply_button:
+                        easy_apply_button.click()
                         try: 
                             try:
                                 errored = ""

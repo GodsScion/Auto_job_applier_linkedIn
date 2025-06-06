@@ -450,7 +450,18 @@ def upload_resume(modal: WebElement, resume: str) -> tuple[bool, str]:
 
 # Function to answer common questions for Easy Apply
 def answer_common_questions(label: str, answer: str) -> str:
-    if 'sponsorship' in label or 'visa' in label: answer = require_visa
+    label_low = label.lower()
+    if 'sponsorship' in label_low or 'visa' in label_low:
+        answer = require_visa
+    elif 'background' in label_low and 'check' in label_low:
+        answer = background_check
+    elif (
+        ('authorized' in label_low and 'work' in label_low)
+        or ('authorization' in label_low and 'work' in label_low)
+        or ('eligible' in label_low and 'work' in label_low)
+        or ('right to work' in label_low)
+    ):
+        answer = authorized_to_work
     return answer
 
 

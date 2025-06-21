@@ -42,7 +42,7 @@ CHECK THE OPENAI API PIRCES AT THEIR WEBSITE (https://openai.com/api/pricing/).
 # REMOVED: unnecessary extra variables for DeepSeek models (use llm instead)
 
 # Select AI Provider
-ai_provider = "openai"               # "openai", "deepseek"
+ai_provider = ""               # "openai", "deepseek", "ollama"
 '''
 Note: Select your AI provider.
 * "openai" - OpenAI API (GPT models)
@@ -52,7 +52,7 @@ Note: Select your AI provider.
 ##<
 
 # Your Local LLM url or other AI api url and port
-llm_api_url = "http://localhost:11434"       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/"
+llm_api_url = ""       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/", "http://localhost:11434"
 '''
 Note: Don't forget to add / at the end of your url.
 If you are using deepseek, this URL is compatible with OpenAI interface. The full endpoint will be {deepseek_api_url}/chat/completions.
@@ -65,9 +65,9 @@ Note: Leave it empyt as "" or "not-needed" if not needed. Else will result in er
 '''
 
 # Your local LLM model name or other AI model name
-llm_model = "deepseek-llm"          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct"
+llm_model = ""          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct"
 '''
-Note: If using DeekSeek API, use DeepSeek's model selection
+Note: If using DeekSeek API, use DeepSeek's model selection. If you are using Ollama, ensure that you have pulled your desired model first.
 * "deepseek-chat" - DeepSeek-V3, general conversation model
 * "deepseek-reasoner" - DeepSeek-R1, reasoning model
 '''

@@ -44,32 +44,14 @@ Note: Select your AI provider.
 * "deepseek" - DeepSeek API (DeepSeek models)
 '''
 
-# DeepSeek Configuration
-deepseek_api_url = "https://api.deepseek.com"       # Examples: "https://api.deepseek.com", "https://api.deepseek.com/v1"
-'''
-Note: DeepSeek API URL. 
-This URL is compatible with OpenAI interface. The full endpoint will be {deepseek_api_url}/chat/completions.
-'''
-
-deepseek_api_key = "YOUR_OPENAI_API_KEY"                # Enter your DeepSeek API key in the quotes
-'''
-Note: Enter your DeepSeek API key here. Leave it empty as "" or "not-needed" if not needed.
-'''
-
-deepseek_model = "deepseek-chat"     # Examples: "deepseek-chat", "deepseek-reasoner"
-'''
-Note: DeepSeek model selection
-* "deepseek-chat" - DeepSeek-V3, general conversation model
-* "deepseek-reasoner" - DeepSeek-R1, reasoning model
-'''
-##<
+##> ------ Tim L : tulxoro - Refactor ------
 
 # Your Local LLM url or other AI api url and port
-llm_api_url = "https://api.openai.com/v1/"       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/"
+llm_api_url = "https://api.openai.com/v1/"       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/", "https://api.deepseek.com", "https://api.deepseek.com/v1"
 '''
 Note: Don't forget to add / at the end of your url
 '''
-
+##<
 # Your Local LLM API key or other AI API key 
 llm_api_key = "YOUR_OPENAI_API_KEY"              # Enter your API key in the quotes, make sure it's valid, if not will result in error.
 '''
@@ -84,8 +66,9 @@ llm_model = "gpt-3.5-turbo"          # Examples: "gpt-3.5-turbo", "gpt-4o", "lla
 llm_spec = "openai"                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"
 '''
 Note: Currently "openai" and "openai-like" api endpoints are supported.
+If you aren't sure what this is, then you are safe to leave as.
 '''
-
+##<
 # # Yor local embedding model name or other AI Embedding model name
 # llm_embedding_model = "nomic-embed-text-v1.5"
 

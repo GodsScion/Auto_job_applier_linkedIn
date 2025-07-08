@@ -43,7 +43,7 @@ ai_provider = "openai"               # "openai", "deepseek"
 Note: Select your AI provider.
 * "openai" - OpenAI API (GPT models)
 * "deepseek" - DeepSeek API (DeepSeek models)
-* For any other models, keep it as "openai".
+* For any other models, keep it as "openai" if it is compatible with OpenAI's api.
 '''
 
 

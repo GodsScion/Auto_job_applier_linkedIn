@@ -37,12 +37,17 @@ CHECK THE OPENAI API PIRCES AT THEIR WEBSITE (https://openai.com/api/pricing/).
 
 ##> ------ Yang Li : MARKYangL - Feature ------
 # Select AI Provider
-ai_provider = "deepseek"               # "openai", "deepseek"
+ai_provider = "deepseek"               # "openai", "deepseek", "gemini"
 '''
 Note: Select your AI provider.
 * "openai" - OpenAI API (GPT models)
 * "deepseek" - DeepSeek API (DeepSeek models)
+* "gemini" - Google Gemini API (Gemini models)
 '''
+
+# Gemini Configuration
+gemini_api_key = "YOUR_GEMINI_API_KEY"                # Enter your Gemini API key in the quotes
+gemini_model = "gemini-2.5-flash"     # Examples: "gemini-pro", "gemini-1.5-flash"
 
 # DeepSeek Configuration
 deepseek_api_url = "https://api.deepseek.com"       # Examples: "https://api.deepseek.com", "https://api.deepseek.com/v1"
@@ -77,16 +82,13 @@ Note: Leave it empyt as "" or "not-needed" if not needed. Else will result in er
 '''
 
 # Your local LLM model name or other AI model name
-llm_model = "gpt-3.5-turbo"          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct"
+# llm_model = "gpt-4-turbo"
+# llm_model = "gpt-4o"
+llm_model = "deepseek-chat"
+llm_spec = "deepseek"
 
-
-#
-llm_spec = "openai"                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"
-'''
-Note: Currently "openai" and "openai-like" api endpoints are supported.
-'''
-
-# # Yor local embedding model name or other AI Embedding model name
+# Embedding model
+# Make sure the dimensions of your embedding model is compatible with your vector database.
 # llm_embedding_model = "nomic-embed-text-v1.5"
 
 # Do you want to stream AI output?

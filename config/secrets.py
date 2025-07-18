@@ -70,8 +70,7 @@ llm_spec = "openai"                # Examples: "openai", "openai-like", "openai-
 Note: Currently "openai", "deepseek", "gemini" and "openai-like" api endpoints are supported.
 Most LLMs are compatible with openai, so keeping it as "openai-like" will work.
 '''
-##<
-##<
+
 # # Yor local embedding model name or other AI Embedding model name
 # llm_embedding_model = "nomic-embed-text-v1.5"
 

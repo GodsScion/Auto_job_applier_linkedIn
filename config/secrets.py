@@ -38,41 +38,39 @@ CHECK THE OPENAI API PIRCES AT THEIR WEBSITE (https://openai.com/api/pricing/).
 ##> ------ Yang Li : MARKYangL - Feature ------
 ##> ------ Tim L : tulxoro - Refactor ------
 # Select AI Provider
-ai_provider = "openai"               # "openai", "deepseek"
+ai_provider = "openai"               # "openai", "deepseek", "gemini"
 '''
 Note: Select your AI provider.
-* "openai" - OpenAI API (GPT models)
+* "openai" - OpenAI API (GPT models) OR OpenAi-compatible APIs (like Ollama)
 * "deepseek" - DeepSeek API (DeepSeek models)
+* "gemini" - Google Gemini API (Gemini models)
 * For any other models, keep it as "openai" if it is compatible with OpenAI's api.
 '''
 
 
 
-# Your Local LLM url or other AI api url and port
-llm_api_url = "http://localhost:11434/v1/"       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/", "https://api.deepseek.com", "https://api.deepseek.com/v1"
+# Your LLM url or other AI api url and port
+llm_api_url = ""       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/", "https://api.deepseek.com", "https://api.deepseek.com/v1"
 '''
-Note: Don't forget to add / at the end of your url
+Note: Don't forget to add / at the end of your url. You may not need this if you are using Gemini.
 '''
 
-# Your Local LLM API key or other AI API key 
+# Your LLM API key or other AI API key 
 llm_api_key = "not-needed"              # Enter your API key in the quotes, make sure it's valid, if not will result in error.
 '''
 Note: Leave it empty as "" or "not-needed" if not needed. Else will result in error!
-If you are using ollama, you MUST put "not-needed" in there.
+If you are using ollama, you MUST put "not-needed".
 '''
 
-# Your local LLM model name or other AI model name
-llm_model = "deepseek-llm:latest"          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct", "qwen3:latest"
+# Your LLM model name or other AI model name
+llm_model = ""          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct", "qwen3:latest", "gemini-pro", "gemini-1.5-flash", "gemini-2.5-flash", "deepseek-llm:latest"
 
-
-#
-llm_spec = "openai-like"                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"
+llm_spec = "openai"                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"
 '''
-Note: Currently "openai" and "openai-like" api endpoints are supported.
+Note: Currently "openai", "deepseek", "gemini" and "openai-like" api endpoints are supported.
 Most LLMs are compatible with openai, so keeping it as "openai-like" will work.
 '''
-##<
-##<
+
 # # Yor local embedding model name or other AI Embedding model name
 # llm_embedding_model = "nomic-embed-text-v1.5"
 

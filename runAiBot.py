@@ -27,7 +27,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, NoSuchWindowException, ElementNotInteractableException
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, NoSuchWindowException, ElementNotInteractableException, WebDriverException
 
 from config.personals import *
 from config.questions import *
@@ -41,6 +41,7 @@ from modules.clickers_and_finders import *
 from modules.validator import validate_config
 from modules.ai.openaiConnections import ai_create_openai_client, ai_extract_skills, ai_answer_question, ai_close_openai_client
 from modules.ai.deepseekConnections import deepseek_create_client, deepseek_extract_skills, deepseek_answer_question
+from modules.ai.geminiConnections import gemini_create_client, gemini_extract_skills, gemini_answer_question
 
 from typing import Literal
 
@@ -632,6 +633,8 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                                 answer = ai_answer_question(aiClient, label_org, question_type="text", job_description=job_description, user_information_all=user_information_all)
                             elif ai_provider.lower() == "deepseek":
                                 answer = deepseek_answer_question(aiClient, label_org, options=None, question_type="text", job_description=job_description, about_company=None, user_information_all=user_information_all)
+                            elif ai_provider.lower() == "gemini":
+                                answer = gemini_answer_question(aiClient, label_org, options=None, question_type="text", job_description=job_description, about_company=None, user_information_all=user_information_all)
                             else:
                                 randomly_answered_questions.add((label_org, "text"))
                                 answer = years_of_experience
@@ -676,6 +679,8 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                                 answer = ai_answer_question(aiClient, label_org, question_type="textarea", job_description=job_description, user_information_all=user_information_all)
                             elif ai_provider.lower() == "deepseek":
                                 answer = deepseek_answer_question(aiClient, label_org, options=None, question_type="textarea", job_description=job_description, about_company=None, user_information_all=user_information_all)
+                            elif ai_provider.lower() == "gemini":
+                                answer = gemini_answer_question(aiClient, label_org, options=None, question_type="textarea", job_description=job_description, about_company=None, user_information_all=user_information_all)
                             else:
                                 randomly_answered_questions.add((label_org, "textarea"))
                                 answer = ""
@@ -950,7 +955,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                         if time_posted_text.__contains__("Reposted"):
                             reposted = True
                             time_posted_text = time_posted_text.replace("Reposted", "")
-                        date_listed = calculate_date_posted(time_posted_text)
+                        date_listed = calculate_date_posted(time_posted_text.strip())
                     except Exception as e:
                         print_lg("Failed to calculate the date posted!",e)
 
@@ -971,6 +976,8 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                 skills = ai_extract_skills(aiClient, description)
                             elif ai_provider.lower() == "deepseek":
                                 skills = deepseek_extract_skills(aiClient, description)
+                            elif ai_provider.lower() == "gemini":
+                                skills = gemini_extract_skills(aiClient, description)
                             else:
                                 skills = "In Development"
                             print_lg(f"Extracted skills using {ai_provider} AI")
@@ -1077,10 +1084,16 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     print_lg(f"\n>-> Didn't find Page {current_page+1}. Probably at the end page of results!\n")
                     break
 
+        except (NoSuchWindowException, WebDriverException) as e:
+            print_lg("Browser window closed or session is invalid. Ending application process.", e)
+            raise e # Re-raise to be caught by main
         except Exception as e:
             print_lg("Failed to find Job listings!")
             critical_error_log("In Applier", e)
-            print_lg(driver.page_source, pretty=True)
+            try:
+                print_lg(driver.page_source, pretty=True)
+            except Exception as page_source_error:
+                print_lg(f"Failed to get page source, browser might have crashed. {page_source_error}")
             # print_lg(e)
 
         
@@ -1136,16 +1149,22 @@ def main() -> None:
         #     except Exception as e:
         #         print_lg("Opening OpenAI chatGPT tab failed!")
         if use_AI:
-            ##> ------ Yang Li : MARKYangL - Feature ------
-            print_lg(f"Initializing AI client for {ai_provider}...")
-            if ai_provider.lower() == "openai":
+            if ai_provider == "openai":
                 aiClient = ai_create_openai_client()
-            elif ai_provider.lower() == "deepseek":
+            ##> ------ Yang Li : MARKYangL - Feature ------
+            # Create DeepSeek client
+            elif ai_provider == "deepseek":
                 aiClient = deepseek_create_client()
-            else:
-                print_lg(f"Unknown AI provider: {ai_provider}. Supported providers are: openai, deepseek")
-                aiClient = None
+            elif ai_provider == "gemini":
+                aiClient = gemini_create_client()
             ##<
+
+            try:
+                about_company_for_ai = " ".join([word for word in (first_name+" "+last_name).split() if len(word) > 3])
+                print_lg(f"Extracted about company info for AI: '{about_company_for_ai}'")
+            except Exception as e:
+                print_lg("Failed to extract about company info!", e)
+        
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)
         total_runs = run(total_runs)
@@ -1164,7 +1183,8 @@ def main() -> None:
                 break
         
 
-    except NoSuchWindowException:   pass
+    except (NoSuchWindowException, WebDriverException) as e:
+        print_lg("Browser window closed or session is invalid. Exiting.", e)
     except Exception as e:
         critical_error_log("In Applier Main", e)
         pyautogui.alert(e,alert_title)
@@ -1204,13 +1224,20 @@ def main() -> None:
                 if ai_provider.lower() == "openai":
                     ai_close_openai_client(aiClient)
                 elif ai_provider.lower() == "deepseek":
-                    ai_close_openai_client(aiClient)  
+                    ai_close_openai_client(aiClient)
+                elif ai_provider.lower() == "gemini":
+                    pass # Gemini client does not need to be closed
                 print_lg(f"Closed {ai_provider} AI client.")
             except Exception as e:
                 print_lg("Failed to close AI client:", e)
         ##<
-        try: driver.quit()
-        except Exception as e: critical_error_log("When quitting...", e)
+        try:
+            if driver:
+                driver.quit()
+        except WebDriverException as e:
+            print_lg("Browser already closed.", e)
+        except Exception as e: 
+            critical_error_log("When quitting...", e)
 
 
 if __name__ == "__main__":

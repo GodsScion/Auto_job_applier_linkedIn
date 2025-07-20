@@ -35,12 +35,20 @@ def make_directories(paths: list[str]) -> None:
     '''
     Function to create missing directories
     '''
-    for path in paths:  
+    for path in paths:
+        path = os.path.expanduser(path) # Expands ~ to user's home directory
         path = path.replace("//","/")
-        if '/' in path and '.' in path: path = path[:path.rfind('/')]
+        
+        # If path looks like a file path, get the directory part
+        if '.' in os.path.basename(path):
+            path = os.path.dirname(path)
+
+        if not path: # Handle cases where path is empty after dirname
+            continue
+
         try:
             if not os.path.exists(path):
-                os.makedirs(path)
+                os.makedirs(path, exist_ok=True) # exist_ok=True avoids race condition
         except Exception as e:
             print(f'Error while creating directory "{path}": ', e)
 
@@ -154,34 +162,39 @@ def calculate_date_posted(time_string: str) -> datetime | None | ValueError:
     * 1 month ago
     * 1 year ago
     '''
+    import re
     time_string = time_string.strip()
-    # print_lg(f"Trying to calculate date job was posted from '{time_string}'")
     now = datetime.now()
-    if "second" in time_string:
-        seconds = int(time_string.split()[0])
-        date_posted = now - timedelta(seconds=seconds)
-    elif "minute" in time_string:
-        minutes = int(time_string.split()[0])
-        date_posted = now - timedelta(minutes=minutes)
-    elif "hour" in time_string:
-        hours = int(time_string.split()[0])
-        date_posted = now - timedelta(hours=hours)
-    elif "day" in time_string:
-        days = int(time_string.split()[0])
-        date_posted = now - timedelta(days=days)
-    elif "week" in time_string:
-        weeks = int(time_string.split()[0])
-        date_posted = now - timedelta(weeks=weeks)
-    elif "month" in time_string:
-        months = int(time_string.split()[0])
-        date_posted = now - timedelta(days=months * 30)
-    elif "year" in time_string:
-        years = int(time_string.split()[0])
-        date_posted = now - timedelta(days=years * 365)
-    else:
-        date_posted = None
-    return date_posted
+
+    match = re.search(r'(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago', time_string, re.IGNORECASE)
+
+    if match:
+        try:
+            value = int(match.group(1))
+            unit = match.group(2).lower()
+
+            if 'second' in unit:
+                return now - timedelta(seconds=value)
+            elif 'minute' in unit:
+                return now - timedelta(minutes=value)
+            elif 'hour' in unit:
+                return now - timedelta(hours=value)
+            elif 'day' in unit:
+                return now - timedelta(days=value)
+            elif 'week' in unit:
+                return now - timedelta(weeks=value)
+            elif 'month' in unit:
+                return now - timedelta(days=value * 30)  # Approximation
+            elif 'year' in unit:
+                return now - timedelta(days=value * 365)  # Approximation
+        except (ValueError, IndexError):
+            # Fallback for cases where parsing fails
+            pass
     
+    # If regex doesn't match, or parsing failed, return None.
+    # This will skip jobs where the date can't be determined, preventing crashes.
+    return None
+
 
 def convert_to_lakhs(value: str) -> str:
     '''

@@ -160,25 +160,24 @@ def validate_secrets() -> None | ValueError | TypeError:
     check_string(password, "password", min_length=5)
 
     check_boolean(use_AI, "use_AI")
-    check_string(ai_provider, "ai_provider", ["openai", "deepseek", "gemini"])
-
-    if ai_provider == "openai":
-        check_string(llm_api_url, "llm_api_url", min_length=5)
-        check_string(llm_api_key, "llm_api_key")
-        check_string(llm_model, "llm_model")
-        # check_string(llm_embedding_model, "llm_embedding_model")
-        check_boolean(stream_output, "stream_output")
+    check_string(llm_api_url, "llm_api_url", min_length=5)
+    check_string(llm_api_key, "llm_api_key")
+    # check_string(llm_embedding_model, "llm_embedding_model")
+    check_boolean(stream_output, "stream_output")
     
     ##> ------ Yang Li : MARKYangL - Feature ------
     # Validate DeepSeek configuration
-    elif ai_provider == "deepseek":
-        check_string(deepseek_api_url, "deepseek_api_url", min_length=5)
-        check_string(deepseek_api_key, "deepseek_api_key")
-        check_string(deepseek_model, "deepseek_model", ["deepseek-chat", "deepseek-reasoner"])
+    check_string(ai_provider, "ai_provider", ["openai", "deepseek"])
+
+    ##> ------ Tim L : tulxoro - Refactor ------
+    if ai_provider == "deepseek":
+        check_string(llm_model, "deepseek_model", ["deepseek-chat", "deepseek-reasoner"])
+    else:
+        check_string(llm_model, "llm_model")
     ##<
-    elif ai_provider == "gemini":
-        check_string(gemini_api_key, "gemini_api_key")
-        check_string(gemini_model, "gemini_model")
+
+    ##<
+
 
 
 from config.settings import *

@@ -20,21 +20,22 @@ def deepseek_create_client() -> OpenAI | None:
         if not use_AI:
             raise ValueError("AI is not enabled! Please enable it by setting `use_AI = True` in `secrets.py` in `config` folder.")
         
+        ##> ------ Tim L : tulxoro - Refactor ------
+        base_url = llm_api_url
         
-        base_url = deepseek_api_url
-        
+
         if base_url.endswith('/'):
             base_url = base_url[:-1]
         
         # Create client with DeepSeek endpoint
-        client = OpenAI(base_url=base_url, api_key=deepseek_api_key)
+        client = OpenAI(base_url=base_url, api_key=llm_api_key)
         
         print_lg("---- SUCCESSFULLY CREATED DEEPSEEK CLIENT! ----")
         print_lg(f"Using API URL: {base_url}")
-        print_lg(f"Using Model: {deepseek_model}")
+        print_lg(f"Using Model: {llm_model}")
         print_lg("Check './config/secrets.py' for more details.\n")
         print_lg("---------------------------------------------")
-        
+        ##<
         return client
     except Exception as e:
         error_message = f"Error occurred while creating DeepSeek client. Make sure your API connection details are correct."
@@ -66,19 +67,21 @@ def deepseek_completion(client: OpenAI, messages: list[dict], response_format: d
     '''
     if not client: 
         raise ValueError("DeepSeek client is not available!")
-
+    ##> ------ Tim L : tulxoro - Improvement ------
     # Set up parameters for the API call
     params = {
-        "model": deepseek_model, 
+        
+        "model": llm_model, 
+   
         "messages": messages, 
         "stream": stream,
         "timeout": 30  
     }
     
     # Add temperature if supported
-    if deepseek_model_supports_temperature(deepseek_model):
+    if deepseek_model_supports_temperature(llm_model):
         params["temperature"] = temperature
-    
+
     # Add response format if needed (DeepSeek uses OpenAI-compatible API)
     if response_format:
         params["response_format"] = response_format
@@ -86,10 +89,10 @@ def deepseek_completion(client: OpenAI, messages: list[dict], response_format: d
     try:
         # Make the API call
         print_lg(f"Calling DeepSeek API for completion...")
-        print_lg(f"Using model: {deepseek_model}")
+        print_lg(f"Using model: {llm_model}")
         print_lg(f"Message count: {len(messages)}")
         completion = client.chat.completions.create(**params)
-
+    ##<
         result = ""
         
         # Process the response

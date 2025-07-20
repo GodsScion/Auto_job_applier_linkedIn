@@ -290,6 +290,10 @@ With heartfelt appreciation, <br>
 <br>
 
 ## 🗓️ Major Updates History:
+### Jul 20, 2024
+- Contributions from community have been added
+- Better AI support, minor bug fixes
+
 ### Nov 28, 2024
 - Patched to work for latest changes in Linkedin.
 - Users can now select to follow or not follow companies when submitting application.
@@ -411,7 +415,7 @@ alternate link: https://discord.gg/ykfDjRFB
     - [Support Q&A](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/support-q-a)
 
 
-#### ℹ️ Version: 24.12.29.12.30 Stable Preview
+#### ℹ️ Version: 25.07.20.9.30 Community Alpha
 
 ---
 

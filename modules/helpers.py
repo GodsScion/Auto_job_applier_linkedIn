@@ -224,3 +224,26 @@ def convert_to_json(data) -> dict:
         return result_json
     except json.JSONDecodeError:
         return {"error": "Unable to parse the response as JSON", "data": data}
+
+
+def truncate_for_csv(data, max_length: int = 131000, suffix: str = "...[TRUNCATED]") -> str:
+    '''
+    Function to truncate data for CSV writing to avoid field size limit errors.
+    * Takes in `data` of any type and converts to string
+    * Takes in `max_length` of type `int` - maximum allowed length (default: 131000, leaving room for suffix)
+    * Takes in `suffix` of type `str` - text to append when truncated
+    * Returns truncated string if data exceeds max_length
+    '''
+    try:
+        # Convert data to string
+        str_data = str(data) if data is not None else ""
+        
+        # If within limit, return as-is
+        if len(str_data) <= max_length:
+            return str_data
+        
+        # Truncate and add suffix
+        truncated = str_data[:max_length - len(suffix)] + suffix
+        return truncated
+    except Exception as e:
+        return f"[ERROR CONVERTING DATA: {e}]"

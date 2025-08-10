@@ -17,8 +17,8 @@ version:    24.12.3.10.30
 
 
 # Login Credentials for LinkedIn (Optional)
-username = "username@example.com"       # Enter your username in the quotes
-password = "example_password"           # Enter your password in the quotes
+username = "sanjaynainwal129@gmail.com"  # Enter your username in the quotes
+password = "B@NGB@ng12"        # Enter your password in the quotes
 
 
 ## Artificial Intelligence (Beta Not-Recommended)
@@ -55,7 +55,7 @@ llm_api_url = ""       # Examples: "https://api.openai.com/v1/", "http://127.0.0
 Note: Don't forget to add / at the end of your url. You may not need this if you are using Gemini.
 '''
 
-# Your LLM API key or other AI API key 
+# Your LLM API key or other AI API key
 llm_api_key = "not-needed"              # Enter your API key in the quotes, make sure it's valid, if not will result in error.
 '''
 Note: Leave it empty as "" or "not-needed" if not needed. Else will result in error!
@@ -67,8 +67,7 @@ llm_model = ""          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-ins
 
 llm_spec = "openai"                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"
 '''
-Note: Currently "openai", "deepseek", "gemini" and "openai-like" api endpoints are supported.
-Most LLMs are compatible with openai, so keeping it as "openai-like" will work.
+Note: Currently "openai" and "openai-like" api endpoints are supported.
 '''
 
 # # Yor local embedding model name or other AI Embedding model name

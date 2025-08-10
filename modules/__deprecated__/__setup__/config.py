@@ -60,10 +60,12 @@ password = "example_password"      # Enter your password in the quotes
 
 # These Sentences are Searched in LinkedIn
 # Enter your search terms inside '[ ]' with quotes ' "searching title" ' for each search followed by comma ', ' Eg: ["Software Engineer", "Software Developer", "Selenium Developer"]
-search_terms = ["Software Engineer", "Software Developer", "Python Developer", "Selenium Developer", "React Developer", "Java Developer", "Front End Developer", "Full Stack Developer", "Web Developer", "Nodejs Developer"]
+# search_terms = ["Software Engineer", "Software Developer", "Python Developer", "Selenium Developer", "React Developer", "Java Developer", "Front End Developer", "Full Stack Developer", "Web Developer", "Nodejs Developer"]
+search_terms = ["Software Engineer", "Software Developer", "Java Developer", "Software Development Engineer", "SDE"]
+
 
 # Search location, this will be filled in "City, state, or zip code" search box. If left empty as "", tool will not fill it.
-search_location = ""               # Some valid examples: "", "United States", "India", "Chicago, Illinois, United States", "90001, Los Angeles, California, United States", "Bengaluru, Karnataka, India", etc.
+search_location = "United States"               # Some valid examples: "", "United States", "India", "Chicago, Illinois, United States", "90001, Los Angeles, California, United States", "Bengaluru, Karnataka, India", etc.
 
 
 # >>>>>>>>>>> Job Search Filters <<<<<<<<<<<
@@ -76,8 +78,8 @@ question_3 = []                    # (dynamic multiple select)
 
 '''
 
-sort_by = ""                       # "Most recent", "Most relevant" or ("" to not select) 
-date_posted = "Past month"         # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
+sort_by = "Most relevant"                       # "Most recent", "Most relevant" or ("" to not select)
+date_posted = ""         # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
 salary = ""                        # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
 
 easy_apply_only = True             # True or False, Note: True or False are case-sensitive
@@ -104,7 +106,7 @@ fair_chance_employer = False       # True or False, Note: True or False are case
 # >>>>>>>>>>> Easy Apply Questions & Inputs <<<<<<<<<<<
 
 # Phone number (required), make sure it's valid.
-phone_number = "9876543210"        # Enter your 10 digit number in quotes Eg: "9876543210"
+phone_number = "9720423975"        # Enter your 10 digit number in quotes Eg: "9876543210"
 
 # Give an relative or absolute path of your default resume to be uploaded. If file in not found, will continue using your previously uploaded resume in LinkedIn.
 default_resume_path = "all resumes/default/resume.pdf"      # (In Development)
@@ -117,54 +119,54 @@ require_visa = "No"               # "Yes" or "No"
 
 # What is the status of your citizenship? # If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
 # Valid options are: "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident" or "Other"
-us_citizenship = "U.S. Citizen/Permanent Resident"
+us_citizenship = "Non-citizen allowed to work for any employer"
 
 
 # What is the link to your portfolio website, leave it empty as "", if you want to leave this question unanswered
-website = "https://github.com/GodsScion"                       # "www.example.bio" or "" and so on....
+website = "https://sanjaynainwal.vercel.app/"                       # "www.example.bio" or "" and so on....
 
 # What to enter in your desired salary question, only enter in numbers inside quotes as some companies only allow numbers
-desired_salary = "120000"          # "80000", "90000", "100000" or "120000" and so on....
+desired_salary = "5000000"          # "80000", "90000", "100000" or "120000" and so on....
 
 # Example question: "On a scale of 1-10 how much experience do you have building web or mobile applications? 1 being very little or only in school, 10 being that you have built and launched applications to real users"
-confidence_level = "8"             # Any number between "1" to "10" including 1 and 10, put it in quotes ""
+confidence_level = "10"             # Any number between "1" to "10" including 1 and 10, put it in quotes ""
 
-current_city = ""                  # If left empty will fill in location of jobs location.
+current_city = "Dehradun"                  # If left empty will fill in location of jobs location.
 
 ## SOME ANNOYING QUESTIONS BY COMPANIES 🫠 ##
 # Address, not so common question but some job applications make it required!
-street = "123 Main Street"
-state = "STATE"
-zipcode = "12345"
-country = "Will Let You Know When Established"
+street = "Dehradun"
+state = "Uttarakhand"
+zipcode = "248001"
+country = "India"
 
-first_name = "Sai"                 # Your first name in quotes Eg: "First", "Sai"
-middle_name = "Vignesh"            # Your name in quotes Eg: "Middle", "Vignesh", ""
-last_name = "Golla"                # Your last name in quotes Eg: "Last", "Golla"
+first_name = "Sanjay"                 # Your first name in quotes Eg: "First", "Sai"
+middle_name = ""            # Your name in quotes Eg: "Middle", "Vignesh", ""
+last_name = "Nainwal"                # Your last name in quotes Eg: "Last", "Golla"
 
 # Your LinkedIn headline in quotes Eg: "Software Engineer @ Google, Masters in Computer Science", "Recent Grad Student @ MIT, Computer Science"
-headline = "Headline"
+headline = "Backend Engineer with Bachelors in Computer Science and 4+ years of experience" # "Headline" or "" to leave this question unanswered
 
 # Your summary in quotes, use \n to add line breaks
-summary = "Summary"
+summary = "I’m Sanjay Nainwal, a Software Development Engineer with 4 years of experience in backend development, currently based in Dehradun,India and working as an SDE-2 at BharatPe (Remote). I’m reaching out to explore backend engineering roles where I can leverage my expertise in large-scale data management, security, and high-performance systems."
 
 # Your cover letter in quotes, use \n to add line breaks
-cover_letter = "Cover Letter"
+cover_letter = "\n"
 
 # Name of your most recent employer
-recent_employer = "Not Applicable" # "", "Lala Company", "Google", "Snowflake", "Databricks"
+recent_employer = "BharatPe" # "", "Lala Company", "Google", "Snowflake", "Databricks"
 
 ## US Equal Opportunity questions
 # What is your ethnicity or race? If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
-ethnicity = "Decline"              # "Decline", "Hispanic/Latino", "American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "Other"
+ethnicity = "Asian"              # "Decline", "Hispanic/Latino", "American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "Other"
 
 # How do you identify yourself? If left empty as "", tool will not answer the question. However, note that some companies make compulsory to be answered
-gender = "Decline"                 # "Male", "Female", "Other", "Decline" or ""
+gender = "Male"                 # "Male", "Female", "Other", "Decline" or ""
 
 # Are you physically disabled or have a history/record of having a disability? If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
-disability_status = "Decline"      # "Yes", "No", "Decline"
+disability_status = "No"      # "Yes", "No", "Decline"
 
-veteran_status = "Decline"         # "Yes", "No", "Decline"
+veteran_status = "No"         # "Yes", "No", "Decline"
 ##
 
 
@@ -172,15 +174,15 @@ veteran_status = "Decline"         # "Yes", "No", "Decline"
 # >>>>>>>>>>> LinkedIn Settings <<<<<<<<<<<
 
 # Do you want to randomize the search order for search_terms?
-randomize_search_order = False     # True of False
+randomize_search_order = True     # True of False
 
 # Do you want to overwrite previous answers?
-overwrite_previous_answers = False # True or False, Note: True or False are case-sensitive
+overwrite_previous_answers = False # True or False
 
 
 ## Skip irrelevant jobs
 # Avoid applying to these companies, and companies with these bad words in their 'About Company' section...
-about_company_bad_words = ["Crossover", "Staffing", "Recruiting", "Jobot"]       # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting", "Name of Company you don't want to apply to"]
+about_company_bad_words = ["Crossover","BharatPe", "EPAM"]       # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting", "Name of Company you don't want to apply to"]
 
 # Skip checking for `about_company_bad_words` for these companies if they have these good words in their 'About Company' section... [Exceptions, For example, I want to apply to "Robert Half" although it's a staffing company]
 about_company_good_words = []      # (dynamic multiple search) or leave empty as []. Ex: ["Robert Half", "Dice"]
@@ -202,14 +204,14 @@ current_experience = 5             # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
 
 ## Allow Manual Inputs
 # Should the tool pause before every submit application during easy apply to let you check the information?
-pause_before_submit = True         # True or False, Note: True or False are case-sensitive
+pause_before_submit = False         # True or False, Note: True or False are case-sensitive
 '''
 Note: Will be treated as False if `run_in_background = True`
 '''
 
 # Should the tool pause if it needs help in answering questions during easy apply?
 # Note: If set as False will answer randomly...
-pause_at_failed_question = True    # True or False, Note: True or False are case-sensitive
+pause_at_failed_question = False    # True or False, Note: True or False are case-sensitive
 '''
 Note: Will be treated as False if `run_in_background = True`
 '''
@@ -219,14 +221,14 @@ Note: Will be treated as False if `run_in_background = True`
 close_tabs = True                  # True or False, Note: True or False are case-sensitive
 
 # After how many number of applications in current search should the bot switch to next search? 
-switch_number = 30                 # Only numbers greater than 0... Don't put in quotes
+switch_number = 50                 # Only numbers greater than 0... Don't put in quotes
 
 ## Upcoming features (In Development)
 # Send connection requests to HR's
 connect_hr = True                  # True or False, Note: True or False are case-sensitive
 
 # What message do you want to send during connection request? (Max. 200 Characters)
-connect_request_message = ""       # Leave Empty to send connection request without personalized invitation (recommended to leave it empty, since you only get 10 per month without LinkedIn Premium*)
+connect_request_message = "I’m Sanjay Nainwal, a Software Development Engineer with 4 years of experience in backend development, currently based in Dehradun,India and working as an SDE-2 at BharatPe (Remote). I’m reaching out to explore backend engineering roles where I can leverage my expertise in large-scale data management, security, and high-performance systems.\n\nNotice Period: 2 months\nCore Expertise: Database migration, real-time anomaly detection, fraud prevention, payment systems, API development\nTech Stack: Java, Python, Spring Boot, Kafka, MySQL, Redis, Kubernetes, WebRTC, Docker, and CI/CD pipelines\n\nLinkedIn : https://www.linkedin.com/in/sanjay-nainwal/\nGitHub : https://github.com/nainwalsanju\nPortfolio : https://sanjaynainwal.vercel.app/\nResume : https://drive.google.com/file/d/1HNIvrMgMgElwoCgRaK4OI9zkhgxpBqVx/view?usp=sharing"       # Leave Empty to send connection request without personalized invitation (recommended to leave it empty, since you only get 10 per month without LinkedIn Premium*)
 
 # Do you want the program to run continuously until you stop it? (Beta)
 run_non_stop = False               # True or False, Note: True or False are case-sensitive

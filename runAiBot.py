@@ -32,7 +32,7 @@ from selenium.common.exceptions import NoSuchElementException, ElementClickInter
 from config.personals import *
 from config.questions import *
 from config.search import *
-from config.secrets import use_AI, username, password
+# from config.secrets import use_AI, username, password
 from config.settings import *
 
 from modules.open_chrome import *
@@ -877,8 +877,8 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                         continue
 
                     
-                    if use_AI and description != "Unknown":
-                        skills = ai_extract_skills(aiClient, description)
+                    # if use_AI and description != "Unknown":
+                    #     skills = ai_extract_skills(aiClient, description)
 
                     uploaded = False
                     # Case 1: Easy Apply Button
@@ -996,9 +996,9 @@ def run(total_runs: int) -> int:
     print_lg("########################################################################################################################\n")
     if not dailyEasyApplyLimitReached:
         print_lg("Sleeping for 10 min...")
-        sleep(300)
+        sleep(60)
         print_lg("Few more min... Gonna start with in next 5 min...")
-        sleep(300)
+        # sleep(300)
     buffer(3)
     return total_runs + 1
 
@@ -1036,8 +1036,8 @@ def main() -> None:
         #         chatGPT_tab = driver.current_window_handle
         #     except Exception as e:
         #         print_lg("Opening OpenAI chatGPT tab failed!")
-        if use_AI:
-            aiClient = ai_create_openai_client()
+        # if use_AI:
+        #     aiClient = ai_create_openai_client()
 
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)

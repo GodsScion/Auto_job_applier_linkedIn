@@ -17,39 +17,11 @@ version:    24.12.3.10.30
 
 
 # Login Credentials for LinkedIn (Optional)
-username = "username@example.com"       # Enter your username in the quotes
-password = "example_password"           # Enter your password in the quotes
+# username = "username@example.com"  # Enter your username in the quotes
+# password = "example_password"      # Enter your password in the quotes
 
-
-## Artificial Intelligence (Beta Not-Recommended)
-# Use AI
-use_AI = False                          # True or False, Note: True or False are case-sensitive
-'''
-Note: Set it as True only if you want to use AI, and If you either have a
-1. Local LLM model running on your local machine, with it's APIs exposed. Example softwares to achieve it are:
-    a. Ollama - https://ollama.com/
-    b. llama.cpp - https://github.com/ggerganov/llama.cpp
-    c. LM Studio - https://lmstudio.ai/ (Recommended)
-    d. Jan - https://jan.ai/
-2. OR you have a valid OpenAI API Key, and money to spare, and you don't mind spending it.
-CHECK THE OPENAI API PIRCES AT THEIR WEBSITE (https://openai.com/api/pricing/). 
-'''
-
-# Your Local LLM url or other AI api url and port
-llm_api_url = "https://api.openai.com/v1/"       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/"
-'''
-Note: Don't forget to add / at the end of your url
-'''
-
-# Your Local LLM API key or other AI API key 
-llm_api_key = "ojjnawuogjuio;ewhfuioweh*********"              # Enter your API key in the quotes, make sure it's valid, if not will result in error.
-'''
-Note: Leave it empyt as "" or "not-needed" if not needed. Else will result in error!
-'''
-
-# Your local LLM model name or other AI model name
-llm_model = "gpt-4o-mini"          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct"
-
+username = "sanjaynainwal129@gmail.com"  # Enter your username in the quotes
+password = "B@NGB@ng12"      # Enter your password in the quotes
 
 #
 llm_spec = "openai"                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"

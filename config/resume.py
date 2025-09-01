@@ -18,8 +18,8 @@ import json
 ###################################################### CONFIGURE YOUR RESUME HERE ######################################################
 
 
-# # Give an relative path of your default resume to be uploaded. If file in not found, will continue using your previously uploaded resume in LinkedIn.
-# default_resume_path = "all resumes/default/resume.pdf"      # (In Development)
+# Give a relative path of your default resume to be uploaded. If file is not found, will continue using your previously uploaded resume in LinkedIn.
+default_resume_path = r"documents/Aidan_Kimberley_CV.pdf"      # (In Development)
 
 '''
 YOU DON'T HAVE TO EDIT THIS FILE, IF YOU ADDED YOUR DEFAULT RESUME.

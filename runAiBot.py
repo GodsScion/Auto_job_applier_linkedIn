@@ -537,7 +537,15 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 label_org += f' {options_labels[-1]},'
 
             if overwrite_previous_answers or prev_answer is None:
-                if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
+                # EDUCATION-SPECIFIC LOGIC - Override AI answers for education questions
+                if 'bachelor' in label:
+                    answer = 'Yes'  # You're currently enrolled at McGill University
+                    print_lg("🎓 EDUCATION OVERRIDE: Bachelor's degree question - Answering 'Yes' (enrolled at McGill)")
+                elif ('master' in label or 'mba' in label or 'phd' in label) and 'bachelor' not in label:
+                    answer = 'No'   # You're still an undergraduate student
+                    print_lg("🎓 EDUCATION OVERRIDE: Advanced degree question - Answering 'No' (still undergraduate)")
+                # Standard logic for other questions
+                elif 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
                 elif 'veteran' in label or 'protected' in label: answer = veteran_status
                 elif 'disability' in label or 'handicapped' in label: 
                     answer = disability_status
@@ -604,7 +612,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     elif 'week' in label:
                         answer = notice_period_weeks
                     else: answer = notice_period
-                elif 'salary' in label or 'compensation' in label or 'ctc' in label or 'pay' in label: 
+                elif 'salary' in label or 'compensation' in label or 'ctc' in label or 'pay' in label or 'money' in label: 
                     if 'current' in label or 'present' in label:
                         if 'month' in label:
                             answer = current_ctc_monthly
@@ -631,23 +639,40 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 ##> ------ Yang Li : MARKYangL - Feature ------
                 if answer == "":
                     if use_AI and aiClient:
-                        try:
-                            if ai_provider.lower() == "openai":
-                                answer = ai_answer_question(aiClient, label_org, question_type="text", job_description=job_description, user_information_all=user_information_all)
-                            elif ai_provider.lower() == "deepseek":
-                                answer = deepseek_answer_question(aiClient, label_org, options=None, question_type="text", job_description=job_description, about_company=None, user_information_all=user_information_all)
-                            elif ai_provider.lower() == "gemini":
-                                answer = gemini_answer_question(aiClient, label_org, options=None, question_type="text", job_description=job_description, about_company=None, user_information_all=user_information_all)
-                            else:
-                                randomly_answered_questions.add((label_org, "text"))
-                                answer = years_of_experience
-                            if answer and isinstance(answer, str) and len(answer) > 0:
-                                print_lg(f'AI Answered received for question "{label_org}" \nhere is answer: "{answer}"')
-                            else:
-                                randomly_answered_questions.add((label_org, "text"))
-                                answer = years_of_experience
-                        except Exception as e:
-                            print_lg("Failed to get AI answer!", e)
+                        # Try AI answer with retry logic
+                        max_retries = 2
+                        retry_count = 0
+                        
+                        while retry_count <= max_retries and (not answer or answer == ""):
+                            try:
+                                if ai_provider.lower() == "openai":
+                                    answer = ai_answer_question(aiClient, label_org, question_type="text", job_description=job_description, user_information_all=user_information_all)
+                                elif ai_provider.lower() == "deepseek":
+                                    answer = deepseek_answer_question(aiClient, label_org, options=None, question_type="text", job_description=job_description, about_company=None, user_information_all=user_information_all)
+                                elif ai_provider.lower() == "gemini":
+                                    answer = gemini_answer_question(aiClient, label_org, options=None, question_type="text", job_description=job_description, about_company=None, user_information_all=user_information_all)
+                                else:
+                                    break
+                                
+                                # Validate the answer
+                                if answer and isinstance(answer, str) and len(answer.strip()) > 0:
+                                    answer = answer.strip()
+                                    print_lg(f'AI Answered received for question "{label_org}" \nhere is answer: "{answer}"')
+                                    break
+                                else:
+                                    retry_count += 1
+                                    if retry_count <= max_retries:
+                                        print_lg(f"AI gave empty/invalid answer, retrying... (attempt {retry_count + 1})")
+                                        
+                            except Exception as e:
+                                retry_count += 1
+                                print_lg(f"Failed to get AI answer (attempt {retry_count}): {e}")
+                                if retry_count <= max_retries:
+                                    print_lg("Retrying AI question...")
+                                    
+                        # If all retries failed, use fallback
+                        if not answer or answer == "":
+                            print_lg(f"AI failed after {max_retries + 1} attempts, using fallback answer")
                             randomly_answered_questions.add((label_org, "text"))
                             answer = years_of_experience
                     else:
@@ -677,23 +702,40 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 if answer == "":
                 ##> ------ Yang Li : MARKYangL - Feature ------
                     if use_AI and aiClient:
-                        try:
-                            if ai_provider.lower() == "openai":
-                                answer = ai_answer_question(aiClient, label_org, question_type="textarea", job_description=job_description, user_information_all=user_information_all)
-                            elif ai_provider.lower() == "deepseek":
-                                answer = deepseek_answer_question(aiClient, label_org, options=None, question_type="textarea", job_description=job_description, about_company=None, user_information_all=user_information_all)
-                            elif ai_provider.lower() == "gemini":
-                                answer = gemini_answer_question(aiClient, label_org, options=None, question_type="textarea", job_description=job_description, about_company=None, user_information_all=user_information_all)
-                            else:
-                                randomly_answered_questions.add((label_org, "textarea"))
-                                answer = ""
-                            if answer and isinstance(answer, str) and len(answer) > 0:
-                                print_lg(f'AI Answered received for question "{label_org}" \nhere is answer: "{answer}"')
-                            else:
-                                randomly_answered_questions.add((label_org, "textarea"))
-                                answer = ""
-                        except Exception as e:
-                            print_lg("Failed to get AI answer!", e)
+                        # Try AI answer with retry logic for textarea
+                        max_retries = 2
+                        retry_count = 0
+                        
+                        while retry_count <= max_retries and (not answer or answer == ""):
+                            try:
+                                if ai_provider.lower() == "openai":
+                                    answer = ai_answer_question(aiClient, label_org, question_type="textarea", job_description=job_description, user_information_all=user_information_all)
+                                elif ai_provider.lower() == "deepseek":
+                                    answer = deepseek_answer_question(aiClient, label_org, options=None, question_type="textarea", job_description=job_description, about_company=None, user_information_all=user_information_all)
+                                elif ai_provider.lower() == "gemini":
+                                    answer = gemini_answer_question(aiClient, label_org, options=None, question_type="textarea", job_description=job_description, about_company=None, user_information_all=user_information_all)
+                                else:
+                                    break
+                                
+                                # Validate the answer
+                                if answer and isinstance(answer, str) and len(answer.strip()) > 0:
+                                    answer = answer.strip()
+                                    print_lg(f'AI Answered received for question "{label_org}" \nhere is answer: "{answer}"')
+                                    break
+                                else:
+                                    retry_count += 1
+                                    if retry_count <= max_retries:
+                                        print_lg(f"AI gave empty/invalid answer for textarea, retrying... (attempt {retry_count + 1})")
+                                        
+                            except Exception as e:
+                                retry_count += 1
+                                print_lg(f"Failed to get AI answer for textarea (attempt {retry_count}): {e}")
+                                if retry_count <= max_retries:
+                                    print_lg("Retrying AI textarea question...")
+                                    
+                        # If all retries failed, leave empty or use fallback
+                        if not answer or answer == "":
+                            print_lg(f"AI failed after {max_retries + 1} attempts for textarea question")
                             randomly_answered_questions.add((label_org, "textarea"))
                             answer = ""
                     else:
@@ -818,6 +860,36 @@ def screenshot(driver: WebDriver, job_id: str, failedAt: str) -> str:
 
 
 
+def format_questions_readable(questions_list):
+    """
+    Convert questions to a readable format for CSV.
+    """
+    if not questions_list:
+        return "No questions found"
+    
+    formatted_lines = []
+    for i, (question, answer, q_type, selected_value) in enumerate(questions_list, 1):
+        # Clean question text
+        clean_question = question.split('[')[0].strip() if '[' in question else question
+        
+        # Get actual answer
+        if q_type == 'radio':
+            if selected_value and '<' in str(selected_value):
+                actual_answer = str(selected_value).split('<')[0].strip('"')
+            else:
+                actual_answer = answer
+        elif q_type == 'select':
+            actual_answer = selected_value if selected_value else answer
+        else:
+            actual_answer = answer
+        
+        # Format as Q&A
+        formatted_lines.append(f"Q{i}: {clean_question}")
+        formatted_lines.append(f"A{i}: {actual_answer}")
+        formatted_lines.append("")
+    
+    return "\n".join(formatted_lines)
+
 def submitted_jobs(job_id: str, title: str, company: str, work_location: str, work_style: str, description: str, experience_required: int | Literal['Unknown', 'Error in extraction'], 
                    skills: list[str] | Literal['In Development'], hr_name: str | Literal['Unknown'], hr_link: str | Literal['Unknown'], resume: str, 
                    reposted: bool, date_listed: datetime | Literal['Unknown'], date_applied:  datetime | Literal['Pending'], job_link: str, application_link: str, 
@@ -826,6 +898,17 @@ def submitted_jobs(job_id: str, title: str, company: str, work_location: str, wo
     Function to create or update the Applied jobs CSV file, once the application is submitted successfully
     '''
     try:
+        # Validate education answers before saving
+        if questions_list:
+            education_issues = validate_education_answers(questions_list)
+            if education_issues:
+                print_lg("⚠️ EDUCATION ISSUES FOUND:")
+                for issue in education_issues:
+                    print_lg(f"  {issue}")
+        
+        # Format questions for better readability
+        formatted_questions = format_questions_readable(questions_list) if questions_list else "No questions found"
+        
         with open(file_name, mode='a', newline='', encoding='utf-8') as csv_file:
             fieldnames = ['Job ID', 'Title', 'Company', 'Work Location', 'Work Style', 'About Job', 'Experience required', 'Skills required', 'HR Name', 'HR Link', 'Resume', 'Re-posted', 'Date Posted', 'Date Applied', 'Job Link', 'External Job link', 'Questions Found', 'Connect Request']
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
@@ -834,13 +917,39 @@ def submitted_jobs(job_id: str, title: str, company: str, work_location: str, wo
                             'About Job':truncate_for_csv(description), 'Experience required': truncate_for_csv(experience_required), 'Skills required':truncate_for_csv(skills), 
                                 'HR Name':truncate_for_csv(hr_name), 'HR Link':truncate_for_csv(hr_link), 'Resume':truncate_for_csv(resume), 'Re-posted':truncate_for_csv(reposted), 
                                 'Date Posted':truncate_for_csv(date_listed), 'Date Applied':truncate_for_csv(date_applied), 'Job Link':truncate_for_csv(job_link), 
-                                'External Job link':truncate_for_csv(application_link), 'Questions Found':truncate_for_csv(questions_list), 'Connect Request':truncate_for_csv(connect_request)})
+                                'External Job link':truncate_for_csv(application_link), 'Questions Found':truncate_for_csv(formatted_questions), 'Connect Request':truncate_for_csv(connect_request)})
         csv_file.close()
     except Exception as e:
         print_lg("Failed to update submitted jobs list!", e)
         pyautogui.alert("Failed to update the excel of applied jobs!\nProbably because of 1 of the following reasons:\n1. The file is currently open or in use by another program\n2. Permission denied to write to the file\n3. Failed to find the file", "Failed Logging")
 
 
+
+def validate_education_answers(questions_list):
+    """
+    Validate education-related answers before submitting application.
+    """
+    education_issues = []
+    
+    for question, answer, q_type, selected_value in questions_list:
+        question_lower = question.lower()
+        
+        # Check Bachelor's degree questions
+        if 'bachelor' in question_lower:
+            if 'no' in str(answer).lower():
+                education_issues.append(f"❌ Bachelor's Degree answered as 'No' - should be 'Yes' (McGill University)")
+        
+        # Check Master's degree questions
+        elif 'master' in question_lower and 'bachelor' not in question_lower:
+            if 'yes' in str(answer).lower():
+                education_issues.append(f"❌ Master's Degree answered as 'Yes' - should be 'No' (still undergraduate)")
+        
+        # Check MBA questions
+        elif 'mba' in question_lower:
+            if 'yes' in str(answer).lower():
+                education_issues.append(f"❌ MBA answered as 'Yes' - should be 'No' (still undergraduate)")
+    
+    return education_issues
 
 # Function to discard the job application
 def discard_job() -> None:

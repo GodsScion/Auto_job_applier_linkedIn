@@ -54,7 +54,7 @@ And if asked in months, then it will divide by 12 and answer. Examples:
 '''
 
 # What is your current CTC? Some companies make it compulsory to be answered in numbers...
-current_ctc = 3400000            # 800000, 900000, 1000000 or 1200000 and so on... Do NOT use quotes
+current_ctc = 3700000            # 800000, 900000, 1000000 or 1200000 and so on... Do NOT use quotes
 '''
 Note: If question has the word "lakhs" in it (Example: What is your current CTC in lakhs), 
 then it will add '.' before last 5 digits and answer. Examples: 
@@ -69,7 +69,7 @@ then it will add '.' before last 5 digits and answer. Examples:
 # currency = "INR"                 # "USD", "INR", "EUR", etc.
 
 # What is your notice period in days?
-notice_period = 15             # Any number >= 0 without quotes. Eg: 0, 7, 15, 30, 45, etc.
+notice_period = 0             # Any number >= 0 without quotes. Eg: 0, 7, 15, 30, 45, etc.
 '''
 Note: If question has 'month' or 'week' in it (Example: What is your notice period in months), 
 then it will divide by 30 or 7 and answer respectively. Examples:
@@ -113,7 +113,7 @@ confidence_level = "8"             # Any number between "1" to "10" including 1 
 
 ## Allow Manual Inputs
 # Should the tool pause before every submit application during easy apply to let you check the information?
-pause_before_submit = True         # True or False, Note: True or False are case-sensitive
+pause_before_submit = False         # True or False, Note: True or False are case-sensitive
 '''
 Note: Will be treated as False if `run_in_background = True`
 '''
@@ -124,7 +124,7 @@ pause_at_failed_question = False    # True or False ,   Will be treated as False
 ##
 
 # Do you want to overwrite previous answers?
-overwrite_previous_answers = False # True or False
+overwrite_previous_answers = True # True or False
 
 # Follow the comapnies you've applied?
 follow_applied_companies = False

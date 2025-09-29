@@ -40,7 +40,7 @@ Note: Will be treated as False if `run_in_background = True`
 '''
 alternate_sortby = True             # True or False, Note: True or False are case-sensitive
 cycle_date_posted = True            # True or False, Note: True or False are case-sensitive
-stop_date_cycle_at_24hr = True      # True or False, Note: True or False are case-sensitive
+stop_date_cycle_at_24hr = False      # True or False, Note: True or False are case-sensitive
 
 
 

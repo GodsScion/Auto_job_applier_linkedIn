@@ -1,13 +1,22 @@
-__pycache__
+# IDE
 .vscode
+.kiro
 
-all excels
-all resumes
-logs
+# Generated files
+.DS_Store
+__pycache__
+.python-version
 
-old
-
+# Secrets
 secrets.py
 config/personals.py
 .venv
 apikeys.py
+
+# Logs
+all excels
+all resumes
+logs
+
+# Misc
+old

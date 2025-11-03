@@ -63,7 +63,7 @@ failed_file_name = "all excels/all_failed_applications_history.csv"
 logs_folder_path = "logs/"
 
 # Set the maximum amount of time allowed to wait between each click in secs
-click_gap = 0                       # Enter max allowed secs to wait approximately. (Only Non Negative Integers Eg: 0,1,2,3,....)
+click_gap = 1                       # Enter max allowed secs to wait approximately. (Only Non Negative Integers Eg: 0,1,2,3,....)
 
 # If you want to see Chrome running then set run_in_background as False (May reduce performance). 
 run_in_background = False           # True or False, Note: True or False are case-sensitive ,   If True, this will make pause_at_failed_question, pause_before_submit and run_in_background as False
@@ -81,7 +81,7 @@ smooth_scroll = False               # True or False, Note: True or False are cas
 keep_screen_awake = True            # True or False, Note: True or False are case-sensitive (Note: Will temporarily deactivate when any application dialog boxes are present (Eg: Pause before submit, Help needed for a question..))
 
 # Run in undetected mode to bypass anti-bot protections (Preview Feature, UNSTABLE. Recommended to leave it as False)
-stealth_mode = False                # True or False, Note: True or False are case-sensitive
+stealth_mode = True                # True or False, Note: True or False are case-sensitive
 
 # Do you want to get alerts on errors related to AI API connection?
 showAiErrorAlerts = True            # True or False, Note: True or False are case-sensitive

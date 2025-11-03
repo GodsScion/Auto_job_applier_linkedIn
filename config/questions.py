@@ -104,7 +104,7 @@ Note: If left empty as "", the tool will not answer the question. However, note 
 recent_employer = "BharatPe" # "", "Lala Company", "Google", "Snowflake", "Databricks"
 
 # Example question: "On a scale of 1-10 how much experience do you have building web or mobile applications? 1 being very little or only in school, 10 being that you have built and launched applications to real users"
-confidence_level = "8"             # Any number between "1" to "10" including 1 and 10, put it in quotes ""
+confidence_level = "10"             # Any number between "1" to "10" including 1 and 10, put it in quotes ""
 ##
 
 
@@ -113,14 +113,14 @@ confidence_level = "8"             # Any number between "1" to "10" including 1 
 
 ## Allow Manual Inputs
 # Should the tool pause before every submit application during easy apply to let you check the information?
-pause_before_submit = False         # True or False, Note: True or False are case-sensitive
+pause_before_submit = True         # True or False, Note: True or False are case-sensitive
 '''
 Note: Will be treated as False if `run_in_background = True`
 '''
 
 # Should the tool pause if it needs help in answering questions during easy apply?
 # Note: If set as False will answer randomly...
-pause_at_failed_question = False    # True or False ,   Will be treated as False if run_in_background is True
+pause_at_failed_question = True    # True or False ,   Will be treated as False if run_in_background is True
 ##
 
 # Do you want to overwrite previous answers?

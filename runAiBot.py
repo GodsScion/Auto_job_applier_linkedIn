@@ -177,9 +177,14 @@ def set_search_location() -> None:
     '''
     if search_location.strip():
         try:
-            print_lg(f'Setting search location as: "{search_location.strip()}"')
+            #create an array of locations by splitting with comma and then pick one randomly if randomize_search_location is True
+            locations = [loc.strip() for loc in search_location.split(',') if loc.strip()]
+            final_location = choice(locations) if randomize_search_location else locations[0]
+
+
+            print_lg(f'Setting search location as: "{final_location.strip()}"')
             search_location_ele = try_xp(driver, ".//input[@aria-label='City, state, or zip code'and not(@disabled)]", False) #  and not(@aria-hidden='true')]")
-            text_input(actions, search_location_ele, search_location, "Search Location")
+            text_input(actions, search_location_ele, final_location, "Search Location")
         except ElementNotInteractableException:
             try_xp(driver, ".//label[@class='jobs-search-box__input-icon jobs-search-box__keywords-label']")
             actions.send_keys(Keys.TAB, Keys.TAB).perform()

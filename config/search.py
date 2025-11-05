@@ -18,15 +18,17 @@ version:    24.12.29.12.30
 # These Sentences are Searched in LinkedIn
 # Enter your search terms inside '[ ]' with quotes ' "searching title" ' for each search followed by comma ', ' Eg: ["Software Engineer", "Software Developer", "Selenium Developer"]
 search_terms = [
-    "Java Backend Engineer",
-    "Java Software Engineer",
-    "Java Developer",
-    "Backend Engineer",
+    # "Java Backend Engineer",
+    # "Java Software Engineer",
+    # "Java Developer",
+    # "Backend Engineer",
     "Java",
     "Backend Engineer",
     "Software Engineer",
     "Software Developer",
-    "Senior Software Engineer",
+    "Senior Software Engineer"
+    "Senior Backend Developer",
+    "SDE-3"
     "SSE"
 ]
 # search_terms = ["Java"]
@@ -67,7 +69,7 @@ easy_apply_only = True             # True or False, Note: True or False are case
 
 experience_level = []              # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
 job_type = []                      # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
-on_site = ["Remote"]                       # (multiple select) "On-site", "Remote", "Hybrid"
+on_site = ["Remote","Hybrid"]                       # (multiple select) "On-site", "Remote", "Hybrid"
 
 companies = []                     # (dynamic multiple select) make sure the name you type in list exactly matches with the company name you're looking for, including capitals. 
                                    # Eg: "7-eleven", "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)","Meta","Apple","Byte Dance","Netflix", "Snowflake","Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express", "Snap Inc", "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", and so on...
@@ -80,13 +82,13 @@ commitments = []                   # (dynamic multiple select)
 
 under_10_applicants = False        # True or False, Note: True or False are case-sensitive
 in_your_network = False            # True or False, Note: True or False are case-sensitive
-fair_chance_employer = True       # True or False, Note: True or False are case-sensitive
+fair_chance_employer = False       # True or False, Note: True or False are case-sensitive
 
 
 ## >>>>>>>>>>> RELATED SETTING <<<<<<<<<<<
 
 # Pause after applying filters to let you modify the search results and filters?
-pause_after_filters = False         # True or False, Note: True or False are case-sensitive
+pause_after_filters = True         # True or False, Note: True or False are case-sensitive
 
 ##
 

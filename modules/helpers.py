@@ -16,7 +16,9 @@ version:    24.12.29.12.30
 # Imports
 
 import os
+import sys
 import json
+import pathlib
 
 from time import sleep
 from random import randint
@@ -55,17 +57,40 @@ def make_directories(paths: list[str]) -> None:
 
 def find_default_profile_directory() -> str | None:
     '''
-    Function to search for Chrome Profiles within default locations
+    Dynamically finds the default Google Chrome 'User Data' directory path
+    across Windows, macOS, and Linux, regardless of OS version.
+
+    Returns the absolute path as a string, or None if the path is not found.
     '''
-    default_locations = [
-        r"%LOCALAPPDATA%\Google\Chrome\User Data",
-        r"%USERPROFILE%\AppData\Local\Google\Chrome\User Data",
-        r"%USERPROFILE%\Local Settings\Application Data\Google\Chrome\User Data"
-    ]
-    for location in default_locations:
-        profile_dir = os.path.expandvars(location)
-        if os.path.exists(profile_dir):
-            return profile_dir
+    
+    home = pathlib.Path.home()
+    
+    # Windows
+    if sys.platform.startswith('win'):
+        paths = [
+            os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data"),
+            os.path.expandvars(r"%USERPROFILE%\AppData\Local\Google\Chrome\User Data"),
+            os.path.expandvars(r"%USERPROFILE%\Local Settings\Application Data\Google\Chrome\User Data")
+        ]
+    # Linux
+    elif sys.platform.startswith('linux'):
+        paths = [
+            str(home / ".config" / "google-chrome"),
+            str(home / ".var" / "app" / "com.google.Chrome" / "data" / ".config" / "google-chrome"),
+        ]
+    # MacOS ## For some reason, opening with profile in MacOS is not creating a session for undetected-chromedriver!
+    # elif sys.platform == 'darwin':
+    #     paths = [
+    #         str(home / "Library" / "Application Support" / "Google" / "Chrome")
+    #     ]
+    else:
+        return None
+
+    # Check each potential path and return the first one that exists
+    for path_str in paths:
+        if os.path.exists(path_str):
+            return path_str
+            
     return None
 #>
 

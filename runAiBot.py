@@ -42,9 +42,11 @@ from modules.open_chrome import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
-from modules.ai.openaiConnections import ai_create_openai_client, ai_extract_skills, ai_answer_question, ai_close_openai_client
-from modules.ai.deepseekConnections import deepseek_create_client, deepseek_extract_skills, deepseek_answer_question
-from modules.ai.geminiConnections import gemini_create_client, gemini_extract_skills, gemini_answer_question
+
+if use_AI:
+    from modules.ai.openaiConnections import ai_create_openai_client, ai_extract_skills, ai_answer_question, ai_close_openai_client
+    from modules.ai.deepseekConnections import deepseek_create_client, deepseek_extract_skills, deepseek_answer_question
+    from modules.ai.geminiConnections import gemini_create_client, gemini_extract_skills, gemini_answer_question
 
 from typing import Literal
 
@@ -154,12 +156,12 @@ def login_LN() -> None:
 
 
 
-def get_applied_job_ids() -> set:
+def get_applied_job_ids() -> set[str]:
     '''
     Function to get a `set` of applied job's Job IDs
     * Returns a set of Job IDs from existing applied jobs history csv file
     '''
-    job_ids = set()
+    job_ids: set[str] = set()
     try:
         with open(file_name, 'r', encoding='utf-8') as file:
             reader = csv.reader(file)

@@ -9,6 +9,8 @@ License:    GNU Affero General Public License
             
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
+Support me: https://github.com/sponsors/GodsScion
+
 version:    24.12.3.10.30
 '''
 

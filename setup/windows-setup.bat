@@ -8,6 +8,8 @@
 
 :: GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
+Support me: https://github.com/sponsors/GodsScion
+
 
 
 @echo off

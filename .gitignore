@@ -11,3 +11,11 @@ secrets.py
 config/personals.py
 .venv
 apikeys.py
+
+# Debug & Temp files
+debug_html_dumps/
+*.html
+verify_fix.py
+debug_user_snippet.html
+.idea
+.env

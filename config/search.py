@@ -33,7 +33,7 @@ search_terms = [
 ]
 # search_terms = ["Java"]
 # Search location, this will be filled in "City, state, or zip code" search box. If left empty as "", tool will not fill it.
-search_location = "India,United States,Asia,Australia,Canada,Europe,UAE,Middle East"               # Some valid examples: "", "United States", "India", "Chicago, Illinois, United States", "90001, Los Angeles, California, United States", "Bengaluru, Karnataka, India", etc.
+search_location = "India,United States,Asia,Australia,Canada,Europe,UAE,Middle East,Singapore"               # Some valid examples: "", "United States", "India", "Chicago, Illinois, United States", "90001, Los Angeles, California, United States", "Bengaluru, Karnataka, India", etc.
 
 #Randmoize search location from above
 randomize_search_location = True      # True or False, Note: True or False are case-sensitive
@@ -67,7 +67,7 @@ salary = ""                        # "$40,000+", "$60,000+", "$80,000+", "$100,0
 
 easy_apply_only = True             # True or False, Note: True or False are case-sensitive
 
-experience_level = []              # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
+experience_level = ["Associate","Mid-Senior level"]              # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
 job_type = []                      # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
 on_site = ["Remote","Hybrid"]                       # (multiple select) "On-site", "Remote", "Hybrid"
 
@@ -98,7 +98,7 @@ pause_after_filters = True         # True or False, Note: True or False are case
 ## >>>>>>>>>>> SKIP IRRELEVANT JOBS <<<<<<<<<<<
  
 # Avoid applying to these companies, and companies with these bad words in their 'About Company' section...
-about_company_bad_words = ["Crossover", "BharatPe", "EPAM"]       # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting", "Name of Company you don't want to apply to"]
+about_company_bad_words = ["BharatPe"]       # (dynamic multiple search) or leave empty as []. Ex: ["Staffing", "Recruiting", "Name of Company you don't want to apply to"]
 
 # Skip checking for `about_company_bad_words` for these companies if they have these good words in their 'About Company' section... [Exceptions, For example, I want to apply to "Robert Half" although it's a staffing company]
 about_company_good_words = []      # (dynamic multiple search) or leave empty as []. Ex: ["Robert Half", "Dice"]
@@ -113,7 +113,7 @@ security_clearance = False         # True or False, Note: True or False are case
 did_masters = False                 # True or False
 
 # Avoid applying to jobs if their required experience is above your current_experience. (Set value as -1 if you want to apply to all ignoring their required experience...)
-current_experience = 5             # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
+current_experience = 6             # Integers > -2 (Ex: -1, 0, 1, 2, 3, 4...)
 ##
 
 # Job style preference?

@@ -1,6 +1,6 @@
 <!-- ##> ------ Karthik Sarode : karthik.sarode23@gmail.com - UI for excel files ------ -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Applied Jobs</title>
     <style>
@@ -8,12 +8,12 @@
         table { 
             border-collapse: collapse; 
             width: 100%;
-            margin-top: 20px;
+            margin-top: 12px;
         }
         th, td { 
             border: 1px solid #ddd; 
-            padding: 12px; 
-            text-align: left; 
+            padding: 10px;
+            text-align: left;
         }
         th { 
             background-color: #f4f4f4; 
@@ -29,85 +29,128 @@
             max-width: 1200px;
             margin: 0 auto;
         }
-        .sl-column {
-            width: 50px;
-            text-align: center;
-        }
-        .sort-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0 5px;
-            font-size: 12px;
-        }
-        .sort-button:hover {
-            color: #0066cc;
-        }
-        .applied-column {
-            width: 70px;
-            text-align: center;
-        }
-        .tick {
-            color: #4CAF50;
-            font-weight: bold;
-        }
+        .sl-column { width: 50px; text-align: center; }
+        .sort-button { background: none; border: none; cursor: pointer; padding: 0 5px; font-size: 12px; }
+        .sort-button:hover { color: #0066cc; }
+        .applied-column { width: 90px; text-align: center; }
+        .tick { color: #4CAF50; font-weight: bold; }
+        .controls { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+        .search { padding:6px 8px; border:1px solid #ccc; border-radius:4px; width:320px; }
+        .btn { padding:6px 10px; border-radius:4px; border:1px solid #004a9e; background:#0056b3; color:#fff; cursor:pointer; }
+        .btn.secondary { background: #fff; color:#004a9e; border-color:#004a9e; }
+        .muted { color:#666; font-size:14px; }
+        .spinner { width:18px; height:18px; border:3px solid #f3f3f3; border-top:3px solid #3498db; border-radius:50%; animation:spin 1s linear infinite; display:inline-block; vertical-align:middle; }
+        .small-spinner { width:12px; height:12px; border:2px solid #f3f3f3; border-top:2px solid #3498db; border-radius:50%; animation:spin 1s linear infinite; display:inline-block; vertical-align:middle; margin-left:6px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .applied-row { background: #f0fff4 !important; }
+        .message { margin-top:12px; color:#333; }
+        .error { color: #b00020; }
+        .small { font-size:13px; color:#444; }
+        .empty-card { padding:18px; border:1px dashed #ccc; border-radius:6px; text-align:center; background:#fafafa; }
+        /* accessible hidden label */
+        .sr-only { position: absolute !important; height: 1px; width: 1px; overflow: hidden; clip: rect(1px, 1px, 1px, 1px); white-space: nowrap; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Applied Jobs History</h1>
+
+        <div class="controls">
+            <label for="searchInput" class="sr-only">Search jobs</label>
+            <input id="searchInput" class="search" placeholder="Search by title, company or HR..." />
+            <button id="refreshBtn" class="btn">Refresh</button>
+            <button id="demoBtn" class="btn secondary" title="Load demo data to preview UI">Demo</button>
+            <button id="toggleAppliedOnly" class="btn secondary">Show Only Pending</button>
+            <div style="margin-left:auto" class="small muted" id="statusText">Ready</div>
+        </div>
+
         <table id="jobsTable">
             <thead>
                 <tr>
                     <th class="sl-column">Sl No</th>
                     <th>Job Title</th>
-                    <th>Company</th>  
+                    <th>Company</th>
                     <th>HR Contact</th>
                     <th>
                         External Link
                         <button class="sort-button" onclick="sortByExternalLink()">↕️</button>
-                    </th> 
+                    </th>
+                    <th>Date Applied</th>
                     <th class="applied-column">Applied</th>
                 </tr>
             </thead>
             <tbody id="jobsBody"></tbody>
         </table>
+
+        <div id="message" class="message"></div>
     </div>
 
     <script>
         let sortOrder = 'asc';
         let jobsData = [];
-        let appliedJobs = new Set();
+        let filteredData = [];
+        let showOnlyPending = false;
 
-        // Replace the createTableRow function with this updated version
+        const statusText = document.getElementById('statusText');
+        const messageDiv = document.getElementById('message');
+        const searchInput = document.getElementById('searchInput');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const demoBtn = document.getElementById('demoBtn');
+        const toggleAppliedOnlyBtn = document.getElementById('toggleAppliedOnly');
+
+        function setStatus(text, isError=false, isLoading=false) {
+            statusText.textContent = text;
+            statusText.className = isError ? 'small error' : 'small muted';
+            // add a small spinner when loading
+            const existing = document.getElementById('status-spinner');
+            if (isLoading) {
+                if (!existing) {
+                    const sp = document.createElement('span');
+                    sp.id = 'status-spinner';
+                    sp.className = 'small-spinner';
+                    statusText.appendChild(sp);
+                }
+            } else if (existing) {
+                existing.remove();
+            }
+        }
+
+        function showMessage(text, isError=false) {
+            messageDiv.textContent = text;
+            messageDiv.className = isError ? 'message error' : 'message';
+        }
+
+        function clearMessage() { messageDiv.textContent = ''; messageDiv.className = 'message'; }
+
         function createTableRow(job, index) {
             const row = document.createElement('tr');
-            
+            if (job.Date_Applied && job.Date_Applied !== 'Pending') row.classList.add('applied-row');
+
             // Serial Number
             const slCell = document.createElement('td');
             slCell.textContent = index + 1;
             slCell.className = 'sl-column';
             row.appendChild(slCell);
-            
+
             // Job Title with link
             const titleCell = document.createElement('td');
             const titleLink = document.createElement('a');
-            titleLink.href = job.Job_Link;
-            titleLink.textContent = job.Title;
+            titleLink.href = job.Job_Link || '#';
+            titleLink.textContent = job.Title || 'Untitled';
             titleLink.target = '_blank';
             titleCell.appendChild(titleLink);
             row.appendChild(titleCell);
-            
+
             // Company
             const companyCell = document.createElement('td');
-            companyCell.textContent = job.Company;
+            companyCell.textContent = job.Company || 'N/A';
             row.appendChild(companyCell);
-            
+
             // HR Name with link
             const hrCell = document.createElement('td');
             if (job.HR_Name && job.HR_Name !== 'Unknown') {
                 const hrLink = document.createElement('a');
-                hrLink.href = job.HR_Link;
+                hrLink.href = job.HR_Link || '#';
                 hrLink.textContent = job.HR_Name;
                 hrLink.target = '_blank';
                 hrCell.appendChild(hrLink);
@@ -115,7 +158,7 @@
                 hrCell.textContent = 'N/A';
             }
             row.appendChild(hrCell);
-            
+
             // External Job Link
             const extCell = document.createElement('td');
             const appliedCell = document.createElement('td');
@@ -129,71 +172,201 @@
                 extLink.href = job.External_Job_link;
                 extLink.textContent = 'External Link';
                 extLink.target = '_blank';
-                
-                // Add click handler for external link
-                extLink.addEventListener('click', async () => {
+                extLink.rel = 'noopener noreferrer';
+
+                // Add click handler for external link - mark applied optimistically
+                extLink.addEventListener('click', async (e) => {
                     try {
+                        appliedCell.innerHTML = '<span class="spinner" title="Marking applied..."></span>';
                         const response = await fetch(`/applied-jobs/${job.Job_ID}`, {
                             method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
+                            headers: { 'Content-Type': 'application/json' }
                         });
-                        
+
                         if (response.ok) {
-                            appliedCell.innerHTML = '<span class="tick">✓</span>';
                             job.Date_Applied = new Date().toISOString();
+                            appliedCell.innerHTML = '<span class="tick">✓</span>';
+                            row.classList.add('applied-row');
+                            clearMessage();
+                        } else {
+                            appliedCell.textContent = '';
+                            showMessage('Failed to mark as applied (server error).', true);
                         }
                     } catch (error) {
+                        appliedCell.textContent = '';
+                        showMessage('Error updating applied date: ' + error.message, true);
                         console.error('Error updating applied date:', error);
                     }
                 });
-                
+
                 extCell.appendChild(extLink);
                 // Show tick if already applied
-                if (job.Date_Applied !== 'Pending') {
+                if (job.Date_Applied && job.Date_Applied !== 'Pending') {
                     appliedCell.innerHTML = '<span class="tick">✓</span>';
                 }
             } else {
                 extCell.textContent = 'N/A';
             }
             row.appendChild(extCell);
+
+            // Date Applied
+            const dateCell = document.createElement('td');
+            dateCell.textContent = job.Date_Applied && job.Date_Applied !== 'Pending' ? new Date(job.Date_Applied).toLocaleString() : 'Pending';
+            row.appendChild(dateCell);
+
             row.appendChild(appliedCell);
-            
+
             return row;
         }
 
-        function sortByExternalLink() {
-            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-            
-            jobsData.sort((a, b) => {
-                const valueA = a.External_Job_link || '';
-                const valueB = b.External_Job_link || '';
-                
-                if (sortOrder === 'asc') {
-                    return valueA.localeCompare(valueB);
-                } else {
-                    return valueB.localeCompare(valueA);
-                }
-            });
-            
+        function renderTable(data) {
             const tbody = document.getElementById('jobsBody');
             tbody.innerHTML = '';
-            jobsData.forEach((job, index) => {
+            if (!data || data.length === 0) {
+                // show a friendly empty state in the table
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 7;
+                td.innerHTML = `
+                    <div class="empty-card">
+                        <strong>No jobs found</strong>
+                        <div style="margin-top:8px;">It looks like your backend returned an empty list. You can:</div>
+                        <div style="margin-top:10px; display:flex; gap:8px; justify-content:center;">
+                            <button id="retryBtn" class="btn">Retry</button>
+                            <button id="loadDemoBtn" class="btn secondary">Load Demo Data</button>
+                        </div>
+                        <div style="margin-top:8px; color:#666; font-size:13px;">If this keeps happening, ensure the backend endpoint <code>/applied-jobs</code> is running and reachable.</div>
+                    </div>
+                `;
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+
+                // attach handlers for retry and demo
+                setTimeout(() => {
+                    const retryBtn = document.getElementById('retryBtn');
+                    const loadDemoBtn = document.getElementById('loadDemoBtn');
+                    if (retryBtn) retryBtn.addEventListener('click', () => fetchJobs());
+                    if (loadDemoBtn) loadDemoBtn.addEventListener('click', () => loadDemoData());
+                }, 0);
+
+                showMessage('No jobs to show. Try refreshing or load a demo.', false);
+                setStatus('No jobs', false);
+                return;
+            }
+            clearMessage();
+            data.forEach((job, index) => {
                 tbody.appendChild(createTableRow(job, index));
             });
         }
 
-        fetch('http://localhost:5000/applied-jobs')
-            .then(response => response.json())
-            .then(jobs => {
-                jobsData = jobs;
-                const tbody = document.getElementById('jobsBody');
-                jobs.forEach((job, index) => {
-                    tbody.appendChild(createTableRow(job, index));
-                });
-            })
-            .catch(error => console.error('Error:', error));
+        function applyFiltersAndRender() {
+            const q = (searchInput.value || '').trim().toLowerCase();
+            filteredData = jobsData.filter(job => {
+                if (showOnlyPending && job.Date_Applied && job.Date_Applied !== 'Pending') return false;
+                if (!q) return true;
+                const fields = [job.Title, job.Company, job.HR_Name, job.External_Job_link].filter(Boolean).join(' ').toLowerCase();
+                return fields.includes(q);
+            });
+            renderTable(filteredData);
+        }
+
+        function sortByExternalLink() {
+            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+
+            jobsData.sort((a, b) => {
+                const valueA = (a.External_Job_link || '').toString();
+                const valueB = (b.External_Job_link || '').toString();
+                if (sortOrder === 'asc') return valueA.localeCompare(valueB);
+                return valueB.localeCompare(valueA);
+            });
+            applyFiltersAndRender();
+        }
+
+        async function fetchJobs() {
+            setStatus('Loading...', false, true);
+            showMessage('');
+            try {
+                const response = await fetch('/applied-jobs'); // use relative path to avoid CORS issues
+                if (!response.ok) {
+                    setStatus('Error', true);
+                    showMessage('Server returned ' + response.status + ' ' + response.statusText, true);
+                    jobsData = [];
+                    renderTable(jobsData);
+                    // fallback: load demo so UI is usable when backend is unreachable
+                    setTimeout(() => {
+                        loadDemoData();
+                        setStatus('Demo loaded (backend returned error)', false);
+                    }, 400);
+                    return;
+                }
+                const jobs = await response.json();
+                jobsData = Array.isArray(jobs) ? jobs : [];
+                setStatus(`Loaded ${jobsData.length} jobs`);
+                applyFiltersAndRender();
+            } catch (error) {
+                setStatus('Error', true);
+                showMessage('Could not fetch jobs: ' + error.message, true);
+                console.error('Fetch error:', error);
+                // backend unreachable: show demo data automatically so dashboard isn't empty
+                setTimeout(() => {
+                    loadDemoData();
+                    setStatus('Demo loaded (backend unreachable)', false);
+                }, 400);
+            }
+        }
+
+        function loadDemoData() {
+            // small demo dataset so UI "pops"
+            jobsData = [
+                {
+                    Job_ID: 1,
+                    Title: 'Frontend Engineer',
+                    Company: 'Acme Corp',
+                    HR_Name: 'Jane Doe',
+                    HR_Link: 'https://linkedin.com/in/janedoe',
+                    Job_Link: 'https://acme.example/jobs/1',
+                    External_Job_link: 'https://acme.example/apply/1',
+                    Date_Applied: 'Pending'
+                },
+                {
+                    Job_ID: 2,
+                    Title: 'Backend Engineer',
+                    Company: 'Beta Systems',
+                    HR_Name: 'Unknown',
+                    HR_Link: '',
+                    Job_Link: 'https://beta.example/jobs/2',
+                    External_Job_link: 'Easy Applied',
+                    Date_Applied: new Date(Date.now() - 86400000).toISOString()
+                },
+                {
+                    Job_ID: 3,
+                    Title: 'Data Scientist',
+                    Company: 'Gamma AI',
+                    HR_Name: 'Rahul',
+                    HR_Link: 'https://linkedin.com/in/rahul',
+                    Job_Link: 'https://gamma.example/jobs/3',
+                    External_Job_link: 'https://gamma.example/apply/3',
+                    Date_Applied: 'Pending'
+                }
+            ];
+            setStatus(`Loaded demo: ${jobsData.length} jobs`);
+            applyFiltersAndRender();
+            clearMessage();
+        }
+
+        // wire up controls
+        searchInput.addEventListener('input', () => applyFiltersAndRender());
+        refreshBtn.addEventListener('click', () => { fetchJobs(); });
+        demoBtn.addEventListener('click', () => loadDemoData());
+        toggleAppliedOnlyBtn.addEventListener('click', () => {
+            showOnlyPending = !showOnlyPending;
+            toggleAppliedOnlyBtn.textContent = showOnlyPending ? 'Show All' : 'Show Only Pending';
+            applyFiltersAndRender();
+        });
+
+        // initial fetch
+        fetchJobs();
+
     </script>
 </body>
 </html>

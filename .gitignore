@@ -18,3 +18,4 @@ debug_html_dumps/
 verify_fix.py
 debug_user_snippet.html
 .idea
+.env

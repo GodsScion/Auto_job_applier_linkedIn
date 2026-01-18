@@ -214,6 +214,35 @@ def validate_settings() -> None | ValueError | TypeError:
     check_boolean(stealth_mode, "stealth_mode")
 
 
+##> ------ Sanjay Nainwal : sanjaynainwal129@gmail.com - Feature: Recruiter Messaging ------
+try:
+    from config.recruiter_messaging import *
+    def validate_recruiter_messaging() -> None | ValueError | TypeError:
+        '''
+        Validates all variables in the `/config/recruiter_messaging.py` file.
+        '''
+        global __validation_file_path
+        __validation_file_path = "config/recruiter_messaging.py"
+        
+        check_boolean(enable_recruiter_messaging, "enable_recruiter_messaging")
+        check_int(max_messages_per_day, "max_messages_per_day", 1)
+        check_int(message_delay_seconds, "message_delay_seconds", 0)
+        check_boolean(skip_if_already_applied, "skip_if_already_applied")
+        check_boolean(messaging_only_mode, "messaging_only_mode")
+        check_boolean(only_free_messages, "only_free_messages")
+        check_boolean(skip_inmail_required, "skip_inmail_required")
+        check_string(message_subject, "message_subject", min_length=1)
+        check_string(message_template, "message_template", min_length=10)
+        check_boolean(use_ai_for_messages, "use_ai_for_messages")
+        check_string(ai_personalization_level, "ai_personalization_level", ["low", "medium", "high"])
+        check_string(message_history_file, "message_history_file", min_length=1)
+        check_boolean(dry_run_mode, "dry_run_mode")
+    __recruiter_messaging_available = True
+except ImportError:
+    __recruiter_messaging_available = False
+##<
+
+
 
 
 def validate_config() -> bool | ValueError | TypeError:
@@ -225,6 +254,11 @@ def validate_config() -> bool | ValueError | TypeError:
     validate_search()
     validate_secrets()
     validate_settings()
+    
+    ##> ------ Sanjay Nainwal : sanjaynainwal129@gmail.com - Feature: Recruiter Messaging ------
+    if __recruiter_messaging_available:
+        validate_recruiter_messaging()
+    ##<
 
     # validate_String(chatGPT_username, "chatGPT_username")
     # validate_String(chatGPT_password, "chatGPT_password")

@@ -38,6 +38,16 @@ from config.search import *
 from config.secrets import use_AI, username, password, ai_provider
 from config.settings import *
 
+##> ------ Sanjay Nainwal : sanjaynainwal129@gmail.com - Feature: Recruiter Messaging ------
+try:
+    from config.recruiter_messaging import enable_recruiter_messaging, message_delay_seconds, messaging_only_mode
+    recruiter_messaging_available = True
+except ImportError:
+    recruiter_messaging_available = False
+    enable_recruiter_messaging = False
+    messaging_only_mode = False
+##<
+
 from modules.open_chrome import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
@@ -45,6 +55,17 @@ from modules.validator import validate_config
 from modules.ai.openaiConnections import ai_create_openai_client, ai_extract_skills, ai_answer_question, ai_close_openai_client
 from modules.ai.deepseekConnections import deepseek_create_client, deepseek_extract_skills, deepseek_answer_question
 from modules.ai.geminiConnections import gemini_create_client, gemini_extract_skills, gemini_answer_question
+
+##> ------ Sanjay Nainwal : sanjaynainwal129@gmail.com - Feature: Recruiter Messaging ------
+if recruiter_messaging_available and enable_recruiter_messaging:
+    from modules.recruiter_messenger import (
+        find_recruiter_on_job_page,
+        generate_personalized_message,
+        send_message_to_recruiter,
+        track_sent_message,
+        should_skip_recruiter
+    )
+##<
 
 from typing import Literal
 
@@ -70,10 +91,14 @@ randomly_answered_questions = set()
 
 tabs_count = 1
 easy_applied_count = 0
-external_jobs_count = 0
+external_jobs_count =0
 failed_count = 0
 skip_count = 0
 dailyEasyApplyLimitReached = False
+
+##> ------ Sanjay Nainwal : sanjaynainwal129@gmail.com - Feature: Recruiter Messaging ------
+recruiter_messages_sent = 0  # Track recruiter messages sent
+##<
 
 re_experience = re.compile(r'[(]?\s*(\d+)\s*[)]?\s*[-to]*\s*\d*[+]*\s*year[s]?', re.IGNORECASE)
 
@@ -992,9 +1017,91 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                         except Exception as e:
                             print_lg("Failed to extract skills:", e)
                             skills = "Error extracting skills"
-                        ##<
+                        ##>
+                    
+                    ##> ------ Sanjay Nainwal : sanjaynainwal129@gmail.com - Feature: Recruiter Messaging ------
+                    # Message Recruiter Feature
+                    if recruiter_messaging_available and enable_recruiter_messaging:
+                        try:
+                            print_lg(f"\n🎯 Checking for recruiter messaging opportunity for {title} at {company}...")
+                            
+                            # DIAGNOSTIC: Save HTML for verification (every 10th job)
+                            if current_count % 10 == 0:
+                                try:
+                                    from modules.html_diagnostic import save_job_page_html
+                                    html_file, has_section = save_job_page_html(driver, job_id, title, company)
+                                    print_lg(f"📄 DEBUG: Saved HTML to {html_file} - Has 'Meet the hiring team': {has_section}")
+                                except Exception as e:
+                                    print_lg(f"DEBUG: Failed to save HTML diagnostic: {e}")
+                            
+                            # Find recruiter on job page
+                            recruiter_info = find_recruiter_on_job_page(driver)
+                            
+                            if recruiter_info:
+                                # Check if should skip this recruiter
+                                should_skip, skip_reason = should_skip_recruiter(
+                                    recruiter_info,
+                                    job_id,
+                                    False  # We check separately if job was already applied
+                                )
+                                
+                                if should_skip:
+                                    print_lg(f"⏭️ Skipping recruiter message: {skip_reason}")
+                                    # Track the skip
+                                    track_sent_message(
+                                        job_id, title, company, job_link,
+                                        recruiter_info, "", "",
+                                        False, skip_reason, ""
+                                    )
+                                else:
+                                    # Generate personalized message
+                                    print_lg("✍️ Generating personalized message...")
+                                    subject, message_body = generate_personalized_message(
+                                        aiClient,
+                                        recruiter_info,
+                                        description,
+                                        title,
+                                        company,
+                                        job_link
+                                    )
+                                    
+                                    # Send message to recruiter
+                                    success, error_msg = send_message_to_recruiter(
+                                        driver,
+                                        recruiter_info,
+                                        subject,
+                                        message_body
+                                    )
+                                    
+                                    # Track the message
+                                    track_sent_message(
+                                        job_id, title, company, job_link,
+                                        recruiter_info, subject, message_body,
+                                        success, "", error_msg
+                                    )
+                                    
+                                    if success:
+                                        global recruiter_messages_sent
+                                        recruiter_messages_sent += 1
+                                        print_lg(f"✅ Successfully messaged recruiter! Total today: {recruiter_messages_sent}")
+                                        # Add delay after sending message
+                                        buffer(message_delay_seconds)
+                            else:
+                                print_lg("ℹ️ No recruiter found or recruiter doesn't accept free messages.")
+                                
+                        except Exception as e:
+                            print_lg(f"❌ Error in recruiter messaging workflow: {e}")
+                    ##<
 
                     uploaded = False
+                    
+                    ##> ------ Sanjay Nainwal : sanjaynainwal129@gmail.com - Feature: Messaging Only Mode ------
+                    # Skip Easy Apply if messaging_only_mode is enabled
+                    if messaging_only_mode and recruiter_messaging_available:
+                        print_lg(f"⏭️ Skipping Easy Apply (Messaging Only Mode enabled). Moving to next job...")
+                        continue
+                    ##<
+                    
                     # Case 1: Easy Apply Button
                     if try_xp(driver, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3') and contains(@aria-label, 'Easy')]"):
                         try: 

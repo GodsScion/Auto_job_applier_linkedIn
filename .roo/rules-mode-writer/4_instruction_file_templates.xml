@@ -1,0 +1,204 @@
+<instruction_file_templates>
+  <overview>
+    Templates and examples for creating XML instruction files that provide
+    detailed guidance for each mode's behavior and workflows.
+  </overview>
+
+  <file_organization>
+    <principle>Number files to indicate execution order</principle>
+    <principle>Use descriptive names that indicate content</principle>
+    <principle>Keep related instructions together</principle>
+    <standard_structure>
+      <file>1_workflow.xml - Main workflow and processes</file>
+      <file>2_best_practices.xml - Guidelines and conventions</file>
+      <file>3_common_patterns.xml - Reusable code patterns</file>
+      <file>4_tool_usage.xml - Specific tool instructions</file>
+      <file>5_examples.xml - Complete workflow examples</file>
+      <file>6_error_handling.xml - Error scenarios and recovery</file>
+      <file>7_communication.xml - User interaction guidelines</file>
+    </standard_structure>
+  </file_organization>
+
+  <workflow_file_template>
+    <description>Template for main workflow files (1_workflow.xml)</description>
+    <template><![CDATA[
+<workflow_instructions>
+  <mode_overview>
+    Brief description of what this mode does and its primary purpose
+  </mode_overview>
+
+  <initialization_steps>
+    <step number="1">
+      <action>Understand the user's request</action>
+      <details>
+        Parse the user's input to identify:
+        - Primary objective
+        - Specific requirements
+        - Constraints or limitations
+      </details>
+    </step>
+    
+    <step number="2">
+      <action>Gather necessary context</action>
+      <tools>
+        <tool>codebase_search - Find relevant existing code</tool>
+        <tool>list_files - Understand project structure</tool>
+        <tool>read_file - Examine specific implementations</tool>
+      </tools>
+    </step>
+  </initialization_steps>
+
+  <main_workflow>
+    <phase name="analysis">
+      <description>Analyze the current state and requirements</description>
+      <steps>
+        <step>Identify affected components</step>
+        <step>Assess impact of changes</step>
+        <step>Plan implementation approach</step>
+      </steps>
+    </phase>
+
+    <phase name="implementation">
+      <description>Execute the planned changes</description>
+      <steps>
+        <step>Create/modify necessary files</step>
+        <step>Ensure consistency across codebase</step>
+        <step>Add appropriate documentation</step>
+      </steps>
+    </phase>
+
+    <phase name="validation">
+      <description>Verify the implementation</description>
+      <steps>
+        <step>Check for errors or inconsistencies</step>
+        <step>Validate against requirements</step>
+        <step>Ensure no regressions</step>
+      </steps>
+    </phase>
+  </main_workflow>
+
+  <completion_criteria>
+    <criterion>All requirements have been addressed</criterion>
+    <criterion>Code follows project conventions</criterion>
+    <criterion>Changes are properly documented</criterion>
+    <criterion>No breaking changes introduced</criterion>
+  </completion_criteria>
+</workflow_instructions>
+    ]]></template>
+  </workflow_file_template>
+
+  <best_practices_template>
+    <description>Template for best practices files (2_best_practices.xml)</description>
+    <template><![CDATA[
+<best_practices>
+  <general_principles>
+    <principle priority="high">
+      <name>Principle Name</name>
+      <description>Detailed explanation of the principle</description>
+      <rationale>Why this principle is important</rationale>
+      <example>
+        <scenario>When this applies</scenario>
+        <good>Correct approach</good>
+        <bad>What to avoid</bad>
+      </example>
+    </principle>
+  </general_principles>
+
+  <code_conventions>
+    <convention category="naming">
+      <rule>Specific naming convention</rule>
+      <examples>
+        <good>goodExampleName</good>
+        <bad>bad_example-name</bad>
+      </examples>
+    </convention>
+    
+    <convention category="structure">
+      <rule>How to structure code/files</rule>
+      <template>
+        // Example structure
+      </template>
+    </convention>
+  </code_conventions>
+
+  <common_pitfalls>
+    <pitfall>
+      <description>Common mistake to avoid</description>
+      <why_problematic>Explanation of issues it causes</why_problematic>
+      <correct_approach>How to do it properly</correct_approach>
+    </pitfall>
+  </common_pitfalls>
+
+  <quality_checklist>
+    <category name="before_starting">
+      <item>Understand requirements fully</item>
+      <item>Check existing implementations</item>
+    </category>
+    <category name="during_implementation">
+      <item>Follow established patterns</item>
+      <item>Write clear documentation</item>
+    </category>
+    <category name="before_completion">
+      <item>Review all changes</item>
+      <item>Verify requirements met</item>
+    </category>
+  </quality_checklist>
+</best_practices>
+    ]]></template>
+  </best_practices_template>
+
+  <tool_usage_template>
+    <description>Template for tool usage files (4_tool_usage.xml)</description>
+    <template><![CDATA[
+<tool_usage_guide>
+  <tool_priorities>
+    <priority level="1">
+      <tool>codebase_search</tool>
+      <when>Always use first to find relevant code</when>
+      <why>Semantic search finds functionality better than keywords</why>
+    </priority>
+    <priority level="2">
+      <tool>read_file</tool>
+      <when>After identifying files with codebase_search</when>
+      <why>Get full context of implementations</why>
+    </priority>
+  </tool_priorities>
+
+  <tool_specific_guidance>
+    <tool name="apply_diff">
+      <best_practices>
+        <practice>Always read file first to ensure exact content match</practice>
+        <practice>Make multiple changes in one diff when possible</practice>
+        <practice>Include line numbers for accuracy</practice>
+      </best_practices>
+      <example><![CDATA[
+<apply_diff>
+<path>src/config.ts</path>
+<diff>
+<<<<<<< SEARCH
+:start_line:10
+-------
+export const config = {
+  apiUrl: 'http://localhost:3000',
+  timeout: 5000
+};
+=======
+export const config = {
+  apiUrl: process.env.API_URL || 'http://localhost:3000',
+  timeout: parseInt(process.env.TIMEOUT || '5000'),
+  retries: 3
+};
+>>>>>>> REPLACE
+</diff>
+</apply_diff>
+      ]]></example>
+    </tool>
+
+    <tool name="ask_followup_question">
+      <best_practices>
+        <practice>Provide 2-4 specific, actionable suggestions</practice>
+        <practice>Order suggestions by likelihood or importance</practice>
+        <practice>Make suggestions complete (no placeholders)</practice>
+      </best_practices>
+      <example><![CDATA[
+<ask_followup

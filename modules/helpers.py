@@ -97,16 +97,41 @@ def print_lg(*msgs: str | dict, end: str = "\n", pretty: bool = False, flush: bo
     '''
     Function to log and print. **Note that, `end` and `flush` parameters are ignored if `pretty = True`**
     '''
+    # Always print to console first
     try:
         for message in msgs:
             pprint(message) if pretty else print(message, end=end, flush=flush)
-            with open(__logs_file_path, 'a+', encoding="utf-8") as file:
-                file.write(str(message) + end)
-    except Exception as e:
-        trail = f'Skipped saving this message: "{message}" to log.txt!' if from_critical else "We'll try one more time to log..."
-        alert(f"log.txt in {logs_folder_path} is open or is occupied by another program! Please close it! {trail}", "Failed Logging")
-        if not from_critical:
-            critical_error_log("Log.txt is open or is occupied by another program!", e)
+    except Exception:
+        pass  # Console printing should never fail
+
+    # Try to log to file with better error handling
+    try:
+        for message in msgs:
+            # Use explicit file opening and closing to ensure proper cleanup
+            file_handle = None
+            try:
+                file_handle = open(__logs_file_path, 'a+', encoding="utf-8")
+                file_handle.write(str(message) + end)
+            except (OSError, PermissionError) as file_error:
+                # Only show alert for non-critical messages and not too frequently
+                if not from_critical and not hasattr(print_lg, '_last_alert_time'):
+                    setattr(print_lg, '_last_alert_time', 0)
+                if not from_critical and (datetime.now().timestamp() - getattr(print_lg, '_last_alert_time', 0)) > 30:  # Only alert once every 30 seconds
+                    trail = f'Skipped saving this message: "{str(message)[:100]}..." to log.txt!'
+                    alert(f"log.txt in {logs_folder_path} is open or is occupied by another program! Please close it! {trail}", "Failed Logging")
+                    setattr(print_lg, '_last_alert_time', datetime.now().timestamp())
+                if not from_critical:
+                    # Don't recursively call critical_error_log for logging errors
+                    pass
+            finally:
+                if file_handle:
+                    try:
+                        file_handle.close()
+                    except Exception:
+                        pass
+    except Exception:
+        # If everything fails, just silently continue - logging shouldn't crash the program
+        pass
 #>
 
 

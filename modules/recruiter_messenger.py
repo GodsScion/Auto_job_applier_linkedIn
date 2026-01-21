@@ -833,6 +833,57 @@ def send_message_to_recruiter(
          
          return False, f"SAFETY ABORT: Could not verify that message window belongs to {recruiter_info['name']}"
 
+    # STEP 4.5: POST-CLICK InMail Detection
+    # Some recruiters show "Message" button but it actually requires InMail credits.
+    # We detect this AFTER the click by checking for InMail-specific elements in the modal.
+    print_lg(f"🔍 Checking if modal requires InMail credits...")
+    is_inmail_modal = False
+    
+    try:
+        # Check for InMail-specific indicators in the opened modal
+        inmail_indicators = [
+            # InMail compose form class
+            "//*[contains(@class,'msg-inmail-compose-form')]",
+            # InMail credits display section
+            "//*[contains(@class,'msg-inmail-credits-display')]",
+            # Text mentioning InMail credits
+            "//*[contains(text(),'InMail credit')]",
+            # Premium badge in the composer
+            "//section[contains(@class,'msg-inmail')]//svg[@aria-label='Premium']"
+        ]
+        
+        for indicator in inmail_indicators:
+            try:
+                driver.find_element(By.XPATH, indicator)
+                is_inmail_modal = True
+                print_lg(f"⚠️ InMail detected via: {indicator[:60]}...")
+                break
+            except NoSuchElementException:
+                continue
+        
+        if is_inmail_modal:
+            print_lg(f"🚫 POST-CLICK InMail DETECTION: Modal requires InMail credits!")
+            # Close this InMail modal before returning
+            try:
+                close_btn = driver.find_element(By.XPATH, 
+                    "//button[contains(@class,'msg-overlay-bubble-header__control') and .//span[contains(text(),'Close')]]")
+                close_btn.click()
+                buffer(0.5)
+                print_lg("✅ Closed InMail modal")
+            except:
+                pass
+            
+            # Handle new window case
+            if is_new_window and messaging_window_handle:
+                driver.close()
+                driver.switch_to.window(list(pre_click_handles)[0])
+            
+            return False, "SKIPPED: InMail required (detected post-click in modal)"
+            
+    except Exception as e:
+        print_lg(f"⚠️ Post-click InMail check error (continuing): {e}")
+    
+    print_lg(f"✅ Modal is FREE message - no InMail credits required")
     
     # STEP 5: Compose message in detected context
     try:

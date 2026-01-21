@@ -21,3 +21,4 @@ debug_user_snippet.html
 .env
 .tmp/
 .agent/.roo/
+.agent/

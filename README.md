@@ -291,6 +291,18 @@ With heartfelt appreciation, <br>
 <br>
 
 ## 🗓️ Major Updates History:
+### Jan 20, 2026
+- **Recruiter Messaging V2**: Major reliability overhaul based on browser dominance testing
+- **Smart Verification**: Added strict recruiter name verification in chat headers to prevent mis-targeted messages
+- **Bubble Management**: Implemented auto-closing of existing chat bubbles to prevent "full bar" blocking
+- **Timing Logic**: Updated wait states (5s+3s) to match actual LinkedIn UI rendering speeds
+
+### Jan 19, 2026
+- Fixed recruiter messaging issue where new message windows were opening instead of inline modals
+- Root cause: LinkedIn UI change to window-based messaging system
+- Solution: Implemented window detection and switching logic in send_message_to_recruiter()
+- Enhanced modal cleanup and error recovery mechanisms for messaging reliability
+
 ### Jul 20, 2024
 - Contributions from community have been added
 - Better AI support, minor bug fixes

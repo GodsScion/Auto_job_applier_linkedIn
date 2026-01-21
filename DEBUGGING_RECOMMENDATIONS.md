@@ -202,6 +202,99 @@ The system provides comprehensive metrics for AI optimization:
 - `config/recruiter_messaging.py` - Configuration parameters
 - `DEBUGGING_RECOMMENDATIONS.md` - AI agent documentation
 
+### Recent Fix: Robust Messaging (Jan 20, 2026) -> **Logic Update**
+**Bug Identified:** Messages were failing due to timing issues, "full messaging bar" preventing new chats, and risk of messaging wrong recruiters.
+**Resolution:** Updated `recruiter_messenger.py` to:
+1.  **Close existing bubbles** before starting.
+2.  **Wait 5s** for bubble load + **3s** for input field render.
+3.  **Verify Recruiter Name** in the chat header before typing.
+
+## 🆕 Recent Fix: Robust Messaging & Verification (Jan 20, 2026)
+
+### 🐛 Bug Description
+The recruiter messaging system was failing because LinkedIn's UI is complex and timing-sensitive. Specifically:
+1.  **Overlay Bubbles**: LinkedIn uses inline "overlay bubbles" at the bottom of the screen, not usually new windows.
+2.  **Slow Rendering**: These bubbles take **3-5 seconds** to fully render the text input field.
+3.  **UI Blocking**: If 3-4 bubbles are already open, clicking "Message" does nothing (silently fails).
+4.  **Wrong Target**: Without verification, the bot could type into a previously open chat if the new one failed to load.
+
+### 🔍 Root Cause Analysis
+- **Timing Mismatch**: Code was waiting 1-3s, but UI needed 5-8s total.
+- **"Full Bar" Issue**: LinkedIn limits open chats. New clicks get ignored if limit is reached.
+- **Loose Selector**: Detection logic accepted *any* open chat, not just the new one.
+
+### ✅ Solution Implemented
+- **Smart Context Detection**: Automatically detects if message opened in inline overlay (most common) or new window
+- **Bubble Management**: **CRITICAL FIX** - Automatically closes existing messaging bubbles before opening new ones to prevent "full bar" UI blocking
+- **Strict Verification**: Verifies the recruiter's name appears in the chat header before typing (prevents messaging wrong person)
+- **Robust Timing**: Increased partial waits (5s for bubble, 3s for compose field) to match real-world rendering speed
+- **Automatic Context Switching**: Handles rare ecosystem cases where new windows are actually used
+
+### 🔧 Technical Details
+The fix is implemented in the `send_message_to_recruiter()` function:
+
+```python
+# 1. Close existing bubbles to prevent UI blocking
+existing_bubbles = driver.find_elements(By.XPATH, "//aside...//button[@aria-label='Close']")
+for bubble in existing_bubbles[:3]: bubble.click()
+
+# 2. Wait for bubble and verify header
+header_text = driver.find_element(By.XPATH, "...//h2").text
+if recruiter_name in header_text:
+    print("✅ Verified chat is with " + recruiter_name)
+```
+
+**Key Features:**
+- **Pre-emptive Cleanup**: Clears UI space before action
+- **Name Verification**: Ensures 100% targeting accuracy
+- **Dynamic Waiting**: Waits for specific `contenteditable` readiness state
+- **Fallback Handling**: Maintains compatibility with legacy modal-based messaging
+
+### 🧪 Testing Recommendations
+1. **Dry Run Mode**: Test with `dry_run_mode = True` in `config/recruiter_messaging.py` to verify window detection without sending actual messages
+2. **Single Target Testing**: Use a single job posting with a known recruiter to test the complete flow
+3. **Window Handle Monitoring**: Check console logs for window switching messages:
+   - `"🆕 Message button opened new window/tab"`
+   - `"🔄 Switching to messaging window..."`
+   - `"✅ Successfully closed messaging window and returned"`
+4. **Cross-Browser Testing**: Test on both Chrome and Firefox to ensure window handle APIs work consistently
+
+### 📊 Monitoring Tips
+- **Success Rate Tracking**: Monitor the `recruiter_messages_history.csv` for increased "Sent" vs "Failed" ratios
+- **Window Logs**: Look for window-related debug messages in console output
+- **Error Pattern Analysis**: Check for recurring "Failed to switch to messaging window" errors
+- **Performance Metrics**: Track message send times - window switching may add 2-3 seconds to each message
+
+### 🔧 Troubleshooting Steps for Similar Issues
+
+#### If Messages Fail with "Could not find new messaging window handle":
+1. **Check Browser Settings**: Ensure pop-ups are not blocked for LinkedIn domains
+2. **Verify Window Detection**: Add debug logging around window handle checks:
+   ```python
+   print_lg(f"Original handles: {original_handles}")
+   print_lg(f"Current handles: {current_handles}")
+   ```
+3. **Manual Browser Test**: Manually click Message buttons on LinkedIn to confirm new window behavior
+4. **Browser Focus Issues**: Ensure the browser window has focus during automation
+
+#### If Messages Fail After Window Switch:
+1. **Window Load Time**: Increase buffer time after switching: `buffer(3)` instead of `buffer(2)`
+2. **Element Detection**: Verify message field XPath selectors work in new window context
+3. **JavaScript Execution**: Check if JavaScript text insertion works in new window environment
+4. **Network Issues**: Monitor for slow loading of messaging interface in new windows
+
+#### If Windows Remain Open:
+1. **Finally Block Execution**: Ensure the `finally` block in `send_message_to_recruiter()` is executing
+2. **Exception Handling**: Check for exceptions preventing window cleanup
+3. **Driver State**: Monitor WebDriver health - restart if windows accumulate
+4. **Memory Management**: Add periodic window cleanup checks in long-running sessions
+
+#### For LinkedIn UI Changes:
+1. **Regular Monitoring**: Check LinkedIn messaging behavior manually weekly
+2. **XPath Updates**: Monitor for changes in button selectors and modal structures
+3. **Version Testing**: Test with different LinkedIn account types (free vs premium)
+4. **Fallback Strategies**: Maintain multiple detection methods (modal + window)
+
 ## 🏗️ Implementation Summary
 
 ### ✅ **Fixed Issues**

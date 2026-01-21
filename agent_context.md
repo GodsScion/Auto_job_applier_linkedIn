@@ -4,7 +4,7 @@
 
 **Project Name:** LinkedIn AI Auto Job Applier  
 **Repository:** [GodsScion/Auto_job_applier_linkedIn](https://github.com/GodsScion/Auto_job_applier_linkedIn)  
-**Version:** 25.07.20.9.30 Community Alpha  
+**Version:** 26.01.20.14.30 Community Alpha  
 **Author:** Sai Vignesh Golla  
 **License:** GNU Affero General Public License v3.0  
 **Project Location:** `c:\Users\Sanjay\Desktop\Projects\AUTO APPLY\Auto_job_applier_linkedIn`
@@ -409,6 +409,12 @@ pip install undetected-chromedriver pyautogui setuptools openai flask-cors flask
 
 ## 📅 Recent Updates
 
+### January 20, 2026
+- **Recruiter Messaging V2**: Major reliability overhaul
+- **Smart Verification**: Checks recruiter name in chat header
+- **Bubble Management**: Auto-closes existing bubbles to fix UI blocking
+- **Timing Logic**: Updated to 5s+3s wait for overlay rendering
+
 ### December 29, 2024
 - Version: 24.12.29.12.30
 - Updated configurations across all files
@@ -437,4 +443,4 @@ Based on the configuration, Sanjay is:
 
 ---
 
-*This document was generated on January 18, 2026, to provide comprehensive context about the Auto Job Applier LinkedIn project and its configuration for Sanjay Nainwal.*
+*This document was generated on January 20, 2026, to provide comprehensive context about the Auto Job Applier LinkedIn project and its configuration for Sanjay Nainwal.*

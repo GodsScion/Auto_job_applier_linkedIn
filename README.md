@@ -192,6 +192,9 @@ Once your code is tested, your changes will be merged to the `main` branch in ne
 [back to index](#-content)
 
 ## 🗓️ Major Updates History:
+### Jan 20, 2026
+- You can now simultaneously use chrome, while bot continues applying in a new window
+
 ### Jul 20, 2024
 - Contributions from community have been added
 - Better AI support, minor bug fixes

@@ -11,7 +11,7 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 Support me: https://github.com/sponsors/GodsScion
 
-version:    24.12.29.12.30
+version:    26.01.20.5.08
 """
 
 

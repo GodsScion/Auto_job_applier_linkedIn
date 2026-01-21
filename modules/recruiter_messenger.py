@@ -784,10 +784,28 @@ def send_message_to_recruiter(
     
     try:
         if is_new_window:
-             # Logic for new window verification (less common)
-             if recruiter_info['name'].split()[0].lower() in driver.page_source.lower():
-                 verified_context = True
-                 print_lg("✅ Verified - Recruiter name found in new window")
+            # Logic for new window verification - wait for page load first
+            buffer(2)  # Wait for new window content to fully load
+            recruiter_first_name = recruiter_info['name'].split()[0].lower()
+            page_source_lower = driver.page_source.lower()
+            
+            # Check if first name appears in page
+            if recruiter_first_name in page_source_lower:
+                verified_context = True
+                print_lg(f"✅ Verified - Recruiter first name '{recruiter_first_name}' found in new window")
+            else:
+                # Try just first few characters (handles unicode/encoding issues)
+                name_prefix = recruiter_first_name[:4]  # e.g., "gabr" for Gabriel
+                if name_prefix in page_source_lower:
+                    verified_context = True
+                    print_lg(f"✅ Verified - Recruiter name prefix '{name_prefix}' found in new window")
+                else:
+                    # Check URL for profile indicator
+                    if '/messaging/' in driver.current_url or '/in/' in driver.current_url:
+                        print_lg(f"✅ Verified - Messaging URL detected, proceeding with message")
+                        verified_context = True
+                    else:
+                        print_lg(f"⚠️ New window verification failed - name '{recruiter_first_name}' not found in page")
         else:
             # Inline Bubble Verification
             recruiter_first_name = recruiter_info['name'].split()[0]

@@ -860,13 +860,12 @@ def send_message_to_recruiter(
     try:
         # Check for InMail-specific indicators in the opened modal
         inmail_indicators = [
-            # InMail compose form class
-            "//*[contains(@class,'msg-inmail-compose-form')]",
-            # InMail credits display section
+            # InMail credits display section (Most reliable)
             "//*[contains(@class,'msg-inmail-credits-display')]",
-            # Text mentioning InMail credits
+            # Text specifically mentioning InMail credits usage
             "//*[contains(text(),'InMail credit')]",
-            # Premium badge in the composer
+            "//*[contains(text(),'InMail credits')]",
+            # Premium badge combined with non-free text
             "//section[contains(@class,'msg-inmail')]//svg[@aria-label='Premium']"
         ]
         

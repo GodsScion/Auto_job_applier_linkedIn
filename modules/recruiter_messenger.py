@@ -863,15 +863,50 @@ def send_message_to_recruiter(
         
         if is_inmail_modal:
             print_lg(f"🚫 POST-CLICK InMail DETECTION: Modal requires InMail credits!")
-            # Close this InMail modal before returning
-            try:
-                close_btn = driver.find_element(By.XPATH, 
-                    "//button[contains(@class,'msg-overlay-bubble-header__control') and .//span[contains(text(),'Close')]]")
-                close_btn.click()
-                buffer(0.5)
-                print_lg("✅ Closed InMail modal")
-            except:
-                pass
+            # Close this InMail modal before returning - try multiple methods
+            modal_closed = False
+            
+            # Try multiple close button selectors
+            close_button_xpaths = [
+                # Close button by aria-label
+                "//button[@aria-label='Close your draft conversation']",
+                # Close button with close icon
+                "//button[contains(@class,'msg-overlay-bubble-header__control')]//*[contains(@data-test-icon,'close')]/..",
+                # Any close button in message header
+                "//button[contains(@class,'msg-overlay-bubble-header__control') and .//span[contains(text(),'Close')]]",
+                # Generic close with X icon in overlay
+                "//*[contains(@class,'msg-overlay')]//button[.//*[contains(@data-test-icon,'close')]]"
+            ]
+            
+            for close_xpath in close_button_xpaths:
+                try:
+                    close_btn = driver.find_element(By.XPATH, close_xpath)
+                    close_btn.click()
+                    buffer(0.5)
+                    print_lg(f"✅ Closed InMail modal via: {close_xpath[:50]}...")
+                    modal_closed = True
+                    break
+                except:
+                    continue
+            
+            # JavaScript fallback if button clicks didn't work
+            if not modal_closed:
+                try:
+                    driver.execute_script("""
+                        var modals = document.querySelectorAll('.msg-overlay-conversation-bubble, .msg-inmail-compose-form-v2');
+                        modals.forEach(function(m) { 
+                            var closeBtn = m.querySelector('button[data-test-icon="close-small"], button[aria-label*="Close"]');
+                            if(closeBtn) closeBtn.click();
+                        });
+                    """)
+                    buffer(0.5)
+                    print_lg("✅ Closed InMail modal via JavaScript")
+                    modal_closed = True
+                except Exception as js_err:
+                    print_lg(f"⚠️ JS close also failed: {js_err}")
+            
+            if not modal_closed:
+                print_lg("⚠️ Could not close InMail modal - will be cleaned up by next modal check")
             
             # Handle new window case
             if is_new_window and messaging_window_handle:

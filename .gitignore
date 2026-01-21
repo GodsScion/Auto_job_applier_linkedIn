@@ -22,3 +22,4 @@ debug_user_snippet.html
 .tmp/
 .agent/.roo/
 .agent/
+.roo/

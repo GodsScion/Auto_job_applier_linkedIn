@@ -20,4 +20,4 @@ debug_user_snippet.html
 .idea
 .env
 .tmp/
-.agent/
+.agent/.roo/

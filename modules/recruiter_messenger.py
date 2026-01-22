@@ -878,8 +878,36 @@ def send_message_to_recruiter(
             except NoSuchElementException:
                 continue
         
+        # Check if it's explicitly a "Free to message" (Open Profile) to override InMail detection
+        if is_inmail_modal:
+            free_indicators = [
+                "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'free to message')]",
+                "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'free message')]", 
+                "//*[contains(text(),'Open Profile')]",
+                "//*[contains(@class,'msg-inmail-credits-display') and contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'free')]"
+            ]
+            
+            for free_ind in free_indicators:
+                try:
+                    driver.find_element(By.XPATH, free_ind)
+                    is_inmail_modal = False
+                    print_lg(f"✅ Found Free indicator via: {free_ind} - Overriding InMail detected status (It is Free)")
+                    break
+                except:
+                    continue
+        
         if is_inmail_modal:
             print_lg(f"🚫 POST-CLICK InMail DETECTION: Modal requires InMail credits!")
+             # CAPTURE DEBUG DATA FOR THIS FAILURE
+            try:
+                timestamp = os.environ.get('Safe_Current_Time', 'unknown_time').replace(':', '')
+                debug_file = f"debug_html_dumps/INMAIL_BLOCK_{timestamp}.html"
+                with open(debug_file, "w", encoding="utf-8") as f:
+                    f.write(driver.page_source)
+                print_lg(f"📸 Saved INMAIL VALIDATION FAILURE dump to: {debug_file}")
+            except Exception as e:
+                print_lg(f"Could not save debug dump: {e}")
+
             # Close this InMail modal before returning - try multiple methods
             modal_closed = False
             
@@ -942,14 +970,14 @@ def send_message_to_recruiter(
         # Try multiple selectors for message body field (LinkedIn UI varies)
         msg_body = None
         body_selectors = [
-            # Primary: Contenteditable INSIDE the active bubble (Most specific/safe)
-            "//*[contains(@class,'msg-overlay-conversation-bubble--is-active') or contains(@class,'msg-overlay-conversation-bubble--is-expanded') or contains(@class,'msg-overlay-conversation-bubble--is-compose')]//div[contains(@class,'msg-form__contenteditable') and @contenteditable='true']",
-            # Fallback 1: Generic msg-form contenteditable
-            "//div[@contenteditable='true' and contains(@class,'msg-form')]",
-            # Fallback 2: Any contenteditable in message context
-            "//div[@contenteditable='true' and contains(@class,'message')]",
-            # Fallback 3: Most generic
-            "//div[@contenteditable='true' and @role='textbox']"
+            # Primary: Contenteditable INSIDE the active bubble (Most specific/safe for overlays)
+            "//*[contains(@class,'msg-overlay-conversation-bubble--is-active') or contains(@class,'msg-overlay-conversation-bubble--is-expanded') or contains(@class,'msg-overlay-conversation-bubble--is-compose')]//div[contains(@class,'msg-form__contenteditable')]",
+            # Fallback 1: Full Page / Generic Class Match (Critical for new window mode)
+            "//div[contains(@class, 'msg-form__contenteditable')]",
+            # Fallback 2: Role-based (Very common in ARIA apps)
+            "//div[@role='textbox']",
+            # Fallback 3: Generic contenteditable
+            "//div[@contenteditable='true']"
         ]
         
         for selector in body_selectors:

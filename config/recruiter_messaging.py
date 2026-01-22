@@ -25,16 +25,16 @@ enable_recruiter_messaging = True          # True or False, Note: True or False 
 # \u003e\u003e\u003e\u003e\u003e\u003e\u003e\u003e\u003e\u003e\u003e Message Sending Preferences \u003c\u003c\u003c\u003c\u003c\u003c\u003c\u003c\u003c\u003c\u003c
 
 # Maximum messages to send per day (no InMail cost, so can send more)
-max_messages_per_day = 50              # Only Non Negative Integers Eg: 10, 20, 50, 100
+max_messages_per_day = 500              # Only Non Negative Integers Eg: 10, 20, 50, 100
 
 # Delay between messages in seconds (to avoid spam detection)
-message_delay_seconds = 30             # Only Non Negative Integers Eg: 15, 30, 45, 60
+message_delay_seconds = 10             # Only Non Negative Integers Eg: 15, 30, 45, 60
 
 # Skip messaging if already applied to job via Easy Apply?
 skip_if_already_applied = False         # True or False, Note: True or False are case-sensitive
 
 # Messaging Only Mode - Skip Easy Apply and only message recruiters?
-messaging_only_mode = True            # True or False, Note: True or False are case-sensitive
+messaging_only_mode = False            # True or False, Note: True or False are case-sensitive
 '''
 Set to True if you want to ONLY message recruiters without applying via Easy Apply.
 This is useful when you want to focus on direct recruiter outreach.
@@ -101,7 +101,7 @@ Available template variables:
 # \u003e\u003e\u003e\u003e\u003e\u003e\u003e\u003e\u003e\u003e\u003e AI-Powered Personalization \u003c\u003c\u003c\u003c\u003c\u003c\u003c\u003c\u003c\u003c\u003c
 
 # Use AI to personalize messages based on job description?
-use_ai_for_messages = False             # True or False, Note: True or False are case-sensitive
+use_ai_for_messages = True             # True or False, Note: True or False are case-sensitive
 
 # Level of AI personalization
 ai_personalization_level = "high"      # "low", "medium", "high"

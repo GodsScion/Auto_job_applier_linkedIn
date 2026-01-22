@@ -28,7 +28,7 @@ enable_recruiter_messaging = True          # True or False, Note: True or False 
 max_messages_per_day = 500              # Only Non Negative Integers Eg: 10, 20, 50, 100
 
 # Delay between messages in seconds (to avoid spam detection)
-message_delay_seconds = 10             # Only Non Negative Integers Eg: 15, 30, 45, 60
+message_delay_seconds = 1             # Only Non Negative Integers Eg: 15, 30, 45, 60
 
 # Skip messaging if already applied to job via Easy Apply?
 skip_if_already_applied = False         # True or False, Note: True or False are case-sensitive
@@ -123,6 +123,13 @@ message_history_file = "all excels/recruiter_messages_history.csv"
 # Dry run mode - generate messages but don't actually send them (for testing)
 dry_run_mode = False                   # True or False, Note: True or False are case-sensitive
 
+
+# AI Skill Extraction Config
+
+# Enable AI skill extraction from job descriptions?
+use_ai_skill_extraction = False         # True or False, Note: True or False are case-sensitive
+
+# You can add more skill extraction settings here in the future
 
 
 

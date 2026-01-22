@@ -12,18 +12,23 @@ GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 version:    24.12.3.10.30
 '''
 
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 ###################################################### CONFIGURE YOUR TOOLS HERE ######################################################
 
 
 # Login Credentials for LinkedIn (Optional)
-username = "sanjaynainwal129@gmail.com"  # Enter your username in the quotes
-password = "B@NGB@ng12"        # Enter your password in the quotes
+username = os.getenv("LINKEDIN_USERNAME", "sanjaynainwal129@gmail.com")  # Enter your username in the quotes
+password = os.getenv("LINKEDIN_PASSWORD", "B@NGB@ng12")        # Enter your password in the quotes
 
 
 ## Artificial Intelligence (Beta Not-Recommended)
 # Use AI
-use_AI = False                          # True or False, Note: True or False are case-sensitive
+use_AI = os.getenv("USE_AI", "false").lower() == "true"                          # True or False, Note: True or False are case-sensitive
 '''
 Note: Set it as True only if you want to use AI, and If you either have a
 1. Local LLM model running on your local machine, with it's APIs exposed. Example softwares to achieve it are:
@@ -38,7 +43,7 @@ CHECK THE OPENAI API PIRCES AT THEIR WEBSITE (https://openai.com/api/pricing/).
 ##> ------ Yang Li : MARKYangL - Feature ------
 ##> ------ Tim L : tulxoro - Refactor ------
 # Select AI Provider
-ai_provider = "deepseek"               # "openai", "deepseek", "gemini"
+ai_provider = os.getenv("AI_PROVIDER", "deepseek")               # "openai", "deepseek", "gemini"
 '''
 Note: Select your AI provider.
 * "openai" - OpenAI API (GPT models) OR OpenAi-compatible APIs (like Ollama)
@@ -51,23 +56,23 @@ Note: Select your AI provider.
 
 # Your LLM url or other AI api url and port
 #llm_api_url = ""       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/", "https://api.deepseek.com", "https://api.deepseek.com/v1"
-llm_api_url = "https://api.deepseek.com/v1"       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/", "https://api.deepseek.com", "https://api.deepseek.com/v1"
+llm_api_url = os.getenv("LLM_API_URL", "https://api.deepseek.com/v1")       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/", "https://api.deepseek.com", "https://api.deepseek.com/v1"
 
 '''
 Note: Don't forget to add / at the end of your url. You may not need this if you are using Gemini.
 '''
 
 # Your LLM API key or other AI API key
-llm_api_key = "sk-c101c45ee7af44c19e77e9ff43f59bd9"              # Enter your API key in the quotes, make sure it's valid, if not will result in error.
+llm_api_key = os.getenv("LLM_API_KEY", "sk-c101c45ee7af44c19e77e9ff43f59bd9")              # Enter your API key in the quotes, make sure it's valid, if not will result in error.
 '''
 Note: Leave it empty as "" or "not-needed" if not needed. Else will result in error!
 If you are using ollama, you MUST put "not-needed".
 '''
 
 # Your LLM model name or other AI model name
-llm_model = "deepseek-chat"          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct", "qwen3:latest", "gemini-pro", "gemini-1.5-flash", "gemini-2.5-flash", "deepseek-llm:latest"
+llm_model = os.getenv("LLM_MODEL", "deepseek-chat")          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct", "qwen3:latest", "gemini-pro", "gemini-1.5-flash", "gemini-2.5-flash", "deepseek-llm:latest"
 
-llm_spec = "openai"                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"
+llm_spec = os.getenv("LLM_SPEC", "openai")                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"
 '''
 Note: Currently "openai" and "openai-like" api endpoints are supported.
 '''
@@ -76,7 +81,7 @@ Note: Currently "openai" and "openai-like" api endpoints are supported.
 # llm_embedding_model = "nomic-embed-text-v1.5"
 
 # Do you want to stream AI output?
-stream_output = False                    # Examples: True or False. (False is recommended for performance, True is recommended for user experience!)
+stream_output = os.getenv("STREAM_OUTPUT", "false").lower() == "true"                    # Examples: True or False. (False is recommended for performance, True is recommended for user experience!)
 '''
 Set `stream_output = True` if you want to stream AI output or `stream_output = False` if not.
 '''

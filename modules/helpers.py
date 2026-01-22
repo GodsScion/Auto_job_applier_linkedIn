@@ -116,13 +116,10 @@ def print_lg(*msgs: str | dict, end: str = "\n", pretty: bool = False, flush: bo
                 # Only show alert for non-critical messages and not too frequently
                 if not from_critical and not hasattr(print_lg, '_last_alert_time'):
                     setattr(print_lg, '_last_alert_time', 0)
-                if not from_critical and (datetime.now().timestamp() - getattr(print_lg, '_last_alert_time', 0)) > 30:  # Only alert once every 30 seconds
+                if not from_critical and (datetime.now().timestamp() - getattr(print_lg, '_last_alert_time', 0)) > 30:
                     trail = f'Skipped saving this message: "{str(message)[:100]}..." to log.txt!'
                     alert(f"log.txt in {logs_folder_path} is open or is occupied by another program! Please close it! {trail}", "Failed Logging")
                     setattr(print_lg, '_last_alert_time', datetime.now().timestamp())
-                if not from_critical:
-                    # Don't recursively call critical_error_log for logging errors
-                    pass
             finally:
                 if file_handle:
                     try:
@@ -160,15 +157,24 @@ def manual_login_retry(is_logged_in: callable, limit: int = 2) -> None:
     '''
     count = 0
     while not is_logged_in():
-        from pyautogui import alert
-        print_lg("Seems like you're not logged in!")
         button = "Confirm Login"
         message = 'After you successfully Log In, please click "{}" button below.'.format(button)
         if count > limit:
             button = "Skip Confirmation"
             message = 'If you\'re seeing this message even after you logged in, Click "{}". Seems like auto login confirmation failed!'.format(button)
+        print_lg("Seems like you're not logged in!")
         count += 1
-        if alert(message, "Login Required", button) and count > limit: return
+        
+        try:
+            from pyautogui import alert
+            # alert returns the button text if clicked, which is truthy.
+            if alert(message, "Login Required", button) and count > limit: return
+        except (ImportError, Exception):
+            # Fallback for environments without GUI/Tkinter
+            print_lg(f"\n👉 {message}")
+            print_lg(f"Press Enter to '{button}'...")
+            input()
+            if count > limit: return
 
 
 

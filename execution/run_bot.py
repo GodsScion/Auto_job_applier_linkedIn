@@ -60,6 +60,7 @@ from modules.validator import validate_config
 from modules.ai.openaiConnections import ai_create_openai_client, ai_extract_skills, ai_answer_question, ai_close_openai_client
 from modules.ai.deepseekConnections import deepseek_create_client, deepseek_extract_skills, deepseek_answer_question
 from modules.ai.geminiConnections import gemini_create_client, gemini_extract_skills, gemini_answer_question
+from modules.bot_logger import init_session_logger, log_step, log_job_start, log_job_end, log_section_separator, finalize_session, log_html_snapshot
 
 ##> ------ Sanjay Nainwal : sanjaynainwal129@gmail.com - Feature: Recruiter Messaging ------
 if recruiter_messaging_available and enable_recruiter_messaging:
@@ -277,8 +278,19 @@ def apply_filters() -> None:
         show_results_button.click()
 
         global pause_after_filters
-        if pause_after_filters and "Turn off Pause after search" == pyautogui.confirm("These are your configured search results and filter. It is safe to change them while this dialog is open, any changes later could result in errors and skipping this search run.", "Please check your results", ["Turn off Pause after search", "Look's good, Continue"]):
-            pause_after_filters = False
+        if pause_after_filters:
+            msg = "These are your configured search results and filter. It is safe to change them while this dialog is open, any changes later could result in errors and skipping this search run."
+            title = "Please check your results"
+            buttons = ["Turn off Pause after search", "Look's good, Continue"]
+            
+            try:
+                if "Turn off Pause after search" == pyautogui.confirm(msg, title, buttons):
+                    pause_after_filters = False
+            except:
+                print_lg(f"\n✋ PAUSED: {msg}")
+                response = input(f"Press Enter to continue, or type 'off' to disable this pause: ")
+                if response.strip().lower() == 'off':
+                    pause_after_filters = False
 
     except Exception as e:
         print_lg("Setting the preferences failed!")
@@ -442,8 +454,7 @@ def get_job_description(
             experience_required = "Error in extraction"
             print_lg("Unable to extract years of experience required!")
             # print_lg(e)
-    finally:
-        return jobDescription, experience_required, skip, skipReason, skipMessage
+    return jobDescription, experience_required, skip, skipReason, skipMessage
         
 
 
@@ -1007,7 +1018,13 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                         continue
 
                     
-                    if use_AI and description != "Unknown":
+                    # Import config for skill extraction
+                    try:
+                        from config.recruiter_messaging import use_ai_skill_extraction
+                    except ImportError:
+                        use_ai_skill_extraction = True # Default to True if config missing
+
+                    if use_AI and description != "Unknown" and use_ai_skill_extraction:
                         ##> ------ Yang Li : MARKYangL - Feature ------
                         try:
                             if ai_provider.lower() == "openai":
@@ -1061,29 +1078,28 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                         )
                                         continue
 
-                                    # Generate personalized message
-                                    print_lg(f"✍️ Generating personalized message for {recruiter_info['name']}...")
-                                    subject, message_body = generate_personalized_message(
-                                        aiClient,
-                                        recruiter_info,
-                                        description,
-                                        title,
-                                        company,
-                                        job_link
-                                    )
+                                    # Prepare init data for just-in-time generation
+                                    message_init_data = {
+                                        'aiClient': aiClient,
+                                        'recruiter_info': recruiter_info,
+                                        'job_description': description,
+                                        'job_title': title,
+                                        'company_name': company,
+                                        'job_link': job_link
+                                        # 'message_subject' and 'message_body' left empty to trigger generation
+                                    }
 
                                     # Send message to recruiter/connection
                                     success, error_msg = send_message_to_recruiter(
                                         driver,
                                         recruiter_info,
-                                        subject,
-                                        message_body
+                                        message_init_data
                                     )
 
-                                    # Track the message
+                                    # Track the message (Subject/Body will be logged inside send_message_to_recruiter)
                                     track_sent_message(
                                         job_id, title, company, job_link,
-                                        recruiter_info, subject, message_body,
+                                        recruiter_info, "See logs", "See logs",
                                         success, "", error_msg
                                     )
 
@@ -1290,7 +1306,14 @@ def main() -> None:
         global linkedIn_tab, tabs_count, useNewResume, aiClient
         alert_title = "Error Occurred. Closing Browser!"
         total_runs = 1        
+        
+        # Initialize comprehensive session logging
+        session_dir = init_session_logger()
+        log_step("BOT STARTED", f"Session directory: {session_dir}")
+        log_section_separator("INITIALIZATION")
+        
         validate_config()
+        log_step("Config validated")
         
         if not os.path.exists(default_resume_path):
             pyautogui.alert(text='Your default resume "{}" is missing! Please update it\'s folder path "default_resume_path" in config.py\n\nOR\n\nAdd a resume with exact name and path (check for spelling mistakes including cases).\n\n\nFor now the bot will continue using your previous upload from LinkedIn!'.format(default_resume_path), title="Missing Resume", button="OK")
@@ -1353,7 +1376,8 @@ def main() -> None:
         print_lg("Browser window closed or session is invalid. Exiting.", e)
     except Exception as e:
         critical_error_log("In Applier Main", e)
-        pyautogui.alert(e,alert_title)
+        try: pyautogui.alert(e,alert_title)
+        except: pass
     finally:
         print_lg("\n\nTotal runs:                     {}".format(total_runs))
         print_lg("Jobs Easy Applied:              {}".format(easy_applied_count))
@@ -1378,11 +1402,13 @@ def main() -> None:
             "The only limit to our realization of tomorrow will be our doubts of today. - Franklin D. Roosevelt"
             ])
         msg = f"\n{quote}\n\n\nBest regards,\nSai Vignesh Golla\nhttps://www.linkedin.com/in/saivigneshgolla/\n\n"
-        pyautogui.alert(msg, "Exiting..")
+        try: pyautogui.alert(msg, "Exiting..")
+        except: pass
         print_lg(msg,"Closing the browser...")
         if tabs_count >= 10:
             msg = "NOTE: IF YOU HAVE MORE THAN 10 TABS OPENED, PLEASE CLOSE OR BOOKMARK THEM!\n\nOr it's highly likely that application will just open browser and not do anything next time!" 
-            pyautogui.alert(msg,"Info")
+            try: pyautogui.alert(msg,"Info")
+            except: pass
             print_lg("\n"+msg)
         ##> ------ Yang Li : MARKYangL - Feature ------
         if use_AI and aiClient:

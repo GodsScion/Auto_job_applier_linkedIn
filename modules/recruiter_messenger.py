@@ -34,6 +34,10 @@ from config.recruiter_messaging import *
 from config.personals import first_name, last_name
 from config.questions import years_of_experience
 from modules.helpers import print_lg, buffer, make_directories
+from modules.bot_logger import (
+    log_step, log_html_snapshot, log_action, log_decision, 
+    log_error, log_recruiter_action, log_section_separator
+)
 
 # Import AI functions conditionally
 if use_ai_for_messages:
@@ -233,9 +237,13 @@ def find_recruiters_on_job_page(driver: WebDriver) -> list[dict]:
 
     try:
         print_lg("Starting recruiter search...")
+        log_section_separator("RECRUITER SEARCH")
+        log_step("Starting recruiter search on job page")
+        log_html_snapshot(driver, "recruiter_search_start", "Initial state before searching for recruiters")
 
         # Ensure no modals are open from previous operations
         _ensure_modal_closed(driver)
+        log_action("Modal cleanup", "Ensured no stray modals are open")
 
         # STEP 1: Find "Meet the hiring team" section
         hiring_team_section = None
@@ -266,6 +274,19 @@ def find_recruiters_on_job_page(driver: WebDriver) -> list[dict]:
 
         except NoSuchElementException:
             print_lg("No 'People you can reach out to' section found on this job posting.")
+
+        # STEP 3: Check for "Show all" button to expand and get more connections
+        # This opens a modal with potentially many more 1st-degree connections
+        try:
+            modal_connections = find_connections_in_show_all_modal(driver)
+            if modal_connections:
+                # Deduplicate by recruiter_id to avoid messaging same person twice
+                existing_ids = {r.get('recruiter_id') for r in recruiters}
+                new_connections = [c for c in modal_connections if c.get('recruiter_id') not in existing_ids]
+                recruiters.extend(new_connections)
+                print_lg(f"Added {len(new_connections)} new connections from 'Show all' modal")
+        except Exception as e:
+            print_lg(f"⚠️ Error checking 'Show all' modal: {e}")
 
         print_lg(f"Found {len(recruiters)} potential messaging targets")
         return recruiters
@@ -349,6 +370,174 @@ def find_connections_in_help_section(driver: WebDriver, connections_section: Web
     except Exception as e:
         print_lg(f"Error extracting connections from help section: {e}")
 
+    return connections
+
+
+def find_connections_in_show_all_modal(driver: WebDriver) -> list[dict]:
+    '''
+    Clicks the "Show all" button to open the connections modal and extracts
+    all 1st-degree connections who can be messaged for free.
+    
+    Returns list of connection dictionaries with messaging capability info.
+    '''
+    connections = []
+    modal_opened = False
+    
+    try:
+        # STEP 1: Find and click the "Show all" button
+        # It's typically inside the "People you can reach out to" section
+        show_all_selectors = [
+            "//button[contains(@class, 'artdeco-button') and .//span[text()='Show all']]",
+            "//a[contains(@class, 'inline-block')]//button[.//span[text()='Show all']]",
+            "//div[contains(@class, 'job-details-people-who-can-help')]//button[.//span[text()='Show all']]"
+        ]
+        
+        show_all_btn = None
+        for selector in show_all_selectors:
+            try:
+                buttons = driver.find_elements(By.XPATH, selector)
+                # Get the first visible 'Show all' button
+                for btn in buttons:
+                    if btn.is_displayed():
+                        show_all_btn = btn
+                        break
+                if show_all_btn:
+                    break
+            except:
+                continue
+        
+        if not show_all_btn:
+            print_lg("ℹ️ No 'Show all' button found - skipping expanded connections")
+            return connections
+        
+        print_lg("🔍 Found 'Show all' button, clicking to expand connections...")
+        
+        # Scroll button into view and click
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", show_all_btn)
+        buffer(0.5)
+        
+        try:
+            show_all_btn.click()
+        except:
+            driver.execute_script("arguments[0].click();", show_all_btn)
+        
+        buffer(1.5)  # Wait for modal to load
+        modal_opened = True
+        
+        # STEP 2: Find the opened modal
+        modal = None
+        modal_selectors = [
+            "//div[contains(@class, 'job-details-connections-modal__modal-wrapper')]",
+            "//div[@role='dialog' and contains(@class, 'artdeco-modal')]"
+        ]
+        
+        for selector in modal_selectors:
+            try:
+                modal = WebDriverWait(driver, 5).until(
+                    EC.presence_of_element_located((By.XPATH, selector))
+                )
+                print_lg("✅ Opened 'In your network' modal")
+                break
+            except:
+                continue
+        
+        if not modal:
+            print_lg("⚠️ Could not find connections modal after clicking 'Show all'")
+            return connections
+        
+        # STEP 3: Extract all connection cards from the modal
+        # Look for cards with "Message" buttons (1st degree - free messaging)
+        connection_cards = modal.find_elements(By.XPATH,
+            ".//div[contains(@class, 'artdeco-entity-lockup') and .//button[.//span[text()='Message']]]")
+        
+        print_lg(f"📋 Found {len(connection_cards)} connections with Message button in modal")
+        
+        for card in connection_cards:
+            try:
+                conn_info = {'section': 'modal_connections'}
+                
+                # Extract name
+                try:
+                    name_elem = card.find_element(By.XPATH, 
+                        ".//div[contains(@class, 'artdeco-entity-lockup__title')]//strong")
+                    conn_info['name'] = name_elem.text.strip()
+                except:
+                    conn_info['name'] = "Unknown"
+                
+                # Extract title/subtitle
+                try:
+                    title_elem = card.find_element(By.XPATH,
+                        ".//div[contains(@class, 'artdeco-entity-lockup__subtitle')]")
+                    conn_info['title'] = title_elem.text.strip()
+                except:
+                    conn_info['title'] = "Unknown Title"
+                
+                # Extract profile link
+                try:
+                    link_elem = card.find_element(By.XPATH, ".//a[contains(@href, '/in/')]")
+                    conn_info['profile_link'] = link_elem.get_attribute('href')
+                    conn_info['recruiter_id'] = conn_info['profile_link'].split('/in/')[-1].split('/')[0].split('?')[0]
+                except:
+                    conn_info['profile_link'] = ""
+                    conn_info['recruiter_id'] = "unknown"
+                
+                # Extract connection degree
+                degree = "1st"  # Default to 1st since they have Message button
+                try:
+                    degree_elem = card.find_element(By.XPATH,
+                        ".//span[contains(@class, 'artdeco-entity-lockup__degree')]")
+                    degree_text = degree_elem.text.strip()
+                    if '1st' in degree_text:
+                        degree = "1st"
+                    elif '2nd' in degree_text:
+                        degree = "2nd"
+                    elif '3rd' in degree_text:
+                        degree = "3rd"
+                except:
+                    pass
+                
+                conn_info['connection_degree'] = degree
+                
+                # If they have a Message button, they're 1st degree = free messaging
+                conn_info['can_message'] = True
+                conn_info['is_free_message'] = (degree == "1st")
+                conn_info['button_type'] = 'message'
+                conn_info['message_type'] = 'connection' if degree == "1st" else 'inmail'
+                
+                # Only add if it's a free message (1st degree)
+                if conn_info['is_free_message'] and conn_info['name'] != "Unknown":
+                    print_lg(f"   ✅ Modal connection: {conn_info['name']} ({degree}) - Free Message")
+                    connections.append(conn_info)
+                else:
+                    print_lg(f"   ⏭️ Skipping modal connection: {conn_info['name']} ({degree}) - Not free")
+                    
+            except Exception as e:
+                print_lg(f"   ⚠️ Error parsing connection card: {e}")
+                continue
+        
+        print_lg(f"📊 Total free messageable connections from modal: {len(connections)}")
+        
+    except Exception as e:
+        print_lg(f"⚠️ Error processing 'Show all' modal: {e}")
+    
+    finally:
+        # STEP 4: Close the modal if it was opened
+        if modal_opened:
+            try:
+                close_btn = driver.find_element(By.XPATH,
+                    "//div[contains(@class, 'artdeco-modal')]//button[@aria-label='Dismiss' or contains(@class, 'artdeco-modal__dismiss')]")
+                close_btn.click()
+                buffer(0.5)
+                print_lg("✅ Closed connections modal")
+            except:
+                # Try ESC key as fallback
+                try:
+                    from selenium.webdriver.common.keys import Keys
+                    driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
+                    buffer(0.5)
+                except:
+                    pass
+    
     return connections
 
 
@@ -449,9 +638,14 @@ def check_message_capability(driver: WebDriver, section: WebElement) -> dict:
                 result['is_free_message'] = False
                 result['message_type'] = 'inmail'
             else:
-                # No lock detected -> Open Profile (Free)
-                result['is_free_message'] = True 
-                result['message_type'] = 'free'
+                # IMPORTANT: Without a lock icon, we CANNOT reliably determine if it's free.
+                # LinkedIn doesn't show InMail indicators until AFTER clicking the button.
+                # For safety, we mark it as 'unknown' - the post-click check will verify.
+                # We still allow the attempt, but is_free_message = False means we expect
+                # the post-click verification to confirm it's actually free.
+                result['is_free_message'] = False  # Conservative - assume InMail until proven free
+                result['message_type'] = 'unknown'  # Let post-click determine
+                print_lg(f"⚠️ Pre-click check: Cannot determine if message is free (no 1st degree indicator)")
                 
             return result
 
@@ -490,7 +684,7 @@ explaining why the candidate is a good fit. Be specific about matching skills.
 
 Job Title: {job_title}
 Company: {company_name}
-Job Description: {job_description[:500]}
+Job Description: {job_description[:1000]}
 Candidate Experience: {years_of_experience} years in backend development with Java"""
 
             if ai_provider.lower() == "openai":
@@ -541,6 +735,13 @@ Company: {company_name}"""
         key_skills="Java, Spring Boot, Microservices"  # Can be made dynamic later
     ).strip()
 
+    # Log the AI generated message for verification
+    if use_ai_for_messages:
+        print_lg("\n================= AI GENERATED MESSAGE =================")
+        print_lg(f"SUBJECT: {subject}")
+        print_lg(f"BODY:\n{body}")
+        print_lg("========================================================\n")
+
     # Ensure message is within LinkedIn limits
     # Subject: 200 chars, Body: 1900 chars for regular messages
     if len(subject) > 200:
@@ -555,8 +756,7 @@ Company: {company_name}"""
 def send_message_to_recruiter(
     driver: WebDriver,
     recruiter_info: dict,
-    subject: str,
-    message_body: str
+    message_init_data: dict
 ) -> tuple[bool, str]:
     '''
     Sends message to the recruiter via LinkedIn.
@@ -571,13 +771,24 @@ def send_message_to_recruiter(
     '''
     global messages_sent_today
 
+    # Log the messaging attempt
+    log_section_separator(f"MESSAGE TO: {recruiter_info.get('name', 'Unknown')}")
+    log_recruiter_action(recruiter_info.get('name', 'Unknown'), 
+                         f"Starting message attempt | Section: {recruiter_info.get('section')} | Button: {recruiter_info.get('button_type')}")
+    log_html_snapshot(driver, f"msg_start_{recruiter_info.get('name', 'unknown')[:20]}", 
+                      f"Before messaging {recruiter_info.get('name')}")
+
     if dry_run_mode:
         print_lg(f"[DRY RUN] Would send message to {recruiter_info['name']}")
+        print_lg(f"📝 Message Subject: {subject}")
+        print_lg(f"📝 Message Body:\n{message_body}")
+        log_decision("DRY RUN", f"Would send message to {recruiter_info['name']}")
         return True, "Dry run - message not actually sent"
 
     # STEP 1: Capture initial state
     original_window = driver.current_window_handle
     pre_click_handles = set(driver.window_handles)
+    log_step("Captured initial browser state", f"Window: {original_window[:30]}... | Handles: {len(pre_click_handles)}")
     
     # Initialize variables for cleanup scope
     messaging_window_handle = None
@@ -640,6 +851,51 @@ def send_message_to_recruiter(
     # STEP 2: Click message/connect button
     try:
         current_name = recruiter_info.get('name', '').split()[0]
+        section_type = recruiter_info.get('section', '')
+        
+        # SPECIAL CASE: Modal connections require re-opening the modal first
+        if section_type == 'modal_connections':
+            print_lg(f"🔍 Re-opening 'Show all' modal to message {current_name}...")
+            
+            # Click Show all button to re-open modal
+            show_all_selectors = [
+                "//button[contains(@class, 'artdeco-button') and .//span[text()='Show all']]",
+                "//a[contains(@class, 'inline-block')]//button[.//span[text()='Show all']]",
+                "//div[contains(@class, 'job-details-people-who-can-help')]//button[.//span[text()='Show all']]"
+            ]
+            
+            show_all_btn = None
+            for selector in show_all_selectors:
+                try:
+                    buttons = driver.find_elements(By.XPATH, selector)
+                    for btn in buttons:
+                        if btn.is_displayed():
+                            show_all_btn = btn
+                            break
+                    if show_all_btn:
+                        break
+                except:
+                    continue
+            
+            if not show_all_btn:
+                return False, f"Could not find 'Show all' button to message modal connection {current_name}"
+            
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", show_all_btn)
+            buffer(0.5)
+            try:
+                show_all_btn.click()
+            except:
+                driver.execute_script("arguments[0].click();", show_all_btn)
+            buffer(1.5)
+            
+            # Wait for modal to open
+            try:
+                WebDriverWait(driver, 5).until(
+                    EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'job-details-connections-modal__modal-wrapper')]"))
+                )
+                print_lg("✅ Re-opened modal for messaging")
+            except:
+                return False, f"Could not re-open modal for {current_name}"
         
         # 2. Find button relative to the recruiter's name (Most Robust)
         # Instead of finding a container first (which might be too narrow, like just the <a> tag),
@@ -655,6 +911,9 @@ def send_message_to_recruiter(
         
         if recruiter_info['button_type'] == 'message':
             btn_xpaths = [
+                # 0. Modal-specific: Find button within the connections modal (for modal_connections)
+                f"//div[contains(@class, 'job-details-connections-modal')]//div[contains(@class, 'artdeco-entity-lockup') and .//*[contains(text(), '{name_clean}')]]//button[.//span[text()='Message']]",
+                f"//div[@role='dialog']//div[contains(@class, 'artdeco-entity-lockup') and .//*[contains(text(), '{name_clean}')]]//button[.//span[text()='Message']]",
                 # 1. Correct Structure: Button is sibling's child (entry-point sibling to hirer-card__hirer-information)
                 # Find the container div that has BOTH the name text and a button descendant
                 f"//div[contains(@class, 'display-flex') and .//*[contains(text(), '{name_clean}')]]//button[.//span[contains(text(), 'Message')]]",
@@ -664,6 +923,8 @@ def send_message_to_recruiter(
                 "//section[.//h2[contains(text(),'Meet the hiring team')]]//button[contains(normalize-space(.), 'Message')]",
                 # 3. Artdeco card fallback
                 f"//div[contains(@class,'artdeco-card') and .//*[contains(text(), '{name_clean}')]]//button[contains(normalize-space(.), 'Message')]",
+                # 4. Generic artdeco-entity-lockup (common in modals)
+                f"//div[contains(@class, 'artdeco-entity-lockup') and .//*[contains(text(), '{name_clean}')]]//button[.//span[text()='Message']]",
             ]
         elif recruiter_info['button_type'] == 'connect':
             btn_xpaths = [
@@ -967,6 +1228,31 @@ def send_message_to_recruiter(
     
     # STEP 5: Compose message in detected context
     try:
+        # Generate personalized message here, JUST-IN-TIME!
+        # This ensures we don't waste tokens on profiles that require InMail (which we skipped above)
+        print_lg(f"🧠 Generating AI message for {recruiter_info['name']} (Verified Free)...")
+        
+        # Unpack init data
+        aiClient = message_init_data.get('aiClient')
+        job_description = message_init_data.get('job_description', '')
+        job_title = message_init_data.get('job_title', '')
+        company_name = message_init_data.get('company_name', '')
+        job_link = message_init_data.get('job_link', '')
+        
+        # Check if we already have pre-generated content (legacy support or manual override)
+        message_subject = message_init_data.get('message_subject', '')
+        message_body = message_init_data.get('message_body', '')
+        
+        if not message_body:
+             message_subject, message_body = generate_personalized_message(
+                aiClient=aiClient,
+                recruiter_info=recruiter_info,
+                job_description=job_description,
+                job_title=job_title,
+                company_name=company_name,
+                job_link=job_link
+             )
+        
         # Try multiple selectors for message body field (LinkedIn UI varies)
         msg_body = None
         body_selectors = [
@@ -1006,50 +1292,41 @@ def send_message_to_recruiter(
         """, msg_body)
         buffer(0.3)
         
-        # Try multiple text insertion methods for maximum compatibility
-        text_inserted = False
-        
-        # Method 1: JavaScript innerHTML with proper event triggering
+        # Try to fill message using standard send_keys (matches Easy Apply strategy)
+        # This mimics real user behavior and triggers native events best
         try:
-            driver.execute_script("""
-                var field = arguments[0];
-                var text = arguments[1];
-                var p = document.createElement('p');
-                p.textContent = text;
-                field.appendChild(p);
-                field.dispatchEvent(new Event('input', { bubbles: true }));
-                field.dispatchEvent(new Event('change', { bubbles: true }));
-            """, msg_body, message_body)
+            msg_body.click()
+            buffer(0.2)
+            msg_body.clear()
+            msg_body.send_keys(message_body)
             buffer(0.5)
+            
+            # Verify text was inserted
             entered_text = msg_body.get_attribute('innerText').strip()
-            if len(entered_text) >= 10:
-                text_inserted = True
-                print_lg("Text inserted via JavaScript method")
-        except Exception as e:
-            print_lg(f"JavaScript insertion failed: {e}")
-        
-        # Method 2: Fallback - Selenium send_keys
-        if not text_inserted:
-            try:
-                msg_body.clear()
+            
+            # If clear() didn't work (common in contenteditable), try JS clear + send_keys
+            if len(entered_text) < len(message_body) * 0.5:
+                print_lg("Standard send_keys failed to clear/insert. Retrying...")
+                driver.execute_script("arguments[0].innerHTML = '';", msg_body)
                 msg_body.send_keys(message_body)
                 buffer(0.5)
                 entered_text = msg_body.get_attribute('innerText').strip()
-                if len(entered_text) >= 10:
-                    text_inserted = True
-                    print_lg("Text inserted via send_keys fallback")
-            except Exception as e:
-                print_lg(f"send_keys fallback failed: {e}")
-        
-        # Verify text was inserted
-        entered_text = msg_body.get_attribute('innerText').strip()
-        if len(entered_text) < 10:
-            return False, f"ERROR: Text insertion failed - only {len(entered_text)} characters inserted"
-        
-        print_lg(f"✅ Successfully inserted {len(entered_text)} characters")
-        
+            
+            if len(entered_text) < 10:
+                print_lg(f"⚠️ Warning: Only {len(entered_text)} chars inserted. Trying Actions chain...")
+                # Fallback: ActionChains
+                actions = ActionChains(driver)
+                actions.move_to_element(msg_body).click().send_keys(message_body).perform()
+                buffer(0.5)
+                entered_text = msg_body.get_attribute('innerText').strip()
+
+            print_lg(f"✅ Successfully inserted {len(entered_text)} characters")
+            
+        except Exception as e:
+            return False, f"ERROR: Failed to fill message fields - {str(e)}"
+
     except Exception as e:
-        return False, f"ERROR: Failed to fill message fields - {str(e)}"
+        return False, f"ERROR: Failed to prepare message body - {str(e)}"
     
     # STEP 5: Send message
     try:
@@ -1079,6 +1356,17 @@ def send_message_to_recruiter(
                 continue
         
         if not send_button:
+            log_error("Send button not found", f"Tried {len(send_selectors)} selectors")
+            # Save HTML dump for debugging
+            dump_path = f"debug_html_dumps/SEND_BUTTON_MISSING_{recruiter_info.get('name', 'unknown')}_{int(time.time())}.html"
+            make_directories([os.path.dirname(dump_path)])
+            try:
+                with open(dump_path, "w", encoding="utf-8") as f:
+                    f.write(driver.page_source)
+                print_lg(f"📸 Saved SEND BUTTON MISSING dump to: {dump_path}")
+            except Exception as e:
+                print_lg(f"Failed to save debug dump: {e}")
+            
             return False, "ERROR: Send button not found with any selector"
         
         # DRY RUN CHECK: Don't actually click send if in dry run mode
@@ -1251,7 +1539,9 @@ def should_skip_recruiter(recruiter_info: dict, job_id: str, already_applied: bo
         return True, "Already applied via Easy Apply"
 
     # Check if InMail required but we want only free messages
-    if skip_inmail_required and not recruiter_info['is_free_message']:
+    # IMPORTANT: If message_type is 'unknown', we still attempt - post-click verification will decide
+    message_type = recruiter_info.get('message_type', 'unknown')
+    if skip_inmail_required and not recruiter_info['is_free_message'] and message_type != 'unknown':
         return True, "InMail required (preserving credits)"
 
     # Check daily limit

@@ -4,10 +4,10 @@
 
 **Project Name:** LinkedIn AI Auto Job Applier  
 **Repository:** [GodsScion/Auto_job_applier_linkedIn](https://github.com/GodsScion/Auto_job_applier_linkedIn)  
-**Version:** 26.01.20.14.30 Community Alpha  
+**Version:** 26.01.23.01.30 Community Alpha  
 **Author:** Sai Vignesh Golla  
 **License:** GNU Affero General Public License v3.0  
-**Project Location:** `c:\Users\Sanjay\Desktop\Projects\AUTO APPLY\Auto_job_applier_linkedIn`
+**Project Location:** `/Users/sanju/Projects/Auto_job_applier_linkedIn`
 
 ### Purpose
 This is an advanced web scraping automation bot that streamlines the job application process on LinkedIn. It searches for relevant jobs, automatically fills out application forms, customizes resumes based on job requirements (skills, description, company info), and can apply to 100+ jobs in less than 1 hour.
@@ -196,6 +196,7 @@ Auto_job_applier_linkedIn/
 │   ├── search.py                   # Job search preferences
 │   ├── secrets.py                  # LinkedIn credentials & AI config
 │   ├── settings.py                 # Bot behavior settings
+│   ├── recruiter_messaging.py      # Recruiter messaging config
 │   └── resume.py                   # Resume generation config
 ├── modules/                        # Core functionality modules
 │   ├── ai/                        # AI integration modules
@@ -206,23 +207,49 @@ Auto_job_applier_linkedIn/
 │   ├── resumes/                   # Resume processing
 │   │   ├── generator.py           # Resume generation
 │   │   └── extractor.py           # Resume data extraction
+│   ├── recruiter_messenger.py     # Recruiter messaging (69KB, AI-optimized)
+│   ├── bot_logger.py              # Session logging system
 │   ├── clickers_and_finders.py    # Selenium utilities
 │   ├── helpers.py                 # Helper functions
 │   ├── open_chrome.py             # Chrome browser automation
+│   ├── html_diagnostic.py         # HTML debugging tools
 │   └── validator.py               # Configuration validation
+├── execution/                      # Execution scripts (Layer 3)
+│   ├── run_bot.py                 # Main automation script (78KB, ~2000 lines)
+│   ├── linkedin_login.py          # LinkedIn authentication
+│   └── messaging_utility.py       # Standalone messaging tool
+├── directives/                     # SOPs (Layer 1)
+│   ├── apply_to_jobs.md           # Job application workflow
+│   ├── recruiter_messaging.md     # Recruiter messaging instructions
+│   └── people_messaging.md        # General messaging workflows
 ├── templates/                      # Flask web UI templates
 │   └── index.html                 # Job history UI
-├── all excels/                    # Application tracking
+├── all excels/                    # Application tracking (Deliverables)
 │   ├── all_applied_applications_history.csv
-│   └── all_failed_applications_history.csv
+│   ├── all_failed_applications_history.csv
+│   └── recruiter_messages_history.csv
 ├── all resumes/                   # Resume storage
-├── logs/                          # Application logs
-├── runAiBot.py                    # Main automation script (1253 lines)
+│   ├── default/
+│   │   └── resume.pdf             # Default resume for applications
+│   └── temp/                      # Temporary resumes
+├── logs/                          # Session logs (Deliverables)
+│   ├── sessions/                  # Session log files
+│   └── screenshots/               # Failure screenshots
+├── debug_html_dumps/              # Debug HTML dumps (Intermediates)
+├── .tmp/                          # Temporary files (Intermediates)
 ├── app.py                         # Flask web UI server
 ├── test.py                        # Testing utilities
 ├── test_gemini.py                 # Gemini AI testing
+├── test_recruiter_messaging.py    # Recruiter messaging tests
+├── verify_selectors.py            # Selector verification tool
 ├── requirements.txt               # Python dependencies
-└── README.md                      # Project documentation
+├── README.md                      # Project documentation
+├── agents.md                      # Agent instructions (mirrored file)
+├── agent_context.md               # Agent context documentation (this file)
+├── AGENTS.md                      # Agent instructions (mirrored file)
+├── CLAUDE.md                      # Agent instructions (mirrored file)
+├── GEMINI.md                      # Agent instructions (mirrored file)
+└── DEBUGGING_RECOMMENDATIONS.md   # Debugging guide
 ```
 
 ---
@@ -375,13 +402,18 @@ setuptools                 # Python packaging
 
 ### Start the Bot
 ```bash
-python runAiBot.py
+python execution/run_bot.py
 ```
 
 ### Start the Web UI
 ```bash
 python app.py
 # Then navigate to: http://localhost:5000
+```
+
+### Standalone Messaging Utility
+```bash
+python execution/messaging_utility.py
 ```
 
 ### Install Dependencies
@@ -408,6 +440,18 @@ pip install undetected-chromedriver pyautogui setuptools openai flask-cors flask
 ---
 
 ## 📅 Recent Updates
+
+### January 23, 2026
+- **3-Layer Architecture Implementation**: Implemented Layer 1 (Directives in `directives/`), Layer 2 (Orchestration via AI agents), Layer 3 (Execution via Python scripts in `execution/`)
+- **AI Agent Optimization**: Enhanced `modules/recruiter_messenger.py` with AI-friendly integration points, structured error messages, and comprehensive logging
+- **Modular Structure**: Reorganized code into clear directories - `config/`, `modules/`, `execution/`, `directives/`
+- **Documentation Updates**: Added `agents.md`, `agent_context.md`, and mirrored files for seamless AI agent integration
+
+### January 22, 2026
+- **Recruiter Messaging V2**: Major reliability overhaul based on browser dominance testing
+- **Smart Verification**: Added strict recruiter name verification in chat headers to prevent mis-targeted messages
+- **Bubble Management**: Implemented auto-closing of existing chat bubbles to prevent "full bar" blocking
+- **Timing Logic**: Updated wait states (5s+3s) to match actual LinkedIn UI rendering speeds
 
 ### January 20, 2026
 - **Recruiter Messaging V2**: Major reliability overhaul
@@ -443,4 +487,4 @@ Based on the configuration, Sanjay is:
 
 ---
 
-*This document was generated on January 20, 2026, to provide comprehensive context about the Auto Job Applier LinkedIn project and its configuration for Sanjay Nainwal.*
+*This document was generated on January 23, 2026, to provide comprehensive context about the Auto Job Applier LinkedIn project and its configuration for Sanjay Nainwal. Updated with 3-layer architecture documentation and AI agent integration details.*

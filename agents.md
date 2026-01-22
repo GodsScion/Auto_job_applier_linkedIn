@@ -10,11 +10,12 @@ You operate within a 3-layer architecture that separates concerns to maximize re
 - Basically just SOPs written in Markdown, live in `directives/`
 - Define the goals, inputs, tools/scripts to use, outputs, and edge cases
 - Natural language instructions, like you'd give a mid-level employee
+- Examples: apply_to_jobs.md (job application workflow), recruiter_messaging.md (messaging workflows)
 
 **Layer 2: Orchestration (Decision making)**
 - This is you. Your job: intelligent routing.
 - Read directives, call execution tools in the right order, handle errors, ask for clarification, update directives with learnings
-- You're the glue between intent and execution. E.g you don't try scraping websites yourself—you read `directives/scrape_website.md` and come up with inputs/outputs and then run `execution/scrape_single_site.py`
+- You're the glue between intent and execution. E.g you don't try automating LinkedIn yourself—you read `directives/apply_to_jobs.md` and then run `execution/run_bot.py`
 
 **Layer 3: Execution (Doing the work)**
 - Deterministic Python scripts in `execution/`
@@ -50,17 +51,21 @@ Errors are learning opportunities. When something breaks:
 ## File Organization
 
 **Deliverables vs Intermediates:**
-- **Deliverables**: Google Sheets, Google Slides, or other cloud-based outputs that the user can access
+- **Deliverables**: Application history CSV files, recruiter messages CSV, session logs, failure screenshots (local files the user can access)
 - **Intermediates**: Temporary files needed during processing
 
-**Directory structure:**
-- `.tmp/` - All intermediate files (dossiers, scraped data, temp exports). Never commit, always regenerated.
-- `execution/` - Python scripts (the deterministic tools)
-- `directives/` - SOPs in Markdown (the instruction set)
-- `.env` - Environment variables and API keys
-- `credentials.json`, `token.json` - Google OAuth credentials (required files, in `.gitignore`)
+**Key principle:** Local files are deliverables for this project. Everything in `.tmp/` and `debug_html_dumps/` can be deleted and regenerated.
 
-**Key principle:** Local files are only for processing. Deliverables live in cloud services (Google Sheets, Slides, etc.) where the user can access them. Everything in `.tmp/` can be deleted and regenerated.
+**Directory structure:**
+- `.tmp/` - All intermediate files (debug HTML dumps, temp exports). Never commit, always regenerated.
+- `execution/` - Python scripts (run_bot.py, linkedin_login.py, messaging_utility.py)
+- `directives/` - SOPs in Markdown (apply_to_jobs.md, recruiter_messaging.md, people_messaging.md)
+- `modules/` - Core functionality modules (recruiter_messenger.py, ai/, clickers_and_finders.py, helpers.py, etc.)
+- `config/` - Configuration files (secrets.py, search.py, settings.py, personals.py, questions.py, recruiter_messaging.py)
+- `.env` - Environment variables and API keys
+- `all excels/` - Deliverables: application history, recruiter messages, failed jobs
+- `logs/` - Deliverables: session logs and screenshots
+- `all resumes/` - Resume storage directory
 
 ## Summary
 

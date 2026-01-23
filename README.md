@@ -320,7 +320,7 @@ alternate link: https://discord.gg/ykfDjRFB
     - [Support Q&A](https://github.com/GodsScion/Auto_job_applier_linkedIn/discussions/categories/support-q-a)
 
 
-#### ℹ️ Version: 25.07.20.9.30 Community Alpha
+#### ℹ️ Version: 26.01.20.5.08
 
 ---
 

@@ -31,10 +31,10 @@ max_messages_per_day = 500              # Only Non Negative Integers Eg: 10, 20,
 message_delay_seconds = 1             # Only Non Negative Integers Eg: 15, 30, 45, 60
 
 # Skip messaging if already applied to job via Easy Apply?
-skip_if_already_applied = False         # True or False, Note: True or False are case-sensitive
+skip_if_already_applied = True1         # True or False, Note: True or False are case-sensitive
 
 # Messaging Only Mode - Skip Easy Apply and only message recruiters?
-messaging_only_mode = False            # True or False, Note: True or False are case-sensitive
+messaging_only_mode = True            # True or False, Note: True or False are case-sensitive
 '''
 Set to True if you want to ONLY message recruiters without applying via Easy Apply.
 This is useful when you want to focus on direct recruiter outreach.
@@ -83,6 +83,12 @@ Job Listing: {job_link}
 Best regards,
 {your_name}
 """
+
+# Connection note template (short, under connection_note_max_chars)
+connection_note_template = """Hi {recruiter_name}, {personalized_intro} {why_interested} Thanks, {your_name}."""
+
+# Max characters for connection note (LinkedIn limit is low; keep <= 380)
+connection_note_max_chars = 380
 
 '''
 Available template variables:

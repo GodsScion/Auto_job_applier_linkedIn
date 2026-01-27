@@ -31,7 +31,7 @@ max_messages_per_day = 500              # Only Non Negative Integers Eg: 10, 20,
 message_delay_seconds = 1             # Only Non Negative Integers Eg: 15, 30, 45, 60
 
 # Skip messaging if already applied to job via Easy Apply?
-skip_if_already_applied = True1         # True or False, Note: True or False are case-sensitive
+skip_if_already_applied = True         # True or False, Note: True or False are case-sensitive
 
 # Messaging Only Mode - Skip Easy Apply and only message recruiters?
 messaging_only_mode = True            # True or False, Note: True or False are case-sensitive

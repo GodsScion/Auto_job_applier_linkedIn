@@ -1002,7 +1002,19 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
                     uploaded = False
                     # Case 1: Easy Apply Button
-                    if try_xp(driver, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3') and contains(@aria-label, 'Easy')]"):
+                    # First try the classic button with "Easy" in aria-label
+                    is_easy_apply = try_xp(driver, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3') and contains(@aria-label, 'Easy')]")
+                    # Fallback: check if the apply button/link leads to Easy Apply via URL pattern
+                    if not is_easy_apply:
+                        try:
+                            apply_link_el = driver.find_element(By.XPATH, ".//a[contains(@href, 'openSDUIApplyFlow=true')]")
+                            if apply_link_el:
+                                apply_link_el.click()
+                                is_easy_apply = True
+                                print_lg("Detected Easy Apply via URL pattern (openSDUIApplyFlow)")
+                        except:
+                            pass
+                    if is_easy_apply:
                         try: 
                             try:
                                 errored = ""

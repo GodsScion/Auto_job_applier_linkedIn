@@ -1002,7 +1002,36 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
                     uploaded = False
                     # Case 1: Easy Apply Button
-                    if try_xp(driver, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3') and contains(@aria-label, 'Easy')]"):
+                    # First try the classic button with "Easy" in aria-label
+                    is_easy_apply = try_xp(driver, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3') and contains(@aria-label, 'Easy')]")
+                    # Fallback 1: check if apply link contains Easy Apply URL pattern
+                    if not is_easy_apply:
+                        try:
+                            apply_link_el = driver.find_element(By.XPATH, ".//a[contains(@href, 'openSDUIApplyFlow=true')]")
+                            if apply_link_el:
+                                apply_link_el.click()
+                                is_easy_apply = True
+                                print_lg("Detected Easy Apply via URL pattern (openSDUIApplyFlow)")
+                        except:
+                            pass
+                    # Fallback 2: click any Apply button and check if Easy Apply modal appears
+                    if not is_easy_apply:
+                        try:
+                            apply_btn = driver.find_element(By.XPATH, ".//button[contains(@class,'jobs-apply-button')]")
+                            if apply_btn:
+                                apply_btn.click()
+                                buffer(click_gap)
+                                try:
+                                    find_by_class(driver, "jobs-easy-apply-modal")
+                                    is_easy_apply = True
+                                    print_lg("Detected Easy Apply via modal appearance after click")
+                                except:
+                                    # Modal didn't appear — not Easy Apply, dismiss any opened page
+                                    try: actions.send_keys(Keys.ESCAPE).perform()
+                                    except: pass
+                        except:
+                            pass
+                    if is_easy_apply:
                         try: 
                             try:
                                 errored = ""

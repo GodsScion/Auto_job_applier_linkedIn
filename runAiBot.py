@@ -1065,6 +1065,12 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(modal, questions_list, work_location, job_description=description)
+                                    for question in questions_list:
+                                        for word in bad_question_words:
+                                            for q_word in re.split(r'[ \[\]",]+', question[0]):
+                                                if word.lower() in q_word.lower():
+                                                    errored = "bad-question"
+                                                    raise Exception(f'\n"{question[0]}"\n\nContains "{word}".')
                                     if useNewResume and not uploaded: uploaded, resume = upload_resume(modal, default_resume_path)
                                     try: next_button = modal.find_element(By.XPATH, './/span[normalize-space(.)="Review"]') 
                                     except NoSuchElementException:  next_button = modal.find_element(By.XPATH, './/button[contains(span, "Next")]')
@@ -1074,6 +1080,9 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
                             except NoSuchElementException: errored = "nose"
                             finally:
+                                if questions_list and errored == "bad-question":
+                                    print_lg("Application contains an bad question, discarding the job application.")
+                                    raise Exception("Application with bad question")
                                 if questions_list and errored != "stuck": 
                                     print_lg("Answered the following questions...", questions_list)
                                     print("\n\n" + "\n".join(str(question) for question in questions_list) + "\n\n")

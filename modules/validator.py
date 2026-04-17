@@ -143,6 +143,7 @@ def validate_search() -> None | ValueError | TypeError:
     check_list(about_company_bad_words, "about_company_bad_words")
     check_list(about_company_good_words, "about_company_good_words")
     check_list(bad_words, "bad_words")
+    check_list(bad_question_words, "bad_question_words")
     check_boolean(security_clearance, "security_clearance")
     check_boolean(did_masters, "did_masters")
     check_int(current_experience, "current_experience", -1)

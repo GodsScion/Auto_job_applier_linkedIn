@@ -132,18 +132,20 @@ def login_LN() -> None:
         return
     try:
         wait.until(EC.presence_of_element_located((By.LINK_TEXT, "Forgot password?")))
-        try:
-            text_input_by_ID(driver, "username", username, 1)
-        except Exception as e:
-            print_lg("Couldn't find username field.")
-            # print_lg(e)
-        try:
-            text_input_by_ID(driver, "password", password, 1)
-        except Exception as e:
-            print_lg("Couldn't find password field.")
-            # print_lg(e)
-        # Find the login submit button and click it
-        driver.find_element(By.XPATH, '//button[@type="submit" and contains(text(), "Sign in")]').click()
+        ##> ------ Iliya Brook : iliyabrook1987@gmail.com - Bug fix ------
+        # LinkedIn no longer ships the login form with stable `id="username"` /
+        # `id="password"` attributes, and the primary Sign-in button is now a
+        # plain `<button type="button">` that shares its visible text with
+        # "Sign in with Apple". Rely on `Element.checkVisibility()` instead of
+        # XPath/ID selectors so the flow survives future markup changes.
+        userField, passField = find_visible_login_inputs(driver, 10)
+        text_input_visible(driver, userField, username)
+        text_input_visible(driver, passField, password)
+        # LinkedIn renders the primary action button last among visible buttons;
+        # clicking the final one avoids hitting "Sign in with Apple" or the
+        # "Show password" toggle.
+        find_visible_buttons(driver, 5)[-1].click()
+        ##<
     except Exception as e1:
         try:
             profile_button = find_by_class(driver, "profile__details")

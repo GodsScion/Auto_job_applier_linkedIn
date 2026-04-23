@@ -125,6 +125,77 @@ def text_input_by_ID(driver: WebDriver, id: str, value: str, time: float=5.0) ->
     username_field.send_keys(Keys.CONTROL + "a")
     username_field.send_keys(value)
 
+
+##> ------ Iliya Brook : iliyabrook1987@gmail.com - Bug fix ------
+# LinkedIn's login page uses React-generated IDs (`:r0:`, `:r1:`, ...) that
+# change on every render and renders multiple hidden copies of the same form.
+# Locating elements by `id`, `name` or brittle XPath text breaks on every
+# layout tweak. These helpers rely on the native `Element.checkVisibility()`
+# API (Chromium 105+, Firefox 125+, Safari 17.4+) to pick only the elements
+# the user actually sees, making the login flow resilient to markup churn.
+def find_visible_login_inputs(driver: WebDriver, time: float=10.0) -> tuple[WebElement, WebElement]:
+    '''
+    Find the visible username and password <input> elements of a login form.
+    - Uses the native Element.checkVisibility() API to ignore hidden duplicate
+      forms (LinkedIn renders several `<input>`s but only one pair is user-facing).
+    - Resilient to dynamic React-generated IDs and empty `name` attributes.
+    - Returns `(username_input, password_input)`.
+    - Raises `TimeoutError` if both fields don't appear within `time` seconds.
+    '''
+    script = (
+        "return Array.from(document.querySelectorAll('input')).filter("
+        "el => el.checkVisibility && el.checkVisibility("
+        "{opacityProperty: true, visibilityProperty: true}));"
+    )
+    import time as _time
+    deadline = _time.time() + time
+    while _time.time() < deadline:
+        userInput, passInput = None, None
+        for el in driver.execute_script(script) or []:
+            inputType = (el.get_attribute("type") or "").lower()
+            if inputType == "password" and passInput is None:
+                passInput = el
+            elif inputType in ("text", "email", "tel", "") and userInput is None:
+                userInput = el
+        if userInput is not None and passInput is not None:
+            return userInput, passInput
+        _time.sleep(0.2)
+    raise TimeoutError("Couldn't locate visible username/password inputs on the login form")
+
+
+def text_input_visible(driver: WebDriver, field: WebElement, value: str) -> None:
+    '''
+    Clears and types `value` into the already-located visible input `field`.
+    '''
+    field.send_keys(Keys.CONTROL + "a")
+    field.send_keys(value)
+
+
+def find_visible_buttons(driver: WebDriver, time: float=10.0) -> list[WebElement]:
+    '''
+    Return the list of *visible* buttons on the page, in DOM order.
+    - Scans `<button>`, `<input type="button">`, and `<input type="submit">`.
+    - Uses Element.checkVisibility() so hidden duplicate layouts are skipped.
+    - Waits up to `time` seconds for at least one visible button to appear.
+    - Raises `TimeoutError` if none show up in time.
+    '''
+    script = (
+        "return Array.from(document.querySelectorAll("
+        "'button, input[type=\"button\"], input[type=\"submit\"]'))"
+        ".filter(el => el.checkVisibility && el.checkVisibility("
+        "{opacityProperty: true, visibilityProperty: true}));"
+    )
+    import time as _time
+    deadline = _time.time() + time
+    while _time.time() < deadline:
+        buttons = driver.execute_script(script) or []
+        if buttons:
+            return buttons
+        _time.sleep(0.2)
+    raise TimeoutError("No visible buttons found on the page")
+##<
+
+
 def try_xp(driver: WebDriver, xpath: str, click: bool=True) -> WebElement | bool:
     try:
         if click:

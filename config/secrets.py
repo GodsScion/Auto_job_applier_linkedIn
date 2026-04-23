@@ -19,8 +19,17 @@ version:    24.12.3.10.30
 
 
 # Login Credentials for LinkedIn (Optional)
-username = "username@example.com"       # Enter your username in the quotes
-password = "example_password"           # Enter your password in the quotes
+# Credentials are loaded from a local `.env` file. Copy `.env.example` to `.env` and fill in your details.
+# If `.env` is missing or the values are empty, the bot will fall back to a saved browser profile or manual login.
+import os
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+username = os.getenv("LINKEDIN_USERNAME", "")       # Set LINKEDIN_USERNAME in your .env file
+password = os.getenv("LINKEDIN_PASSWORD", "")       # Set LINKEDIN_PASSWORD in your .env file
 
 
 ## Artificial Intelligence (Beta Not-Recommended)

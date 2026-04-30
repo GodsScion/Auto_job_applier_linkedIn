@@ -5,6 +5,7 @@ __pycache__
 all excels
 all resumes
 logs
+.env
 
 old
 

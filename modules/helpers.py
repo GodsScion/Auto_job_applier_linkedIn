@@ -130,20 +130,36 @@ def get_log_path():
 __logs_file_path = get_log_path()
 
 
+# Reconfigure stdout/stderr for UTF-8 to prevent charmap errors on Windows
+try:
+    if sys.stdout.encoding.lower() != 'utf-8':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+except:
+    pass
+
 def print_lg(*msgs: str | dict, end: str = "\n", pretty: bool = False, flush: bool = False, from_critical: bool = False) -> None:
     '''
     Function to log and print. **Note that, `end` and `flush` parameters are ignored if `pretty = True`**
     '''
     try:
         for message in msgs:
-            pprint(message) if pretty else print(message, end=end, flush=flush)
+            msg_str = str(message)
+            try:
+                if pretty: pprint(message)
+                else: print(msg_str, end=end, flush=flush)
+            except UnicodeEncodeError:
+                # Fallback for older terminals or environments that can't handle UTF-8 despite reconfiguration
+                print(msg_str.encode(sys.stdout.encoding, errors='replace').decode(sys.stdout.encoding), end=end, flush=flush)
+                
             with open(__logs_file_path, 'a+', encoding="utf-8") as file:
-                file.write(str(message) + end)
+                file.write(msg_str + end)
     except Exception as e:
-        trail = f'Skipped saving this message: "{message}" to log.txt!' if from_critical else "We'll try one more time to log..."
-        alert(f"log.txt in {logs_folder_path} is open or is occupied by another program! Please close it! {trail}", "Failed Logging")
         if not from_critical:
-            critical_error_log("Log.txt is open or is occupied by another program!", e)
+            # Avoid infinite recursion and only log to console if file write fails
+            print(f"FAILED TO SEARCH/LOG: {e}")
+
 #>
 
 

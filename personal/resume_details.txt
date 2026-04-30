@@ -1,0 +1,56 @@
+first_name=Aman Kumar
+last_name=Srivastava
+phone_number=7739704188
+current_city=Varanasi
+state=U.P
+country=India
+website=https://github.com/aman012
+linkedIn=https://www.linkedin.com/in/aman-kumar-srivastava
+search_terms=Data Engineer, AI Engineer
+search_location=India
+years_of_experience=1
+current_ctc=300000
+expected_ctc=600000
+notice_period=10 days
+
+--- PROFESSIONAL SUMMARY ---
+Data Engineer with hands-on production experience building modern lakehouse pipelines on the Cloudflare + Trino + Apache Iceberg stack. Designed and maintained ELT workflows ingesting data from Cloudflare D1 into R2-backed cold storage, configured federated SQL layers via Trino for schema-on-read analytics, and orchestrated 10+ automation workflows using n8n. Strong Python and SQL foundation; experienced deploying scalable backends with FastAPI and Docker.
+
+--- TECHNICAL SKILLS ---
+Data Engineering: Trino, Apache Iceberg, Apache Hive, ELT Pipelines, Data Lake Architecture, Cloudflare D1 & R2, PostgreSQL, MySQL, Pandas, NumPy
+Workflow & Analytics: n8n, Apache Superset, Metabase, Data Lineage, Data Quality Checks, Self-Serve BI, KPI Dashboards
+Backend & DevOps: FastAPI, RESTful APIs, Docker, Docker Swarm, GitHub Actions, CI/CD Pipelines, AWS, GCP, Cloudflare, Linux
+ML & AI: PyTorch, Scikit-learn, Hugging Face Transformers, Prompt Engineering
+Languages: Python, SQL, HTML, CSS
+
+--- WORK EXPERIENCE ---
+HumanizeIQ.ai | Data Engineer | Nov 2025 -- Present
+- Designed and built a production ELT pipeline ingesting data from Cloudflare D1 into Cloudflare R2.
+- Configured Trino over R2-backed Apache Iceberg catalogs as a federated SQL engine.
+- Orchestrated 10+ n8n workflows automating D1-to-R2 sync and Trino query triggering.
+- Built Metabase dashboards on the Trino layer for self-serve BI reporting and KPI tracking.
+- Maintained data quality checks and lineage documentation, reducing discrepancies by 50%.
+
+HumanizeIQ.ai | AI Engineer Intern | June 2025 -- Oct 2025
+- Architected 5+ Apache Superset dashboards serving 300+ users, cutting turnaround by 40%.
+- Built and deployed production ML solutions using FastAPI and Scikit-learn.
+- Drove adoption of dashboards across 3 business teams, reducing ad-hoc SQL requests by 60%.
+
+--- KEY PROJECTS ---
+PDF Summarization --- Full-Stack AI Web App (botzcoder.com)
+- Engineered PDF ingestion and storage on Cloudflare R2 with async FastAPI workers.
+- Built full-stack app with Next.js, FastAPI, and Neon PostgreSQL; integrated Google OAuth.
+- Applied LoRA-based fine-tuning on Mistral-7B, cutting trainable parameters by 99%.
+
+AI Chatbot --- Food Delivery Platform
+- Built FastAPI + MySQL backend handling concurrent order sessions with ACID transactions.
+- Optimized query execution, reducing p95 response time from 800ms to 120ms.
+- Integrated Dialogflow NLP for multi-intent classification (tracking, lookup, complaints).
+
+--- EDUCATION ---
+Indian Institute of Information Technology, Kottayam (2020 -- 2024)
+B.Tech, Computer Science & Engineering | GPA: 7.48 / 10.0
+
+--- CERTIFICATIONS ---
+Generative AI with Large Language Models (DeepLearning.AI)
+Prompt Engineering for AI Models (LetsUpgrade)

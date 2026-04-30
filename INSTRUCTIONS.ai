@@ -1,0 +1,8 @@
+STRICT: don't create any file with more than 200 lines of code
+STRICT: don't modify dockerfile without asking for permission
+STRICT: always do minimal line of code change
+STRICT: don't use any hardcoded url in any file creation, add into environment variable and fetch from there only 
+STRICT: don't create any document file without permission
+STRICT: don't explain something in a detailed way without permission
+STRICT: always follow @instructions.ai inside chat window
+STRICT: never write any code without explaining the reason 

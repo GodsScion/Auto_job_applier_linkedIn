@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AutoApply</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 320px;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f14;
+      color: #e2e8f0;
+    }
+    .header {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.5px; }
+    .header span { font-size: 22px; }
+    .body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; }
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      background: #1e1e2e;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-size: 13px;
+      outline: none;
+      margin-top: 4px;
+    }
+    input:focus { border-color: #6366f1; }
+    #apply-btn {
+      width: 100%;
+      padding: 11px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: opacity 0.2s;
+    }
+    #apply-btn:hover { opacity: 0.88; }
+    #apply-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    #status {
+      font-size: 12px;
+      min-height: 18px;
+      color: #94a3b8;
+      text-align: center;
+    }
+    #status.ok  { color: #34d399; }
+    #status.err { color: #f87171; }
+    .divider { border: none; border-top: 1px solid #1e293b; }
+  </style>
+</head>
+<body>
+  <div class="header"><span>⚡</span><h1>AutoApply</h1></div>
+  <div class="body">
+    <div>
+      <label>Backend URL</label>
+      <input id="backend-url" type="text" placeholder="http://localhost:8000" />
+    </div>
+    <hr class="divider" />
+    <button id="apply-btn">🚀 Auto Apply on This Page</button>
+    <div id="status">Ready</div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

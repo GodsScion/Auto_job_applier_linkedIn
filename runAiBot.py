@@ -485,6 +485,12 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         answer = current_city if current_city else work_location
                     else:
                         answer = work_location
+                elif 'experience' in label or 'years' in label: 
+                    answer = years_of_experience
+                elif 'month' in label:
+                    answer = '0'
+                elif 'salary' in label or 'ctc' in label or 'compensation' in label:
+                    answer = str(desired_salary)
                 else: 
                     answer = answer_common_questions(label,answer)
                 try: 
@@ -1134,7 +1140,6 @@ chatGPT_tab = False
 linkedIn_tab = False
 
 def main() -> None:
-    pyautogui.alert("Please consider sponsoring this project at:\n\nhttps://github.com/sponsors/GodsScion\n\n", "Support the project", "Okay")
     total_runs = 1
     try:
         global linkedIn_tab, tabs_count, useNewResume, aiClient
@@ -1142,7 +1147,7 @@ def main() -> None:
         validate_config()
         
         if not os.path.exists(default_resume_path):
-            pyautogui.alert(text='Your default resume "{}" is missing! Please update it\'s folder path "default_resume_path" in config.py\n\nOR\n\nAdd a resume with exact name and path (check for spelling mistakes including cases).\n\n\nFor now the bot will continue using your previous upload from LinkedIn!'.format(default_resume_path), title="Missing Resume", button="OK")
+            print_lg('Your default resume "{}" is missing! The bot will continue using your previously uploaded resume on LinkedIn.'.format(default_resume_path))
             useNewResume = False
         
         # Login to LinkedIn
@@ -1228,15 +1233,9 @@ def main() -> None:
             "Obstacles are those frightful things you see when you take your eyes off your goal. - Henry Ford (Not a sponsor)",
             "The only limit to our realization of tomorrow will be our doubts of today. - Franklin D. Roosevelt (Not a sponsor)",
             ])
-        sponsors = "Be the first to have your name here!"
-        timeSaved = (easy_applied_count * 80) + (external_jobs_count * 20) + (skip_count * 10)
-        timeSavedMsg = ""
-        if timeSaved > 0:
-            timeSaved += 60
-            timeSavedMsg = f"In this run, you saved approx {round(timeSaved/60)} mins ({timeSaved} secs), please consider supporting the project."
-        msg = f"{quotes}\n\n\n{timeSavedMsg}\nYou can also get your quote and name shown here, or prioritize your bug reports by supporting the project at:\n\nhttps://github.com/sponsors/GodsScion\n\n\nSummary:\n{summary}\n\n\nBest regards,\nSai Vignesh Golla\nhttps://www.linkedin.com/in/saivigneshgolla/\n\nTop Sponsors:\n{sponsors}"
-        pyautogui.alert(msg, "Exiting..")
-        print_lg(msg,"Closing the browser...")
+        msg = f"Summary:\n{summary}"
+        pyautogui.alert(msg, "Run Complete")
+        print_lg(msg, "Closing the browser...")
         if tabs_count >= 10:
             msg = "NOTE: IF YOU HAVE MORE THAN 10 TABS OPENED, PLEASE CLOSE OR BOOKMARK THEM!\n\nOr it's highly likely that application will just open browser and not do anything next time!" 
             pyautogui.alert(msg,"Info")

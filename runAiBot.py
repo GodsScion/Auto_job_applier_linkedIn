@@ -485,6 +485,15 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         answer = current_city if current_city else work_location
                     else:
                         answer = work_location
+                elif 'experience' in label:
+                    try:
+                        yrs = float(years_of_experience)
+                        if 'month' in label:
+                            answer = str(int((yrs - int(yrs)) * 12))
+                        else:
+                            answer = str(int(yrs))
+                    except:
+                        answer = str(years_of_experience)
                 else: 
                     answer = answer_common_questions(label,answer)
                 try: 
@@ -552,6 +561,15 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 elif 'veteran' in label or 'protected' in label: answer = veteran_status
                 elif 'disability' in label or 'handicapped' in label: 
                     answer = disability_status
+                elif 'experience' in label:
+                    try:
+                        yrs = float(years_of_experience)
+                        if 'month' in label:
+                            answer = str(int((yrs - int(yrs)) * 12))
+                        else:
+                            answer = str(int(yrs))
+                    except:
+                        answer = str(years_of_experience)
                 else: answer = answer_common_questions(label,answer)
                 foundOption = try_xp(radio, f".//label[normalize-space()='{answer}']", False)
                 if foundOption: 

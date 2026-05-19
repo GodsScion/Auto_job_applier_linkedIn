@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  job-ai-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: job-ai-agent
+
+    ports:
+      - "5000:5000"
+
+    environment:
+      PYTHONUNBUFFERED: 1
+      CHROME_BIN: /usr/bin/chromium
+      CHROMEDRIVER_PATH: /usr/bin/chromedriver
+
+    volumes:
+      - .:/app
+      - ./job_apply_ai/outputs:/app/job_apply_ai/outputs
+
+    restart: unless-stopped
+
+    stdin_open: true
+    tty: true

@@ -27,8 +27,12 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from modules.helpers import find_default_profile_directory, critical_error_log, print_lg
 from selenium.common.exceptions import SessionNotCreatedException
+import os
 
 def createChromeSession(isRetry: bool = False):
+    import subprocess
+    subprocess.call("taskkill /f /im chrome.exe", shell=True)
+
     make_directories([file_name,failed_file_name,logs_folder_path+"/screenshots",default_resume_path,generated_resume_path+"/temp"])
     # Set up WebDriver with Chrome Profile
     options = uc.ChromeOptions() if stealth_mode else Options()
@@ -50,7 +54,7 @@ def createChromeSession(isRetry: bool = False):
         # except (FileNotFoundError, PermissionError) as e: 
         #     print_lg("(Undetected Mode) Got '{}' when using pre-installed ChromeDriver.".format(type(e).__name__)) 
             print_lg("Downloading Chrome Driver... This may take some time. Undetected mode requires download every run!")
-            driver = uc.Chrome(options=options)
+            driver = uc.Chrome(options=options, version_main=148)
     else: driver = webdriver.Chrome(options=options) #, service=Service(executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe"))
     driver.maximize_window()
     wait = WebDriverWait(driver, 5)

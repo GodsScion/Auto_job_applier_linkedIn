@@ -57,14 +57,10 @@ def make_directories(paths: list[str]) -> None:
             print(f'Error while creating directory "{path}": ', e)
 
 
-def get_default_temp_profile() -> str:
-    # Thanks to https://github.com/vinodbavage31 for suggestion!
-    home = pathlib.Path.home()
-    if sys.platform.startswith('win'):
-        return "--user-data-dir=C:\\temp\\auto-job-apply-profile"
-    elif sys.platform.startswith('linux'):
-        return str(home / ".auto-job-apply-profile")
-    return str(home / "Library" / "Application Support" / "Google" / "Chrome" / "auto-job-apply-profile")
+def get_default_temp_profile():
+    path = os.path.join(os.environ["USERPROFILE"], "chrome-bot-profile")
+    os.makedirs(path, exist_ok=True)
+    return path
 
 
 def find_default_profile_directory() -> str | None:

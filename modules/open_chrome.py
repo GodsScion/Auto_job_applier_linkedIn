@@ -17,12 +17,15 @@ version:    26.01.20.5.08
 from modules.helpers import get_default_temp_profile, make_directories
 from config.settings import run_in_background, stealth_mode, disable_extensions, safe_mode, file_name, failed_file_name, logs_folder_path, generated_resume_path
 from config.questions import default_resume_path
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 if stealth_mode:
-    import undetected_chromedriver as uc
-else: 
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
-    # from selenium.webdriver.chrome.service import Service
+    try:
+        import undetected_chromedriver as uc
+    except ImportError:
+        pass
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from modules.helpers import find_default_profile_directory, critical_error_log, print_lg
@@ -45,13 +48,14 @@ def createChromeSession(isRetry: bool = False):
         print_lg("Logging in with a guest profile, Web history will not be saved!")
         options.add_argument(f"--user-data-dir={get_default_temp_profile()}")
     if stealth_mode:
-        # try: 
-        #     driver = uc.Chrome(driver_executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe", options=options)
-        # except (FileNotFoundError, PermissionError) as e: 
-        #     print_lg("(Undetected Mode) Got '{}' when using pre-installed ChromeDriver.".format(type(e).__name__)) 
+        try:
             print_lg("Downloading Chrome Driver... This may take some time. Undetected mode requires download every run!")
             driver = uc.Chrome(options=options)
-    else: driver = webdriver.Chrome(options=options) #, service=Service(executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe"))
+        except (NameError, AttributeError):
+            print_lg("Undetected chromedriver not available, using standard webdriver")
+            driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    else:
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     driver.maximize_window()
     wait = WebDriverWait(driver, 5)
     actions = ActionChains(driver)
@@ -68,8 +72,11 @@ except Exception as e:
     if isinstance(e,TimeoutError): msg = "Couldn't download Chrome-driver. Set stealth_mode = False in config!"
     print_lg(msg)
     critical_error_log("In Opening Chrome", e)
-    from pyautogui import alert
-    alert(msg, "Error in opening chrome")
+    try:
+        from pyautogui import alert
+        alert(msg, "Error in opening chrome")
+    except:
+        print_lg("Could not display alert dialog.")
     try: driver.quit()
     except NameError: exit()
     

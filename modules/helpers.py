@@ -141,7 +141,10 @@ def print_lg(*msgs: str | dict, end: str = "\n", pretty: bool = False, flush: bo
                 file.write(str(message) + end)
     except Exception as e:
         trail = f'Skipped saving this message: "{message}" to log.txt!' if from_critical else "We'll try one more time to log..."
-        alert(f"log.txt in {logs_folder_path} is open or is occupied by another program! Please close it! {trail}", "Failed Logging")
+        try:
+            alert(f"log.txt in {logs_folder_path} is open or is occupied by another program! Please close it! {trail}", "Failed Logging")
+        except (AssertionError, Exception) as alert_error:
+            print(f"[Failed Logging] log.txt in {logs_folder_path} is open or is occupied by another program! Please close it! {trail}")
         if not from_critical:
             critical_error_log("Log.txt is open or is occupied by another program!", e)
 #>

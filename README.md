@@ -49,6 +49,15 @@ Click on above image to watch the tutorial for installation and configuration or
 ## 🔧 How to configure
 1. Open `personals.py` file in `/config` folder and enter your details like name, phone number, address, etc. Whatever you want to fill in your applications.
 2. Open `questions.py` file in `/config` folder and enter your answers for application questions, configure wether you want the bot to pause before submission or pause if it can't answer unknown questions.
+   - **Multi-Resume Support**: You can now map different resumes to different job titles! Edit the `resume_rules` list to add your own rules. Format:
+     ```python
+     resume_rules = [
+         (["Keyword1", "Keyword2"], "path/to/resume1.pdf"),
+         (["Keyword3", "Keyword4"], "path/to/resume2.pdf"),
+     ]
+     ```
+     The bot checks rules in order — first keyword match wins. If no match, it falls back to `default_resume_path`.
+   - See `config/questions.example.py` for a template.
 3. Open `search.py` file in `/config` folder and enter your search preferences, job filters, configure the bot as per your needs (these settings decide which jobs to apply for or skip).
 4. Open `secrets.py` file in `/config` folder and enter your LinkedIn username, password to login and OpenAI API Key for generation of job tailored resumes and cover letters (This entire step is optional). If you do not provide username or password or leave them as default, it will login with saved profile in browser, if failed will ask you to login manually.
 5. Open `settings.py` file in `/config` folder to configure the bot settings like, keep screen awake, click intervals (click intervals are randomized to seem like human behavior), run in background, stealth mode (to avoid bot detection), etc. as per your needs.

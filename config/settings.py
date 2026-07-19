@@ -1,18 +1,18 @@
-'''
-Author:     Sai Vignesh Golla
-LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
+# '''
+# Author:     Sai Vignesh Golla
+# LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
 
-Copyright (C) 2024 Sai Vignesh Golla
+# Copyright (C) 2024 Sai Vignesh Golla
 
-License:    GNU Affero General Public License
-            https://www.gnu.org/licenses/agpl-3.0.en.html
+# License:    GNU Affero General Public License
+#             https://www.gnu.org/licenses/agpl-3.0.en.html
             
-GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
+# GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
-Support me: https://github.com/sponsors/GodsScion
+# Support me: https://github.com/sponsors/GodsScion
 
-version:    26.01.20.5.08
-'''
+# version:    26.01.20.5.08
+# '''
 
 
 ###################################################### CONFIGURE YOUR BOT HERE ######################################################
@@ -20,13 +20,13 @@ version:    26.01.20.5.08
 # >>>>>>>>>>> LinkedIn Settings <<<<<<<<<<<
 
 # Keep the External Application tabs open?
-close_tabs = False                  # True or False, Note: True or False are case-sensitive
+close_tabs = True                  # True or False, Note: True or False are case-sensitive
 '''
 Note: RECOMMENDED TO LEAVE IT AS `True`, if you set it `False`, be sure to CLOSE ALL TABS BEFORE CLOSING THE BROWSER!!!
 '''
 
 # Follow easy applied companies
-follow_companies = False            # True or False, Note: True or False are case-sensitive
+follow_companies = True            # True or False, Note: True or False are case-sensitive
 
 ## Upcoming features (In Development)
 # # Send connection requests to HR's 
@@ -36,7 +36,7 @@ follow_companies = False            # True or False, Note: True or False are cas
 # connect_request_message = ""       # Leave Empty to send connection request without personalized invitation (recommended to leave it empty, since you only get 10 per month without LinkedIn Premium*)
 
 # Do you want the program to run continuously until you stop it? (Beta)
-run_non_stop = False                # True or False, Note: True or False are case-sensitive
+run_non_stop = True                # True or False, Note: True or False are case-sensitive
 '''
 Note: Will be treated as False if `run_in_background = True`
 '''
@@ -51,7 +51,7 @@ stop_date_cycle_at_24hr = True      # True or False, Note: True or False are cas
 # >>>>>>>>>>> RESUME GENERATOR (Experimental & In Development) <<<<<<<<<<<
 
 # Give the path to the folder where all the generated resumes are to be stored
-generated_resume_path = "all resumes/" # (In Development)
+generated_resume_path = "C:\Users\SAIDI REDDY\OneDrive\Desktop\job-auto-apply\Auto_job_applier_linkedIn\Generated-Resumes/" # (In Development)
 
 
 
@@ -101,19 +101,3 @@ showAiErrorAlerts = False            # True or False, Note: True or False are ca
 
 
 
-############################################################################################################
-'''
-THANK YOU for using my tool 😊! Wishing you the best in your job hunt 🙌🏻!
-
-Sharing is caring! If you found this tool helpful, please share it with your peers 🥺. Your support keeps this project alive.
-
-Support my work on <PATREON_LINK>. Together, we can help more job seekers.
-
-As an independent developer, I pour my heart and soul into creating tools like this, driven by the genuine desire to make a positive impact.
-
-Your support, whether through donations big or small or simply spreading the word, means the world to me and helps keep this project alive and thriving.
-
-Gratefully yours 🙏🏻,
-Sai Vignesh Golla
-'''
-############################################################################################################

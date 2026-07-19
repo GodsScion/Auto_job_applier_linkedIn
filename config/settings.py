@@ -51,7 +51,7 @@ stop_date_cycle_at_24hr = True      # True or False, Note: True or False are cas
 # >>>>>>>>>>> RESUME GENERATOR (Experimental & In Development) <<<<<<<<<<<
 
 # Give the path to the folder where all the generated resumes are to be stored
-generated_resume_path = "C:\Users\SAIDI REDDY\OneDrive\Desktop\job-auto-apply\Auto_job_applier_linkedIn\Generated-Resumes/" # (In Development)
+generated_resume_path = "" # (In Development)
 
 
 

@@ -122,7 +122,25 @@ Note: If left empty as "", the tool will not answer the question. However, note 
 
 # Your cover letter in quotes, use \n to add line breaks if using single quotes "Cover Letter".You can skip \n if using triple quotes """Cover Letter""" (This question makes sense though)
 cover_letter = """
-Cover Letter
+Dear Hiring Manager,
+
+I am excited to apply for the Cloud Architect position. I am an Enterprise Cloud Architect with 15+ years of IT experience, specializing in AWS, Microsoft Azure, multi-cloud architecture, cloud transformation, and enterprise platform engineering.
+
+I have extensive experience designing and implementing secure, scalable, and highly available cloud solutions across AWS and Azure environments. My expertise includes cloud migration, enterprise landing zones, cloud governance, security architecture, networking, disaster recovery, cost optimization, and operational excellence aligned with industry best practices such as AWS Well-Architected Framework and Azure Cloud Adoption Framework.
+
+I have hands-on experience with AWS services including AWS Organizations, Control Tower, IAM Identity Center, VPC, Transit Gateway, EC2, EKS, ECS, RDS, Aurora, S3, CloudFront, WAF, and Lambda, along with Azure services including Azure Kubernetes Service, Virtual Networks, and governance solutions. I also have strong experience with Infrastructure as Code and DevOps automation using Terraform, CloudFormation, CI/CD pipelines, GitHub, Bitbucket, and Kubernetes.
+
+Throughout my career, I have worked with enterprise and financial services environments, delivering cloud solutions that improve scalability, security, reliability, and business agility. I have successfully led cloud modernization initiatives, implemented governance frameworks, optimized cloud costs, and supported mission-critical production platforms.
+
+I am passionate about helping organizations accelerate cloud adoption through secure, innovative, and resilient architectures. I believe my experience in multi-cloud strategy, cloud governance, automation, and platform engineering would add significant value to your organization.
+
+I would welcome the opportunity to discuss how my skills and experience align with your cloud architecture requirements.
+
+Thank you for your consideration.
+
+Best regards,
+Saidi Reddy Morthala
++971 - 52 641 74 75 \ +91- 9985 66 66 51
 """
 ##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
 
@@ -137,7 +155,7 @@ Note: If left empty as "", the tool will not answer the question. However, note 
 ''' 
 
 # Name of your most recent employer
-recent_employer = "Not Applicable" # "", "Lala Company", "Google", "Snowflake", "Databricks"
+recent_employer = "Avrioc Technologies LLC" # "", "Lala Company", "Google", "Snowflake", "Databricks"
 
 # Example question: "On a scale of 1-10 how much experience do you have building web or mobile applications? 1 being very little or only in school, 10 being that you have built and launched applications to real users"
 confidence_level = "8"             # Any number between "1" to "10" including 1 and 10, put it in quotes ""
@@ -164,26 +182,3 @@ Note: Will be treated as False if `run_in_background = True`
 
 # Do you want to overwrite previous answers?
 overwrite_previous_answers = False # True or False, Note: True or False are case-sensitive
-
-
-
-
-
-
-
-############################################################################################################
-'''
-THANK YOU for using my tool 😊! Wishing you the best in your job hunt 🙌🏻!
-
-Sharing is caring! If you found this tool helpful, please share it with your peers 🥺. Your support keeps this project alive.
-
-Support my work on <PATREON_LINK>. Together, we can help more job seekers.
-
-As an independent developer, I pour my heart and soul into creating tools like this, driven by the genuine desire to make a positive impact.
-
-Your support, whether through donations big or small or simply spreading the word, means the world to me and helps keep this project alive and thriving.
-
-Gratefully yours 🙏🏻,
-Sai Vignesh Golla
-'''
-############################################################################################################

@@ -21,57 +21,57 @@
 # >>>>>>>>>>> Easy Apply Questions & Inputs <<<<<<<<<<<
 
 # Give an relative path of your default resume to be uploaded. If file in not found, will continue using your previously uploaded resume in LinkedIn.
-default_resume_path = "all resumes/default/resume.pdf"      # (In Development)
+default_resume_path = "C:\Users\SAIDI REDDY\OneDrive\Desktop\job-auto-apply\Auto_job_applier_linkedIn\SaidiReddy_Morthala_Resume.docx"      # (In Development)
 
 # What do you want to answer for questions that ask about years of experience you have, this is different from current_experience? 
-years_of_experience = "5"          # A number in quotes Eg: "0","1","2","3","4", etc.
+years_of_experience = "15"          # A number in quotes Eg: "0","1","2","3","4", etc.
 
 # Do you need visa sponsorship now or in future?
-require_visa = "No"               # "Yes" or "No"
+require_visa = "Yes"               # "Yes" or "No"
 
 # What is the link to your portfolio website, leave it empty as "", if you want to leave this question unanswered
-website = "https://github.com/GodsScion"                        # "www.example.bio" or "" and so on....
+website = ""                        # "www.example.bio" or "" and so on....
 
 # Please provide the link to your LinkedIn profile.
-linkedIn = "https://www.linkedin.com/in/saivigneshgolla/"       # "https://www.linkedin.com/in/example" or "" and so on...
+linkedIn = "https://www.linkedin.com/in/saidi-reddy-morthala-3a72b3110/"       # "https://www.linkedin.com/in/example" or "" and so on...
 
 # What is the status of your citizenship? # If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
 # Valid options are: "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident" or "Other"
-us_citizenship = "U.S. Citizen/Permanent Resident"
+us_citizenship = "Non-citizen seeking work authorization"
 
 
 
 ## SOME ANNOYING QUESTIONS BY COMPANIES 🫠 ##
 
 # What to enter in your desired salary question (American and European), What is your expected CTC (South Asian and others)?, only enter in numbers as some companies only allow numbers,
-desired_salary = 1200000          # 80000, 90000, 100000 or 120000 and so on... Do NOT use quotes
-'''
-Note: If question has the word "lakhs" in it (Example: What is your expected CTC in lakhs), 
-then it will add '.' before last 5 digits and answer. Examples: 
-* 2400000 will be answered as "24.00"
-* 850000 will be answered as "8.50"
-And if asked in months, then it will divide by 12 and answer. Examples:
-* 2400000 will be answered as "200000"
-* 850000 will be answered as "70833"
-'''
-
-# What is your current CTC? Some companies make it compulsory to be answered in numbers...
-current_ctc = 800000            # 800000, 900000, 1000000 or 1200000 and so on... Do NOT use quotes
-'''
-Note: If question has the word "lakhs" in it (Example: What is your current CTC in lakhs), 
-then it will add '.' before last 5 digits and answer. Examples: 
-* 2400000 will be answered as "24.00"
-* 850000 will be answered as "8.50"
+desired_salary = 40000          # 80000, 90000, 100000 or 120000 and so on... Do NOT use quotes
+# '''
+# Note: If question has the word "lakhs" in it (Example: What is your expected CTC in lakhs), 
+# then it will add '.' before last 5 digits and answer. Examples: 
+# * 2400000 will be answered as "24.00"
+# * 850000 will be answered as "8.50"
 # And if asked in months, then it will divide by 12 and answer. Examples:
 # * 2400000 will be answered as "200000"
 # * 850000 will be answered as "70833"
-'''
+# '''
+
+# What is your current CTC? Some companies make it compulsory to be answered in numbers...
+current_ctc = 30000            # 800000, 900000, 1000000 or 1200000 and so on... Do NOT use quotes
+# '''
+# Note: If question has the word "lakhs" in it (Example: What is your current CTC in lakhs), 
+# then it will add '.' before last 5 digits and answer. Examples: 
+# * 2400000 will be answered as "24.00"
+# * 850000 will be answered as "8.50"
+# # And if asked in months, then it will divide by 12 and answer. Examples:
+# # * 2400000 will be answered as "200000"
+# # * 850000 will be answered as "70833"
+# '''
 
 # (In Development) # Currency of salaries you mentioned. Companies that allow string inputs will add this tag to the end of numbers. Eg: 
 # currency = "INR"                 # "USD", "INR", "EUR", etc.
 
 # What is your notice period in days?
-notice_period = 30                   # Any number >= 0 without quotes. Eg: 0, 7, 15, 30, 45, etc.
+notice_period = 60                   # Any number >= 0 without quotes. Eg: 0, 7, 15, 30, 45, etc.
 '''
 Note: If question has 'month' or 'week' in it (Example: What is your notice period in months), 
 then it will divide by 30 or 7 and answer respectively. Examples:
@@ -84,13 +84,37 @@ then it will divide by 30 or 7 and answer respectively. Examples:
 '''
 
 # Your LinkedIn headline in quotes Eg: "Software Engineer @ Google, Masters in Computer Science", "Recent Grad Student @ MIT, Computer Science"
-linkedin_headline = "Full Stack Developer with Masters in Computer Science and 4+ years of experience" # "Headline" or "" to leave this question unanswered
+linkedin_headline = "Enterprise Cloud Architect | AWS & Azure | Multi-Cloud Architecture | Cloud Transformation | Security & Governance | Kubernetes | Terraform | Financial Services" # "Headline" or "" to leave this question unanswered
 
 # Your summary in quotes, use \n to add line breaks if using single quotes "Summary".You can skip \n if using triple quotes """Summary"""
 linkedin_summary = """
-I'm a Senior Software Engineer at Amazon with Masters in CS and 4+ years of experience in developing and maintaining Full Stack Web applications and cloud solutions. 
-Specialized in React, Node.js, and Python.
+Enterprise Cloud Architect with 15+ years of experience designing, implementing, and governing scalable, secure, and highly available cloud platforms across AWS and Microsoft Azure. Experienced in enterprise cloud transformation, multi-cloud architecture, cloud migration, infrastructure modernization, and building cloud operating models for large-scale environments.
+
+Strong expertise in AWS and Azure services including AWS Organizations, Control Tower, Landing Zones, IAM Identity Center, VPC, Transit Gateway, CloudFront, WAF, EC2, EKS, ECS, RDS, Aurora, S3, Lambda, Azure Virtual Networks, Azure Kubernetes Service, and Azure governance frameworks.
+
+Proven experience in designing enterprise-grade architectures aligned with AWS Well-Architected Framework, Azure Cloud Adoption Framework, security best practices, compliance requirements, and cost optimization strategies. Skilled in implementing cloud governance, security controls, identity management, networking, disaster recovery, high availability, and multi-region active-active architectures.
+
+Hands-on experience with Infrastructure as Code and DevOps automation using Terraform, CloudFormation, CI/CD pipelines, GitHub, Bitbucket, Harness, and container platforms including Kubernetes and Amazon EKS. Experienced in building scalable cloud platforms, observability solutions, automation frameworks, and operational excellence practices.
+
+Specialized in financial services and enterprise environments, delivering secure cloud solutions while balancing business requirements, performance, reliability, and cost efficiency.
+
+Key Skills:
+• Enterprise Cloud Architecture
+• AWS & Azure Multi-Cloud Solutions
+• Cloud Migration & Modernization
+• Cloud Governance & Landing Zones
+• AWS Control Tower & Azure Governance
+• Security Architecture & Compliance
+• Kubernetes & Container Platforms
+• Terraform & Infrastructure Automation
+• DevOps & CI/CD Transformation
+• Disaster Recovery & High Availability
+• Cost Optimization & Cloud FinOps
+• Platform Engineering
+
+Passionate about designing future-ready cloud platforms, enabling digital transformation, and helping organizations achieve secure, scalable, and resilient cloud adoption.
 """
+
 
 '''
 Note: If left empty as "", the tool will not answer the question. However, note that some companies make it compulsory to be answered. Use \n to add line breaks.

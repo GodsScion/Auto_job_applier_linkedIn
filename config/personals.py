@@ -12,7 +12,7 @@ last_name = "Morthala"                # Your last name in quotes Eg: "Last", "Go
 phone_number = "0526417475"        # Enter your 10 digit number in quotes Eg: "9876543210"
 
 # What is your current city?
-current_city = ""                  # Los Angeles, San Francisco, etc.
+current_city = "Abu Dhabi"                  # Los Angeles, San Francisco, etc.
 '''
 Note: If left empty as "", the bot will fill in location of jobs location.
 '''

@@ -24,16 +24,16 @@ version:    26.01.20.5.08
 default_resume_path = "all resumes/default/resume.pdf"      # (In Development)
 
 # What do you want to answer for questions that ask about years of experience you have, this is different from current_experience? 
-years_of_experience = "5"          # A number in quotes Eg: "0","1","2","3","4", etc.
+years_of_experience = "51"          # A number in quotes Eg: "0","1","2","3","4", etc.
 
 # Do you need visa sponsorship now or in future?
-require_visa = "No"               # "Yes" or "No"
+require_visa = "Yes"               # "Yes" or "No"
 
 # What is the link to your portfolio website, leave it empty as "", if you want to leave this question unanswered
-website = "https://github.com/GodsScion"                        # "www.example.bio" or "" and so on....
+website = ""                        # "www.example.bio" or "" and so on....
 
 # Please provide the link to your LinkedIn profile.
-linkedIn = "https://www.linkedin.com/in/saivigneshgolla/"       # "https://www.linkedin.com/in/example" or "" and so on...
+linkedIn = ""       # "https://www.linkedin.com/in/example" or "" and so on...
 
 # What is the status of your citizenship? # If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
 # Valid options are: "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident" or "Other"

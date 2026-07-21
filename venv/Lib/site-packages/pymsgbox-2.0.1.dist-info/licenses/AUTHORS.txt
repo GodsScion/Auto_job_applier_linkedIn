@@ -1,0 +1,7 @@
+Here is an inevitably incomplete list of MUCH-APPRECIATED CONTRIBUTORS --
+people who have submitted patches, reported bugs, added translations, helped
+answer newbie questions, and generally made PyMsgBox that much better:
+
+Al Sweigart https://github.com/asweigart
+Jose Dzireh Chong https://github.com/josedzirehchong
+Joseph Ernest https://github.com/josephernest

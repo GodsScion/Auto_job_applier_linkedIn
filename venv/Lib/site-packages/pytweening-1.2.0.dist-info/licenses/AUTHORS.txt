@@ -1,0 +1,9 @@
+Here is an inevitably incomplete list of MUCH-APPRECIATED CONTRIBUTORS --
+people who have submitted patches, reported bugs, added translations, helped
+answer newbie questions, and generally made PyTweening that much better:
+
+Al Sweigart (al@inventwithpython.com)
+Denilson Figueiredo de Sá https://github.com/denilsonsa
+Julien Schueller https://github.com/jschueller
+Marek Madejski https://github.com/TrangOul
+Stefanie Molin https://github.com/stefmolin

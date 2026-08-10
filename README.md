@@ -1,5 +1,5 @@
 # LinkedIn AI Auto Job Applier 🤖
-This is a free, open-source tool that automates job applications on LinkedIn. It runs entirely on your own computer, using your own LinkedIn account. It finds jobs relevant to you, fills in the application questions, tailors your resume to each job's details (required skills, description, about the company, etc.), and applies. Can apply to 100+ jobs in under an hour. 
+This is a free, open-source tool that automates job applications on LinkedIn. It runs entirely on your own computer, using your own LinkedIn account. It finds jobs relevant to you, fills in the application questions — optionally with AI help — and applies using the resume you provide. Can apply to 100+ jobs in under an hour. 
 
 
 ## 📽️ See it in Action
@@ -57,11 +57,7 @@ Click on above image to watch the tutorial for installation and configuration or
   ```
 3. Download and install latest version of [Google Chrome](https://www.google.com/chrome) in it's default location, visit https://www.google.com/chrome to download it's installer.
 4. Clone the current git repo or download it as a zip file, url to the latest update https://github.com/GodsScion/Auto_job_applier_linkedIn.
-5. (Not needed if you set `auto_manage_driver = True` in `config/settings.py`, which downloads the matching driver for you automatically.) Otherwise, download the [Chrome Driver](https://googlechromelabs.github.io/chrome-for-testing/) that matches your Google Chrome version and place it where Chrome is installed. Visit https://googlechromelabs.github.io/chrome-for-testing/ to download.
-  <br> <br>
-  ***OR*** 
-  <br> <br>
-  If you are using Windows, click on `windows-setup.bat` available in the `/setup` folder, this will install the latest chromedriver automatically.
+5. Chrome Driver is taken care of for you: `auto_manage_driver = True` (the default in `config/settings.py`) downloads the matching driver automatically. If you'd rather manage it yourself, set it to `False` and place the matching [Chrome Driver](https://googlechromelabs.github.io/chrome-for-testing/) where Chrome is installed.
 6. If you have questions or need help setting it up or to talk in general, join the github server: https://discord.gg/fFp7uUzWCY
 
 [back to index](#-content)
@@ -72,12 +68,24 @@ Click on above image to watch the tutorial for installation and configuration or
 1. Open `personals.py` file in `/config` folder and enter your details like name, phone number, address, etc. Whatever you want to fill in your applications.
 2. Open `questions.py` file in `/config` folder and enter your answers for application questions, configure wether you want the bot to pause before submission or pause if it can't answer unknown questions.
 3. Open `search.py` file in `/config` folder and enter your search preferences, job filters, configure the bot as per your needs (these settings decide which jobs to apply for or skip).
-4. Open `secrets.py` file in `/config` folder and enter your LinkedIn username, password to login and OpenAI API Key for generation of job tailored resumes and cover letters (This entire step is optional). If you do not provide username or password or leave them as default, it will login with saved profile in browser, if failed will ask you to login manually.
+4. Open `secrets.py` file in `/config` folder and enter your LinkedIn username and password (optional — if you leave them as default, it logs in with the browser's saved profile, or asks you to log in manually). This file is also where you turn on optional AI help and choose your provider, model, key and URL — see [AI setup](#-ai-setup-optional) below.
 5. Open `settings.py` file in `/config` folder to configure settings like keep screen awake, click interval (time to wait between actions), run in background, automatic Chrome-driver management, etc. as per your needs.
-6. (Optional) Don't forget to add you default resume in the location you mentioned in `default_resume_path = "all resumes/default/resume.pdf"` given in `/config/questions.py`. If one is not provided, it will use your previous resume submitted in LinkedIn or (In Development) generate custom resume if OpenAI APT key is provided!
+6. (Optional) Add your default resume at the path set by `default_resume_path` (e.g. `all resumes/default/resume.pdf`) in `/config/questions.py`. If one isn't provided, the tool uses your most recent resume already uploaded to LinkedIn.
 7. Run `runAiBot.py` and see the magic happen.
 8. To run the local control panel (settings, run controls, and Applied Jobs history), run `app.py` - it prints the address to open (e.g. `http://127.0.0.1:5000`, or another port if 5000 is busy).
 8. If you have questions or need help setting it up or to talk in general, join the github server: https://discord.gg/fFp7uUzWCY
+
+### 🤖 AI setup (optional)
+
+AI is **off by default**. When it's on, it helps answer free-text application questions and can read the required skills out of a job description. It's provider-agnostic (built on LangChain + LangGraph), so one set of options in `config/secrets.py` covers every provider:
+
+- `use_AI` — set to `True` to enable AI.
+- `ai_provider` — `"openai"`, `"gemini"`, or `"deepseek"`. Use `"openai"` for OpenAI **or** any OpenAI-compatible server, including local ones like [Ollama](https://ollama.com/) and [LM Studio](https://lmstudio.ai/).
+- `llm_model` — the model name, e.g. `gpt-4o-mini`, `gemini-2.5-flash`, or a local model like `qwen2.5:latest`.
+- `llm_api_key` — your provider's API key. For local servers, leave it as `"not-needed"`.
+- `llm_api_url` — the server URL (used by the OpenAI provider family only), e.g. `https://api.openai.com/v1/`, `http://localhost:11434/v1/` (Ollama), or `https://api.deepseek.com/v1`.
+
+You can set all of this from the control panel's **Account** tab instead of editing the file.
 
 [back to index](#-content)
 
@@ -177,43 +185,36 @@ Once your code is tested, your changes will be merged to the `main` branch in ne
 
   [back to index](#-content)
   
-  ### Attestation
-  1. All contributions require proper attestion. Format for attestation:
+  ### Running the tests
+
+  Before opening a PR, run the test suite and make sure it passes:
+
+  ```
+  ./run_tests.sh          # macOS/Linux  (run_tests.command / run_tests.bat also work)
+  # or:  python -m pytest
+  ```
+
+  ### Licensing of contributions
+
+  This project is licensed under the **MIT License**. By opening a pull request you agree that your contribution is your own work (or that you have the right to submit it) and that it is provided under the MIT License — inbound contributions are under the same license as the project (inbound = outbound). Contributors are credited through the Git history.
+
+  Optionally, you may add an attestation comment above your code to credit yourself:
+
   ```python
   ##> ------ <Your full name> : <github id> OR <email> - <Type of change> ------
-      print("My contributions 😍") # Your code
-  ##<
-  ```
-  2. Examples for proper attestation:
-  New feature example
-  ```python
-  ##> ------ Sai Vignesh Golla : godsscion - Feature ------
-  def alert_box(title: str, message: str) -> None:
-    '''
-    Shows an alert box with the given `title` and `message`.
-    '''
-    from pyautogui import alert
-    return alert(title, message)
-
-  ##<
-  ```
-  
-  Bug fix example
-  ```python
-  def alert_box(title: str, message: str) -> None:
-    '''
-    Shows an alert box with the given `title` and `message`.
-    '''
-    from pyautogui import alert
-
-  ##> ------ Sai Vignesh Golla : saivigneshgolla@outlook.com - Bug fix ------
-    return alert(message, title)
+      # your code
   ##<
   ```
 
 [back to index](#-content)
 
 ## 🗓️ Major Updates History:
+### Aug 2026
+- Relicensed from AGPL-3.0 to the **MIT License** (see [`NOTICE`](NOTICE)).
+- Rebuilt the AI layer on **LangChain + LangGraph** — one provider-agnostic path for OpenAI, OpenAI-compatible servers (Ollama, LM Studio, DeepSeek), and Google Gemini.
+- Added a unit + integration **test suite** (`./run_tests.sh` or `python -m pytest`).
+- Removed unused in-development scaffolding (resume-generation stubs, legacy setup scripts).
+
 ### Jan 20, 2026
 - You can now simultaneously use chrome, while bot continues applying in a new window
 

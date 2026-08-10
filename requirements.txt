@@ -15,10 +15,6 @@ langchain-openai==1.4.2          # OpenAI + any OpenAI-compatible server (Ollama
 langchain-google-genai==4.3.2    # Google Gemini
 langgraph==1.2.10                # graph orchestration for the question-answer pipeline
 
-# Resume / document generation
-fpdf2                            # PDF output (imported as `fpdf`)
-python-docx                      # .docx output (imported as `docx`)
-
 # Local applied-jobs history web UI (app.py)
 flask
 flask-cors

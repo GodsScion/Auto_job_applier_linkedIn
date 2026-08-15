@@ -503,11 +503,15 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                                 foundOption = True
                                 break
                     if not foundOption:
-                        #TODO: Use AI to answer the question need to be implemented logic to extract the options for the question
-                        print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
-                        select.select_by_index(randint(1, len(select.options)-1))
-                        answer = select.first_selected_option.text
-                        randomly_answered_questions.add((f'{label_org} [ {options} ]',"select"))
+                        ##> ------ Vaibhav Bajpai : VaibhavBajpaij - Bug Fix ------
+                        print_lg(
+                        f'Could not safely match answer "{answer}" for question '
+                        f'"{label_org}". No option was selected.'
+                        )
+                        randomly_answered_questions.add(
+                        (f'{label_org} [ {options} ]', "select")
+                        )
+                        ##<
             questions_list.add((f'{label_org} [ {options} ]', answer, "select", prev_answer))
             continue
         

@@ -2,10 +2,10 @@
 Author:     Sai Vignesh Golla
 LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
 
-Copyright (C) 2024 Sai Vignesh Golla
+Copyright (c) 2024-2026 Sai Vignesh Golla
 
-License:    GNU Affero General Public License
-            https://www.gnu.org/licenses/agpl-3.0.en.html
+License:    MIT License
+            https://opensource.org/license/mit
             
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
@@ -45,12 +45,12 @@ smooth_scroll = False              # True or False, Note: True or False are case
 # If enabled (True), the program would keep your screen active and prevent PC from sleeping. Instead you could disable this feature (set it to false) and adjust your PC sleep settings to Never Sleep or a preferred time. 
 keep_screen_awake = True           # True or False, Note: True or False are case-sensitive (Note: Will temporarily deactivate when any application dialog boxes are present (Eg: Pause before submit, Help needed for a question..))
 
-# Run in undetected mode to bypass anti-bot protections (Preview Feature, UNSTABLE. Recommended to leave it as False)
+# Automatically manage the matching Chrome driver (deprecated config file, kept for reference only).
 undetected_mode = True             # True or False, Note: True or False are case-sensitive
-# Now called as stealth_mode
+# Now called as auto_manage_driver
 
 # Use ChatGPT for resume building (Experimental Feature can break the application. Recommended to leave it as False) 
-use_resume_generator = False       # True or False, Note: True or False are case-sensitive ,   This feature may only work with 'undetected_mode' = True. As ChatGPT website is hosted by CloudFlare which is protected by Anti-bot protections!
+use_resume_generator = False       # True or False, Note: True or False are case-sensitive ,   This experimental feature may only work with 'undetected_mode' = True.
 
 
 

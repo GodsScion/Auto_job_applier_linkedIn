@@ -1,0 +1,26 @@
+Auto Job Applier — licensing notice
+===================================
+
+This project is licensed under the MIT License. See the LICENSE file for the
+full text.
+
+Relicensing history
+-------------------
+Releases prior to the MIT relicense (August 2026) were distributed under the
+GNU Affero General Public License, version 3 (AGPL-3.0).
+
+Ahead of the relicense, the source tree was reviewed so that it contains only
+work authored by the project owner:
+
+  * The dedicated per-provider AI connectors were removed and replaced with a
+    single provider-agnostic AI layer built on LangChain and LangGraph
+    (modules/ai/). It still reaches OpenAI, OpenAI-compatible servers such as
+    Ollama, LM Studio and DeepSeek, and Google Gemini.
+
+  * Other third-party contributions were either removed or independently
+    reimplemented from a description of their behaviour, so the current source
+    reflects an independent implementation rather than the earlier contributed
+    code.
+
+Earlier commits remain under AGPL-3.0 in the Git history. The current source
+tree, and all releases from the relicense onward, are under the MIT License.

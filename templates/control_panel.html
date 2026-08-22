@@ -1,0 +1,770 @@
+<!--
+  Author:  Sai Vignesh Golla
+  License: MIT License
+           https://opensource.org/license/mit
+  GitHub:  https://github.com/GodsScion/Auto_job_applier_linkedIn
+
+  Local control panel for the Auto Job Applier. Vanilla HTML/CSS/JS only, no
+  external libraries or network calls, works fully offline. It reads and writes
+  only user_config.json (via the API in app.py) and never edits the config/*.py
+  files.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Auto Job Applier - Control Panel</title>
+    <style>
+        :root {
+            --bg: #f4f6f9;
+            --card: #ffffff;
+            --ink: #1f2733;
+            --muted: #6b7684;
+            --line: #dce1e8;
+            --brand: #2563eb;
+            --brand-dark: #1d4ed8;
+            --ok: #16a34a;
+            --warn: #b45309;
+            --danger: #dc2626;
+            --shadow: 0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.06);
+        }
+        * { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            line-height: 1.5;
+        }
+        header {
+            background: var(--card);
+            border-bottom: 1px solid var(--line);
+            padding: 20px 24px;
+        }
+        header h1 { margin: 0 0 4px; font-size: 20px; }
+        header p { margin: 0; color: var(--muted); font-size: 14px; }
+        .wrap { width: 100%; max-width: 900px; margin: 0 auto; padding: 0 16px; }
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            background: var(--card);
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+        nav button {
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        nav button:hover { color: var(--ink); }
+        nav button.active { color: var(--brand); border-bottom-color: var(--brand); }
+        /* Top margin so the first setting isn't flush against the tab bar, and a
+           generous bottom gap so the fixed save bar never hides the last field.
+           Uses main.wrap (not just main) so it beats the .wrap padding rule. */
+        main.wrap { padding: 28px 16px 150px; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .field {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+        }
+        .field label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 14px; }
+        .field .help { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+        .field input[type=text],
+        .field input[type=password],
+        .field input[type=number],
+        .field select,
+        .field textarea {
+            width: 100%;
+            padding: 9px 11px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #fff;
+            color: var(--ink);
+        }
+        .field textarea { min-height: 90px; resize: vertical; }
+        .field input:focus, .field select:focus, .field textarea:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+        }
+        .checkline { display: flex; align-items: center; gap: 10px; }
+        .checkline input[type=checkbox] { width: 20px; height: 20px; flex: none; accent-color: var(--brand); }
+        .checkline label { margin: 0; }
+        /* Password field with a show/hide eye button. */
+        .pw-wrap { position: relative; }
+        .pw-wrap input { padding-right: 46px; }
+        .pw-eye {
+            position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
+            background: none; border: none; padding: 6px; margin: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--muted); cursor: pointer; border-radius: 6px;
+        }
+        .pw-eye:hover { color: var(--ink); background: #eef1f6; }
+        .pw-eye svg { display: block; }
+        /* AI fields disabled while "Use AI" is off. */
+        .field.disabled { opacity: .5; }
+        .field.disabled input, .field.disabled select,
+        .field.disabled textarea, .field.disabled .pw-eye { cursor: not-allowed; }
+        /* Collapsible "Advanced options" section per tab. */
+        details.advanced { margin: 4px 0 12px; }
+        details.advanced > summary {
+            cursor: pointer; user-select: none; list-style: none;
+            font-weight: 600; font-size: 14px; color: var(--brand);
+            padding: 11px 14px; background: var(--card);
+            border: 1px solid var(--line); border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+        details.advanced > summary::-webkit-details-marker { display: none; }
+        details.advanced > summary::before { content: "\25B8\00a0\00a0"; }
+        details.advanced[open] > summary::before { content: "\25BE\00a0\00a0"; }
+        details.advanced > summary:hover { background: #f7f9fc; }
+        details.advanced > .adv-body { padding-top: 12px; }
+        .savebar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: var(--card);
+            border-top: 1px solid var(--line);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            justify-content: flex-end;
+            box-shadow: 0 -1px 3px rgba(16,24,40,.06);
+            z-index: 6;
+        }
+        .savebar .inner { width: 100%; max-width: 900px; margin: 0 auto; display: flex; align-items: center; gap: 14px; }
+        .savebar .msg { margin-right: auto; font-size: 14px; color: var(--muted); }
+        .savebar .msg.ok { color: var(--ok); }
+        .savebar .msg.err { color: var(--danger); }
+        button.btn {
+            background: var(--brand);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button.btn:hover { background: var(--brand-dark); }
+        button.btn:disabled { background: #9db4e8; cursor: not-allowed; }
+        button.btn.secondary { background: #eef1f6; color: var(--ink); }
+        button.btn.secondary:hover { background: #e2e7ef; }
+        button.btn.danger { background: var(--danger); }
+        button.btn.danger:hover { background: #b91c1c; }
+        .note {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        .runbox {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+        }
+        .status-line { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-weight: 600; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; background: #cbd2dc; flex: none; }
+        .dot.on { background: var(--ok); box-shadow: 0 0 0 4px rgba(22,163,74,.15); }
+        .run-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+        pre.log {
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 10px;
+            padding: 14px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 12.5px;
+            line-height: 1.5;
+            max-height: 340px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+        }
+        h2.section-h { font-size: 16px; margin: 4px 0 14px; }
+        table.jobs { border-collapse: collapse; width: 100%; font-size: 13px; }
+        table.jobs th, table.jobs td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+        table.jobs th { background: #f1f4f8; font-weight: 600; }
+        table.jobs tr:nth-child(even) { background: #fafbfc; }
+        table.jobs a { color: var(--brand); text-decoration: none; }
+        table.jobs a:hover { text-decoration: underline; }
+        .tick { color: var(--ok); font-weight: 700; }
+        .muted-small { color: var(--muted); font-size: 13px; }
+
+        /* --- Responsive --- */
+        @media (max-width: 640px) {
+            header { padding: 16px 16px; }
+            header h1 { font-size: 18px; }
+            .wrap { padding: 0 12px; }
+            /* Tab bar scrolls sideways instead of wrapping into tall rows. */
+            nav { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            nav button { padding: 11px 12px; font-size: 13px; }
+            main.wrap { padding: 22px 12px 184px; }
+            .savebar { padding: 10px 12px; }
+            .savebar .inner { flex-wrap: wrap; gap: 8px; }
+            .savebar .msg { flex-basis: 100%; margin: 0; }
+            .savebar .btn { flex: 1 1 auto; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="wrap">
+            <h1>Auto Job Applier - Control Panel</h1>
+            <p>Set up everything here, then open the Run tab to start. Nothing is uploaded - your details are saved only on this computer.</p>
+        </div>
+    </header>
+
+    <nav id="tabs" class="wrap"></nav>
+
+    <main class="wrap">
+        <div id="panels"></div>
+    </main>
+
+    <div class="savebar" id="savebar">
+        <div class="inner">
+            <span class="msg" id="saveMsg">Make your changes across the tabs, then click Save.</span>
+            <button class="btn secondary" id="reloadBtn" type="button">Reload</button>
+            <button class="btn" id="saveBtn" type="button">Save</button>
+        </div>
+    </div>
+
+    <script>
+        // ---- icons ----
+        var EYE_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+        var EYE_OFF_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+        // ---- state ----
+        var SCHEMA = [];
+        var CONFIG = {};        // {config_module: {key: value}}
+        var BASELINE = {};      // JSON snapshot for change detection
+        var MODEL_FIELDS = [];  // [{datalistId, models}] for provider-aware model lists
+        var activeTab = null;
+        var logOffset = 0;
+        var pollTimer = null;
+
+        // ---- helpers ----
+        function el(tag, attrs, children) {
+            var node = document.createElement(tag);
+            if (attrs) {
+                for (var k in attrs) {
+                    if (k === 'text') { node.textContent = attrs[k]; }
+                    else if (k === 'html') { node.innerHTML = attrs[k]; }
+                    else { node.setAttribute(k, attrs[k]); }
+                }
+            }
+            (children || []).forEach(function (c) { if (c) node.appendChild(c); });
+            return node;
+        }
+
+        function fieldId(field) { return 'f__' + field.config_module + '__' + field.key; }
+        function datalistId(field) { return 'dl__' + field.config_module + '__' + field.key; }
+
+        function currentValue(cm, key) {
+            if (CONFIG[cm] && Object.prototype.hasOwnProperty.call(CONFIG[cm], key)) {
+                return CONFIG[cm][key];
+            }
+            return '';
+        }
+
+        function asText(value) {
+            return (value === null || value === undefined) ? '' : String(value);
+        }
+
+        // ---- rendering ----
+        function makePasswordControl(id, value) {
+            var wrap = el('div', { class: 'pw-wrap' });
+            var input = el('input', { type: 'password', id: id });
+            input.value = value;
+            var btn = el('button', { type: 'button', class: 'pw-eye', 'aria-label': 'Show password', html: EYE_SVG });
+            btn.addEventListener('click', function () {
+                if (input.disabled) return;
+                if (input.type === 'password') {
+                    input.type = 'text'; btn.innerHTML = EYE_OFF_SVG; btn.setAttribute('aria-label', 'Hide password');
+                } else {
+                    input.type = 'password'; btn.innerHTML = EYE_SVG; btn.setAttribute('aria-label', 'Show password');
+                }
+            });
+            wrap.appendChild(input);
+            wrap.appendChild(btn);
+            return wrap;
+        }
+
+        function makeModelControl(field, value) {
+            var wrap = el('div', {});
+            var input = el('input', { type: 'text', id: fieldId(field), list: datalistId(field), autocomplete: 'off' });
+            input.value = value;
+            var dl = el('datalist', { id: datalistId(field) });
+            wrap.appendChild(input);
+            wrap.appendChild(dl);
+            MODEL_FIELDS.push({ datalistId: datalistId(field), models: field.models_by_provider || {} });
+            return wrap;
+        }
+
+        function renderControl(field) {
+            var value = currentValue(field.config_module, field.key);
+            var id = fieldId(field);
+            if (field.type === 'bool') {
+                var cb = el('input', { type: 'checkbox', id: id });
+                if (value === true) cb.checked = true;
+                return cb;
+            }
+            if (field.type === 'textarea') {
+                var ta = el('textarea', { id: id });
+                ta.value = asText(value);
+                return ta;
+            }
+            if (field.type === 'select') {
+                var sel = el('select', { id: id });
+                (field.options || []).forEach(function (opt) {
+                    var o = el('option', { value: opt, text: opt === '' ? '(leave unanswered)' : opt });
+                    if (String(value) === String(opt)) o.selected = true;
+                    sel.appendChild(o);
+                });
+                return sel;
+            }
+            if (field.type === 'list') {
+                var li = el('input', { type: 'text', id: id });
+                li.value = Array.isArray(value) ? value.join(', ') : asText(value);
+                return li;
+            }
+            if (field.type === 'number') {
+                var nu = el('input', { type: 'number', id: id, step: 'any' });
+                nu.value = asText(value);
+                return nu;
+            }
+            if (field.type === 'password') {
+                return makePasswordControl(id, asText(value));
+            }
+            if (field.models_by_provider) {
+                return makeModelControl(field, asText(value));
+            }
+            var t = el('input', { type: 'text', id: id });
+            t.value = asText(value);
+            return t;
+        }
+
+        function renderField(field) {
+            var control = renderControl(field);
+            var box = el('div', { class: 'field' });
+            box.dataset.cm = field.config_module;
+            box.dataset.key = field.key;
+            if (field.ai) box.dataset.ai = '1';
+            if (field.type === 'bool') {
+                var line = el('div', { class: 'checkline' });
+                line.appendChild(control);
+                line.appendChild(el('label', { for: fieldId(field), text: field.label }));
+                box.appendChild(line);
+                if (field.help) box.appendChild(el('p', { class: 'help', text: field.help }));
+            } else {
+                box.appendChild(el('label', { for: fieldId(field), text: field.label }));
+                if (field.help) box.appendChild(el('p', { class: 'help', text: field.help }));
+                box.appendChild(control);
+            }
+            return box;
+        }
+
+        function buildTabs() {
+            var tabs = document.getElementById('tabs');
+            var panels = document.getElementById('panels');
+            tabs.innerHTML = '';
+            panels.innerHTML = '';
+            MODEL_FIELDS = [];
+
+            SCHEMA.forEach(function (section) {
+                var btn = el('button', { type: 'button', text: section.section });
+                btn.addEventListener('click', function () { showTab(section.section); });
+                btn.dataset.tab = section.section;
+                tabs.appendChild(btn);
+
+                var panel = el('div', { class: 'panel' });
+                panel.dataset.tab = section.section;
+
+                var common = section.fields.filter(function (f) { return !f.advanced; });
+                var advanced = section.fields.filter(function (f) { return f.advanced; });
+
+                common.forEach(function (field) { panel.appendChild(renderField(field)); });
+
+                if (advanced.length) {
+                    var det = el('details', { class: 'advanced' });
+                    det.appendChild(el('summary', { text: 'Advanced options' }));
+                    var body = el('div', { class: 'adv-body' });
+                    advanced.forEach(function (field) { body.appendChild(renderField(field)); });
+                    det.appendChild(body);
+                    panel.appendChild(det);
+                }
+
+                panels.appendChild(panel);
+            });
+
+            // Extra "Run" tab (not part of the config schema).
+            var runBtn = el('button', { type: 'button', text: 'Run' });
+            runBtn.dataset.tab = 'Run';
+            runBtn.addEventListener('click', function () { showTab('Run'); });
+            tabs.appendChild(runBtn);
+            panels.appendChild(buildRunPanel());
+
+            wireAi();
+            updateModelLists();
+            applyAiState();
+
+            showTab(SCHEMA.length ? SCHEMA[0].section : 'Run');
+        }
+
+        function showTab(name) {
+            activeTab = name;
+            document.querySelectorAll('#tabs button').forEach(function (b) {
+                b.classList.toggle('active', b.dataset.tab === name);
+            });
+            document.querySelectorAll('#panels .panel').forEach(function (p) {
+                p.classList.toggle('active', p.dataset.tab === name);
+            });
+            var isRun = (name === 'Run');
+            document.getElementById('savebar').style.display = isRun ? 'none' : 'flex';
+            if (isRun) { refreshStatus(); refreshLogs(); loadAppliedJobs(); }
+        }
+
+        // ---- AI master switch + model lists ----
+        function useAiEnabled() {
+            var cb = document.getElementById('f__secrets__use_AI');
+            return cb ? cb.checked : false;
+        }
+
+        function applyAiState() {
+            var enabled = useAiEnabled();
+            document.querySelectorAll('.field[data-ai="1"]').forEach(function (box) {
+                box.classList.toggle('disabled', !enabled);
+                box.querySelectorAll('input, select, textarea, button').forEach(function (ctrl) {
+                    ctrl.disabled = !enabled;
+                });
+            });
+        }
+
+        function currentProvider() {
+            var sel = document.getElementById('f__secrets__ai_provider');
+            return sel ? sel.value : 'openai';
+        }
+
+        function updateModelLists() {
+            var prov = currentProvider();
+            MODEL_FIELDS.forEach(function (m) {
+                var dl = document.getElementById(m.datalistId);
+                if (!dl) return;
+                dl.innerHTML = '';
+                var list = (m.models && m.models[prov]) || [];
+                list.forEach(function (name) { dl.appendChild(el('option', { value: name })); });
+            });
+        }
+
+        function wireAi() {
+            var cb = document.getElementById('f__secrets__use_AI');
+            if (cb) cb.addEventListener('change', applyAiState);
+            var prov = document.getElementById('f__secrets__ai_provider');
+            if (prov) prov.addEventListener('change', updateModelLists);
+        }
+
+        // ---- Run tab ----
+        function buildRunPanel() {
+            var panel = el('div', { class: 'panel' });
+            panel.dataset.tab = 'Run';
+
+            panel.appendChild(el('div', { class: 'note', html:
+                'This runs on <strong>your computer</strong> using <strong>your own LinkedIn account</strong>. ' +
+                'When you press Start, a browser window will open - keep it in the foreground and let it work. ' +
+                'You can watch progress in the log below and stop at any time.' }));
+
+            var runbox = el('div', { class: 'runbox' });
+            var statusLine = el('div', { class: 'status-line' });
+            statusLine.appendChild(el('span', { class: 'dot', id: 'statusDot' }));
+            statusLine.appendChild(el('span', { id: 'statusText', text: 'Checking status...' }));
+            runbox.appendChild(statusLine);
+
+            var actions = el('div', { class: 'run-actions' });
+            var startBtn = el('button', { class: 'btn', id: 'startBtn', type: 'button', text: 'Start' });
+            var stopBtn = el('button', { class: 'btn danger', id: 'stopBtn', type: 'button', text: 'Stop' });
+            startBtn.addEventListener('click', startBot);
+            stopBtn.addEventListener('click', stopBot);
+            actions.appendChild(startBtn);
+            actions.appendChild(stopBtn);
+            runbox.appendChild(actions);
+            runbox.appendChild(el('p', { class: 'muted-small',
+                text: 'Tip: save your settings on the other tabs before starting.' }));
+            panel.appendChild(runbox);
+
+            panel.appendChild(el('h2', { class: 'section-h', text: 'Activity log' }));
+            panel.appendChild(el('pre', { class: 'log', id: 'logPane', text: 'No activity yet.' }));
+
+            var histWrap = el('div', {});
+            histWrap.appendChild(el('h2', { class: 'section-h', text: 'Applied jobs history' }));
+            var refresh = el('button', { class: 'btn secondary', type: 'button', text: 'Refresh history' });
+            refresh.addEventListener('click', loadAppliedJobs);
+            histWrap.appendChild(refresh);
+            var tableHolder = el('div', { id: 'jobsHolder', style: 'overflow-x:auto; margin-top:12px;' });
+            tableHolder.appendChild(el('p', { class: 'muted-small', text: 'Loading history...' }));
+            histWrap.appendChild(tableHolder);
+            panel.appendChild(histWrap);
+
+            return panel;
+        }
+
+        function setRunningUI(running, pid) {
+            var dot = document.getElementById('statusDot');
+            var text = document.getElementById('statusText');
+            var startBtn = document.getElementById('startBtn');
+            var stopBtn = document.getElementById('stopBtn');
+            if (!dot) return;
+            if (running) {
+                dot.classList.add('on');
+                text.textContent = 'Running' + (pid ? ' (process ' + pid + ')' : '') + '...';
+                if (startBtn) startBtn.disabled = true;
+                if (stopBtn) stopBtn.disabled = false;
+            } else {
+                dot.classList.remove('on');
+                text.textContent = 'Not running';
+                if (startBtn) startBtn.disabled = false;
+                if (stopBtn) stopBtn.disabled = true;
+            }
+        }
+
+        function refreshStatus() {
+            fetch('/api/status').then(function (r) { return r.json(); })
+                .then(function (s) { setRunningUI(s.running, s.pid); })
+                .catch(function () {});
+        }
+
+        function refreshLogs() {
+            fetch('/api/logs?offset=' + logOffset).then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (typeof data.next_offset === 'number' && data.next_offset < logOffset) {
+                        // Log was truncated; reset the pane.
+                        logOffset = 0;
+                        document.getElementById('logPane').textContent = '';
+                    }
+                    if (data.content) {
+                        var pane = document.getElementById('logPane');
+                        if (pane.textContent === 'No activity yet.') pane.textContent = '';
+                        var atBottom = pane.scrollTop + pane.clientHeight >= pane.scrollHeight - 20;
+                        pane.textContent += data.content;
+                        if (atBottom) pane.scrollTop = pane.scrollHeight;
+                    }
+                    if (typeof data.next_offset === 'number') logOffset = data.next_offset;
+                })
+                .catch(function () {});
+        }
+
+        function startBot() {
+            var msgOk = confirm('Start applying now?\n\nA browser window will open and use your LinkedIn account. Keep it in the foreground.');
+            if (!msgOk) return;
+            var pane = document.getElementById('logPane');
+            pane.textContent = '';
+            logOffset = 0;
+            fetch('/api/run', { method: 'POST' }).then(function (r) { return r.json(); })
+                .then(function (s) { setRunningUI(s.running, s.pid); refreshLogs(); })
+                .catch(function () {});
+        }
+
+        function stopBot() {
+            fetch('/api/stop', { method: 'POST' }).then(function (r) { return r.json(); })
+                .then(function (s) { setRunningUI(s.running, s.pid); })
+                .catch(function () {});
+        }
+
+        function pollLoop() {
+            if (activeTab === 'Run') { refreshStatus(); refreshLogs(); }
+            pollTimer = setTimeout(pollLoop, 1500);
+        }
+
+        // ---- applied jobs history ----
+        function loadAppliedJobs() {
+            var holder = document.getElementById('jobsHolder');
+            if (!holder) return;
+            fetch('/applied-jobs').then(function (r) {
+                if (r.status === 404) return [];
+                return r.json();
+            }).then(function (jobs) {
+                if (!Array.isArray(jobs) || jobs.length === 0) {
+                    holder.innerHTML = '';
+                    holder.appendChild(el('p', { class: 'muted-small', text: 'No applications yet. They will appear here after your first run.' }));
+                    return;
+                }
+                var table = el('table', { class: 'jobs' });
+                var thead = el('thead');
+                var hr = el('tr');
+                ['#', 'Job Title', 'Company', 'HR Contact', 'Link', 'Applied'].forEach(function (h) {
+                    hr.appendChild(el('th', { text: h }));
+                });
+                thead.appendChild(hr);
+                table.appendChild(thead);
+                var tbody = el('tbody');
+                jobs.forEach(function (job, i) {
+                    var tr = el('tr');
+                    tr.appendChild(el('td', { text: String(i + 1) }));
+                    var titleCell = el('td');
+                    if (job.Job_Link) {
+                        titleCell.appendChild(el('a', { href: job.Job_Link, target: '_blank', rel: 'noopener', text: job.Title || 'View' }));
+                    } else { titleCell.textContent = job.Title || ''; }
+                    tr.appendChild(titleCell);
+                    tr.appendChild(el('td', { text: job.Company || '' }));
+                    var hrCell = el('td');
+                    if (job.HR_Name && job.HR_Name !== 'Unknown' && job.HR_Link) {
+                        hrCell.appendChild(el('a', { href: job.HR_Link, target: '_blank', rel: 'noopener', text: job.HR_Name }));
+                    } else { hrCell.textContent = 'N/A'; }
+                    tr.appendChild(hrCell);
+                    var linkCell = el('td');
+                    if (job.External_Job_link === 'Easy Applied') {
+                        linkCell.textContent = 'Easy Applied';
+                    } else if (job.External_Job_link) {
+                        linkCell.appendChild(el('a', { href: job.External_Job_link, target: '_blank', rel: 'noopener', text: 'External' }));
+                    } else { linkCell.textContent = 'N/A'; }
+                    tr.appendChild(linkCell);
+                    var appliedCell = el('td');
+                    if (job.External_Job_link === 'Easy Applied' || (job.Date_Applied && job.Date_Applied !== 'Pending')) {
+                        appliedCell.innerHTML = '<span class="tick">&#10003;</span>';
+                    }
+                    tr.appendChild(appliedCell);
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                holder.innerHTML = '';
+                holder.appendChild(table);
+            }).catch(function () {
+                holder.innerHTML = '';
+                holder.appendChild(el('p', { class: 'muted-small', text: 'Could not load history.' }));
+            });
+        }
+
+        // ---- save / load config ----
+        function readControlValue(field) {
+            var node = document.getElementById(fieldId(field));
+            if (!node) return undefined;
+            if (field.type === 'bool') return node.checked;
+            if (field.type === 'list') {
+                return node.value.split(',').map(function (s) { return s.trim(); })
+                    .filter(function (s) { return s !== ''; });
+            }
+            if (field.type === 'number') {
+                var t = node.value.trim();
+                if (t === '') return undefined; // leave unchanged, avoid server error
+                var n = Number(t);
+                return isNaN(n) ? undefined : n;
+            }
+            return node.value;
+        }
+
+        function baselineValue(cm, key) {
+            if (BASELINE[cm] && Object.prototype.hasOwnProperty.call(BASELINE[cm], key)) {
+                return BASELINE[cm][key];
+            }
+            return undefined;
+        }
+
+        function saveConfig() {
+            var payload = {};
+            var changed = 0;
+            SCHEMA.forEach(function (section) {
+                section.fields.forEach(function (field) {
+                    var current = readControlValue(field);
+                    if (current === undefined) return;
+                    var base = baselineValue(field.config_module, field.key);
+                    if (JSON.stringify(current) !== JSON.stringify(base)) {
+                        if (!payload[field.config_module]) payload[field.config_module] = {};
+                        payload[field.config_module][field.key] = current;
+                        changed++;
+                    }
+                });
+            });
+
+            var msg = document.getElementById('saveMsg');
+            if (changed === 0) {
+                msg.className = 'msg';
+                msg.textContent = 'Nothing to save - no changes yet.';
+                return;
+            }
+            var btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            msg.className = 'msg';
+            msg.textContent = 'Saving...';
+            fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(function (r) {
+                return r.json().then(function (body) { return { ok: r.ok, body: body }; });
+            }).then(function (res) {
+                btn.disabled = false;
+                if (!res.ok) {
+                    msg.className = 'msg err';
+                    msg.textContent = 'Could not save: ' + (res.body && res.body.error ? res.body.error : 'unknown error');
+                    return;
+                }
+                CONFIG = mergeIntoConfig(res.body);
+                BASELINE = JSON.parse(JSON.stringify(CONFIG));
+                msg.className = 'msg ok';
+                msg.textContent = 'Saved ' + changed + (changed === 1 ? ' change.' : ' changes.');
+            }).catch(function (err) {
+                btn.disabled = false;
+                msg.className = 'msg err';
+                msg.textContent = 'Could not save: ' + err;
+            });
+        }
+
+        function mergeIntoConfig(saved) {
+            // saved is the full user_config.json. Overlay it onto the effective CONFIG.
+            var merged = JSON.parse(JSON.stringify(CONFIG));
+            for (var cm in saved) {
+                if (!merged[cm]) merged[cm] = {};
+                for (var key in saved[cm]) { merged[cm][key] = saved[cm][key]; }
+            }
+            return merged;
+        }
+
+        function loadAll() {
+            Promise.all([
+                fetch('/api/schema').then(function (r) { return r.json(); }),
+                fetch('/api/config').then(function (r) { return r.json(); })
+            ]).then(function (results) {
+                SCHEMA = results[0];
+                CONFIG = results[1] || {};
+                BASELINE = JSON.parse(JSON.stringify(CONFIG));
+                buildTabs();
+            }).catch(function (err) {
+                document.getElementById('panels').innerHTML =
+                    '<p style="color:#dc2626">Could not load settings from the app. Is it still running? (' + err + ')</p>';
+            });
+        }
+
+        document.getElementById('saveBtn').addEventListener('click', saveConfig);
+        document.getElementById('reloadBtn').addEventListener('click', function () {
+            document.getElementById('saveMsg').textContent = 'Reloading saved settings...';
+            loadAll();
+        });
+
+        loadAll();
+        pollLoop();
+    </script>
+</body>
+</html>

@@ -2,10 +2,10 @@
 Author:     Sai Vignesh Golla
 LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
 
-Copyright (C) 2024 Sai Vignesh Golla
+Copyright (c) 2024-2026 Sai Vignesh Golla
 
-License:    GNU Affero General Public License
-            https://www.gnu.org/licenses/agpl-3.0.en.html
+License:    MIT License
+            https://opensource.org/license/mit
             
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
@@ -36,25 +36,18 @@ from config.settings import logs_folder_path
 
 #< Directories related
 def make_directories(paths: list[str]) -> None:
-    '''
-    Function to create missing directories
-    '''
-    for path in paths:
-        path = os.path.expanduser(path) # Expands ~ to user's home directory
-        path = path.replace("//","/")
-        
-        # If path looks like a file path, get the directory part
-        if '.' in os.path.basename(path):
-            path = os.path.dirname(path)
-
-        if not path: # Handle cases where path is empty after dirname
+    '''Create any of the given directories that don't yet exist (a path pointing at a file creates its parent folder).'''
+    for raw_path in paths:
+        target = os.path.expanduser(raw_path).replace("//", "/")
+        # If the last segment has an extension it's a file, so keep only its folder.
+        if '.' in os.path.basename(target):
+            target = os.path.dirname(target)
+        if not target:
             continue
-
         try:
-            if not os.path.exists(path):
-                os.makedirs(path, exist_ok=True) # exist_ok=True avoids race condition
+            os.makedirs(target, exist_ok=True)
         except Exception as e:
-            print(f'Error while creating directory "{path}": ', e)
+            print(f'Could not create the directory "{target}":', e)
 
 
 def get_default_temp_profile():
@@ -180,53 +173,30 @@ def manual_login_retry(is_logged_in: callable, limit: int = 2) -> None:
 
 
 
-def calculate_date_posted(time_string: str) -> datetime | None | ValueError:
+def calculate_date_posted(time_string: str) -> datetime | None:
     '''
-    Function to calculate date posted from string.
-    Returns datetime object | None if unable to calculate | ValueError if time_string is invalid
-    Valid time string examples:
-    * 10 seconds ago
-    * 15 minutes ago
-    * 2 hours ago
-    * 1 hour ago
-    * 1 day ago
-    * 10 days ago
-    * 1 week ago
-    * 1 month ago
-    * 1 year ago
+    Turn a LinkedIn "posted" phrase like "3 days ago" into an approximate datetime.
+    Returns None when the phrase can't be understood. Months and years are
+    approximated as 30 and 365 days respectively.
     '''
     import re
-    time_string = time_string.strip()
-    now = datetime.now()
-
-    match = re.search(r'(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago', time_string, re.IGNORECASE)
-
-    if match:
-        try:
-            value = int(match.group(1))
-            unit = match.group(2).lower()
-
-            if 'second' in unit:
-                return now - timedelta(seconds=value)
-            elif 'minute' in unit:
-                return now - timedelta(minutes=value)
-            elif 'hour' in unit:
-                return now - timedelta(hours=value)
-            elif 'day' in unit:
-                return now - timedelta(days=value)
-            elif 'week' in unit:
-                return now - timedelta(weeks=value)
-            elif 'month' in unit:
-                return now - timedelta(days=value * 30)  # Approximation
-            elif 'year' in unit:
-                return now - timedelta(days=value * 365)  # Approximation
-        except (ValueError, IndexError):
-            # Fallback for cases where parsing fails
-            pass
-    
-    # If regex doesn't match, or parsing failed, return None.
-    # This will skip jobs where the date can't be determined, preventing crashes.
-    return None
+    match = re.search(r'(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago',
+                      time_string.strip(), re.IGNORECASE)
+    if not match:
+        return None
+    amount = int(match.group(1))
+    unit = match.group(2).lower()
+    spans = {
+        'second': timedelta(seconds=amount),
+        'minute': timedelta(minutes=amount),
+        'hour': timedelta(hours=amount),
+        'day': timedelta(days=amount),
+        'week': timedelta(weeks=amount),
+        'month': timedelta(days=amount * 30),
+        'year': timedelta(days=amount * 365),
+    }
+    delta = spans.get(unit)
+    return datetime.now() - delta if delta else None
 
 
 def convert_to_lakhs(value: str) -> str:
@@ -261,22 +231,15 @@ def convert_to_json(data) -> dict:
 
 def truncate_for_csv(data, max_length: int = 131000, suffix: str = "...[TRUNCATED]") -> str:
     '''
-    Function to truncate data for CSV writing to avoid field size limit errors.
-    * Takes in `data` of any type and converts to string
-    * Takes in `max_length` of type `int` - maximum allowed length (default: 131000, leaving room for suffix)
-    * Takes in `suffix` of type `str` - text to append when truncated
-    * Returns truncated string if data exceeds max_length
+    Coerce any value to a string that's safe to write into a CSV cell, shortening it
+    (with a marker suffix) if it would exceed max_length. Never raises.
     '''
     try:
-        # Convert data to string
-        str_data = str(data) if data is not None else ""
-        
-        # If within limit, return as-is
-        if len(str_data) <= max_length:
-            return str_data
-        
-        # Truncate and add suffix
-        truncated = str_data[:max_length - len(suffix)] + suffix
-        return truncated
+        text = "" if data is None else str(data)
+        if len(text) <= max_length:
+            return text
+        return text[:max_length - len(suffix)] + suffix
     except Exception as e:
-        return f"[ERROR CONVERTING DATA: {e}]"
+        return f"[could not stringify value: {e}]"
+
+

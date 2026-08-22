@@ -1,4 +1,5 @@
 __pycache__
+.pytest_cache
 .vscode
 .idea
 
@@ -12,3 +13,8 @@ secrets.py
 config/personals.py
 .venv
 apikeys.py
+
+# Local control-panel runtime files — contain your credentials/answers, never commit
+user_config.json
+.bot_run.log
+.bot_run.pid

@@ -2,10 +2,10 @@
 Author:     Sai Vignesh Golla
 LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
 
-Copyright (C) 2024 Sai Vignesh Golla
+Copyright (c) 2024-2026 Sai Vignesh Golla
 
-License:    GNU Affero General Public License
-            https://www.gnu.org/licenses/agpl-3.0.en.html
+License:    MIT License
+            https://opensource.org/license/mit
             
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
@@ -22,8 +22,8 @@ import re
 import time
 import pyautogui
 
-# Set CSV field size limit to prevent field size errors
-csv.field_size_limit(1000000)  # Set to 1MB instead of default 131KB
+# Raise the CSV field-size cap so very long job descriptions don't trip the writer.
+csv.field_size_limit(1000000)
 
 from random import choice, shuffle, randint
 from datetime import datetime
@@ -47,9 +47,7 @@ from modules.clickers_and_finders import *
 from modules.validator import validate_config
 
 if use_AI:
-    from modules.ai.openaiConnections import ai_create_openai_client, ai_extract_skills, ai_answer_question, ai_close_openai_client
-    from modules.ai.deepseekConnections import deepseek_create_client, deepseek_extract_skills, deepseek_answer_question
-    from modules.ai.geminiConnections import gemini_create_client, gemini_extract_skills, gemini_answer_question
+    from modules.ai.connections import create_ai_client, extract_skills, answer_question, close_ai_client
 
 from typing import Literal
 
@@ -95,9 +93,7 @@ notice_period_weeks = str(notice_period//7)
 notice_period = str(notice_period)
 
 aiClient = None
-##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
-about_company_for_ai = None # TODO extract about company for AI
-##<
+about_company_for_ai = None  # filled in later, once we're processing a specific job
 
 #>
 
@@ -382,17 +378,17 @@ def get_job_description(
     - `skipReason: str | None`
     - `skipMessage: str | None`
     '''
+    # Initialise every return value before the try, so an early failure (e.g. the
+    # description element not being found) can never leave them unbound.
+    jobDescription = "Unknown"
+    experience_required = "Unknown"
+    skip = False
+    skipReason = None
+    skipMessage = None
     try:
-        ##> ------ Dheeraj Deshwal : dheeraj9811 Email:dheeraj20194@iiitd.ac.in/dheerajdeshwal9811@gmail.com - Feature ------
-        jobDescription = "Unknown"
-        ##<
-        experience_required = "Unknown"
         found_masters = 0
         jobDescription = find_by_class(driver, "jobs-box__html-content").text
         jobDescriptionLow = jobDescription.lower()
-        skip = False
-        skipReason = None
-        skipMessage = None
         for word in bad_words:
             if word.lower() in jobDescriptionLow:
                 skipMessage = f'\n{jobDescription}\n\nContains bad word "{word}". Skipping this job!\n'
@@ -418,8 +414,7 @@ def get_job_description(
             experience_required = "Error in extraction"
             print_lg("Unable to extract years of experience required!")
             # print_lg(e)
-    finally:
-        return jobDescription, experience_required, skip, skipReason, skipMessage
+    return jobDescription, experience_required, skip, skipReason, skipMessage
         
 
 
@@ -466,62 +461,57 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 options = "".join([f' "{option}",' for option in optionsText])
             prev_answer = selected_option
             if overwrite_previous_answers or selected_option == "Select an option":
-                ##> ------ WINDY_WINDWARD Email:karthik.sarode23@gmail.com - Added fuzzy logic to answer location based questions ------
-                if 'email' in label or 'phone' in label: 
+                # Pick a sensible answer for the dropdown from the question label.
+                if 'email' in label or 'phone' in label:
                     answer = prev_answer
-                elif 'gender' in label or 'sex' in label: 
+                elif 'gender' in label or 'sex' in label:
                     answer = gender
-                elif 'disability' in label: 
+                elif 'disability' in label:
                     answer = disability_status
-                elif 'proficiency' in label: 
+                elif 'proficiency' in label:
                     answer = 'Professional'
-                # Add location handling
-                elif any(loc_word in label for loc_word in ['location', 'city', 'state', 'country']):
+                elif any(term in label for term in ['location', 'city', 'state', 'country']):
                     if 'country' in label:
-                        answer = country 
+                        answer = country
                     elif 'state' in label:
                         answer = state
                     elif 'city' in label:
                         answer = current_city if current_city else work_location
                     else:
                         answer = work_location
-                else: 
-                    answer = answer_common_questions(label,answer)
-                try: 
+                else:
+                    answer = answer_common_questions(label, answer)
+                try:
                     select.select_by_visible_text(answer)
-                except NoSuchElementException as e:
-                    # Define similar phrases for common answers
-                    possible_answer_phrases = []
+                except NoSuchElementException:
+                    # The exact text isn't an option; map our answer onto the nearest option.
+                    lower_answer = answer.lower()
                     if answer == 'Decline':
-                        possible_answer_phrases = ["Decline", "not wish", "don't wish", "Prefer not", "not want"]
-                    elif 'yes' in answer.lower():
-                        possible_answer_phrases = ["Yes", "Agree", "I do", "I have"]
-                    elif 'no' in answer.lower():
-                        possible_answer_phrases = ["No", "Disagree", "I don't", "I do not"]
+                        candidate_phrases = ["Decline", "not wish", "don't wish", "Prefer not", "not want"]
+                    elif 'yes' in lower_answer:
+                        candidate_phrases = ["Yes", "Agree", "I do", "I have"]
+                    elif 'no' in lower_answer:
+                        candidate_phrases = ["No", "Disagree", "I don't", "I do not"]
                     else:
-                        # Try partial matching for any answer
-                        possible_answer_phrases = [answer]
-                        # Add lowercase and uppercase variants
-                        possible_answer_phrases.append(answer.lower())
-                        possible_answer_phrases.append(answer.upper())
-                        # Try without special characters
-                        possible_answer_phrases.append(''.join(c for c in answer if c.isalnum()))
-                    ##<
-                    foundOption = False
-                    for phrase in possible_answer_phrases:
+                        candidate_phrases = [answer, lower_answer, answer.upper(),
+                                             ''.join(ch for ch in answer if ch.isalnum())]
+                    matched = False
+                    for phrase in candidate_phrases:
+                        low_phrase = phrase.lower()
                         for option in optionsText:
-                            # Check if phrase is in option or option is in phrase (bidirectional matching)
-                            if phrase.lower() in option.lower() or option.lower() in phrase.lower():
+                            low_option = option.lower()
+                            if low_phrase in low_option or low_option in low_phrase:
                                 select.select_by_visible_text(option)
                                 answer = option
-                                foundOption = True
+                                matched = True
                                 break
-                    if not foundOption:
-                        #TODO: Use AI to answer the question need to be implemented logic to extract the options for the question
-                        print_lg(f'Failed to find an option with text "{answer}" for question labelled "{label_org}", answering randomly!')
-                        select.select_by_index(randint(1, len(select.options)-1))
+                        if matched:
+                            break
+                    if not matched:
+                        print_lg(f'No option matched "{answer}" for "{label_org}", picking one at random.')
+                        select.select_by_index(randint(1, len(select.options) - 1))
                         answer = select.first_selected_option.text
-                        randomly_answered_questions.add((f'{label_org} [ {options} ]',"select"))
+                        randomly_answered_questions.add((f'{label_org} [ {options} ]', "select"))
             questions_list.add((f'{label_org} [ {options} ]', answer, "select", prev_answer))
             continue
         
@@ -639,32 +629,19 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 elif 'zip' in label or 'postal' in label or 'code' in label: answer = zipcode
                 elif 'country' in label: answer = country
                 else: answer = answer_common_questions(label,answer)
-                ##> ------ Yang Li : MARKYangL - Feature ------
                 if answer == "":
+                    ai_answer = ""
                     if use_AI and aiClient:
                         try:
-                            if ai_provider.lower() == "openai":
-                                answer = ai_answer_question(aiClient, label_org, question_type="text", job_description=job_description, user_information_all=user_information_all)
-                            elif ai_provider.lower() == "deepseek":
-                                answer = deepseek_answer_question(aiClient, label_org, options=None, question_type="text", job_description=job_description, about_company=None, user_information_all=user_information_all)
-                            elif ai_provider.lower() == "gemini":
-                                answer = gemini_answer_question(aiClient, label_org, options=None, question_type="text", job_description=job_description, about_company=None, user_information_all=user_information_all)
-                            else:
-                                randomly_answered_questions.add((label_org, "text"))
-                                answer = years_of_experience
-                            if answer and isinstance(answer, str) and len(answer) > 0:
-                                print_lg(f'AI Answered received for question "{label_org}" \nhere is answer: "{answer}"')
-                            else:
-                                randomly_answered_questions.add((label_org, "text"))
-                                answer = years_of_experience
+                            ai_answer = answer_question(aiClient, label_org, question_type="text", job_description=job_description, user_information_all=user_information_all)
                         except Exception as e:
                             print_lg("Failed to get AI answer!", e)
-                            randomly_answered_questions.add((label_org, "text"))
-                            answer = years_of_experience
+                    if ai_answer and isinstance(ai_answer, str) and ai_answer.strip():
+                        answer = ai_answer.strip()
+                        print_lg(f'AI answered "{label_org}": "{answer}"')
                     else:
                         randomly_answered_questions.add((label_org, "text"))
                         answer = years_of_experience
-                ##<
                 text.clear()
                 text.send_keys(answer)
                 if do_actions:
@@ -686,27 +663,15 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 if 'summary' in label: answer = linkedin_summary
                 elif 'cover' in label: answer = cover_letter
                 if answer == "":
-                ##> ------ Yang Li : MARKYangL - Feature ------
+                    ai_answer = ""
                     if use_AI and aiClient:
                         try:
-                            if ai_provider.lower() == "openai":
-                                answer = ai_answer_question(aiClient, label_org, question_type="textarea", job_description=job_description, user_information_all=user_information_all)
-                            elif ai_provider.lower() == "deepseek":
-                                answer = deepseek_answer_question(aiClient, label_org, options=None, question_type="textarea", job_description=job_description, about_company=None, user_information_all=user_information_all)
-                            elif ai_provider.lower() == "gemini":
-                                answer = gemini_answer_question(aiClient, label_org, options=None, question_type="textarea", job_description=job_description, about_company=None, user_information_all=user_information_all)
-                            else:
-                                randomly_answered_questions.add((label_org, "textarea"))
-                                answer = ""
-                            if answer and isinstance(answer, str) and len(answer) > 0:
-                                print_lg(f'AI Answered received for question "{label_org}" \nhere is answer: "{answer}"')
-                            else:
-                                randomly_answered_questions.add((label_org, "textarea"))
-                                answer = ""
+                            ai_answer = answer_question(aiClient, label_org, question_type="textarea", job_description=job_description, user_information_all=user_information_all)
                         except Exception as e:
                             print_lg("Failed to get AI answer!", e)
-                            randomly_answered_questions.add((label_org, "textarea"))
-                            answer = ""
+                    if ai_answer and isinstance(ai_answer, str) and ai_answer.strip():
+                        answer = ai_answer.strip()
+                        print_lg(f'AI answered "{label_org}": "{answer}"')
                     else:
                         randomly_answered_questions.add((label_org, "textarea"))
             text_area.clear()
@@ -716,7 +681,6 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     actions.send_keys(Keys.ARROW_DOWN)
                     actions.send_keys(Keys.ENTER).perform()
             questions_list.add((label, text_area.get_attribute("value"), "textarea", prev_answer))
-            ##<
             continue
 
         # Check if it's a checkbox question
@@ -807,7 +771,13 @@ def failed_job(job_id: str, job_link: str, resume: str, date_listed, error: str,
             fieldnames = ['Job ID', 'Job Link', 'Resume Tried', 'Date listed', 'Date Tried', 'Assumed Reason', 'Stack Trace', 'External Job link', 'Screenshot Name']
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             if file.tell() == 0: writer.writeheader()
-            writer.writerow({'Job ID':truncate_for_csv(job_id), 'Job Link':truncate_for_csv(job_link), 'Resume Tried':truncate_for_csv(resume), 'Date listed':truncate_for_csv(date_listed), 'Date Tried':datetime.now(), 'Assumed Reason':truncate_for_csv(error), 'Stack Trace':truncate_for_csv(exception), 'External Job link':truncate_for_csv(application_link), 'Screenshot Name':truncate_for_csv(screenshot_name)})
+            record = {
+                'Job ID': job_id, 'Job Link': job_link, 'Resume Tried': resume,
+                'Date listed': date_listed, 'Date Tried': datetime.now(),
+                'Assumed Reason': error, 'Stack Trace': exception,
+                'External Job link': application_link, 'Screenshot Name': screenshot_name,
+            }
+            writer.writerow({key: truncate_for_csv(value) for key, value in record.items()})
             file.close()
     except Exception as e:
         print_lg("Failed to update failed jobs list!", e)
@@ -841,11 +811,15 @@ def submitted_jobs(job_id: str, title: str, company: str, work_location: str, wo
             fieldnames = ['Job ID', 'Title', 'Company', 'Work Location', 'Work Style', 'About Job', 'Experience required', 'Skills required', 'HR Name', 'HR Link', 'Resume', 'Re-posted', 'Date Posted', 'Date Applied', 'Job Link', 'External Job link', 'Questions Found', 'Connect Request']
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             if csv_file.tell() == 0: writer.writeheader()
-            writer.writerow({'Job ID':truncate_for_csv(job_id), 'Title':truncate_for_csv(title), 'Company':truncate_for_csv(company), 'Work Location':truncate_for_csv(work_location), 'Work Style':truncate_for_csv(work_style), 
-                            'About Job':truncate_for_csv(description), 'Experience required': truncate_for_csv(experience_required), 'Skills required':truncate_for_csv(skills), 
-                                'HR Name':truncate_for_csv(hr_name), 'HR Link':truncate_for_csv(hr_link), 'Resume':truncate_for_csv(resume), 'Re-posted':truncate_for_csv(reposted), 
-                                'Date Posted':truncate_for_csv(date_listed), 'Date Applied':truncate_for_csv(date_applied), 'Job Link':truncate_for_csv(job_link), 
-                                'External Job link':truncate_for_csv(application_link), 'Questions Found':truncate_for_csv(questions_list), 'Connect Request':truncate_for_csv(connect_request)})
+            record = {
+                'Job ID': job_id, 'Title': title, 'Company': company, 'Work Location': work_location,
+                'Work Style': work_style, 'About Job': description, 'Experience required': experience_required,
+                'Skills required': skills, 'HR Name': hr_name, 'HR Link': hr_link, 'Resume': resume,
+                'Re-posted': reposted, 'Date Posted': date_listed, 'Date Applied': date_applied,
+                'Job Link': job_link, 'External Job link': application_link,
+                'Questions Found': questions_list, 'Connect Request': connect_request,
+            }
+            writer.writerow({key: truncate_for_csv(value) for key, value in record.items()})
         csv_file.close()
     except Exception as e:
         print_lg("Failed to update submitted jobs list!", e)
@@ -984,58 +958,49 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
                     
                     if use_AI and description != "Unknown":
-                        ##> ------ Yang Li : MARKYangL - Feature ------
                         try:
-                            if ai_provider.lower() == "openai":
-                                skills = ai_extract_skills(aiClient, description)
-                            elif ai_provider.lower() == "deepseek":
-                                skills = deepseek_extract_skills(aiClient, description)
-                            elif ai_provider.lower() == "gemini":
-                                skills = gemini_extract_skills(aiClient, description)
-                            else:
-                                skills = "In Development"
+                            skills = extract_skills(aiClient, description)
                             print_lg(f"Extracted skills using {ai_provider} AI")
                         except Exception as e:
                             print_lg("Failed to extract skills:", e)
                             skills = "Error extracting skills"
-                        ##<
 
                     uploaded = False
-                    # Case 1: Easy Apply Button
-                    # First try the classic button with "Easy" in aria-label
+                    # Detect whether this is an Easy Apply job, in three escalating checks.
                     is_easy_apply = try_xp(driver, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3') and contains(@aria-label, 'Easy')]")
-                    # Fallback 1: check if apply link contains Easy Apply URL pattern
+                    # Check 2: an apply link carrying LinkedIn's in-app apply URL flag.
                     if not is_easy_apply:
                         try:
-                            apply_link_el = driver.find_element(By.XPATH, ".//a[contains(@href, 'openSDUIApplyFlow=true')]")
-                            if apply_link_el:
-                                apply_link_el.click()
+                            in_app_apply = driver.find_element(By.XPATH, ".//a[contains(@href, 'openSDUIApplyFlow=true')]")
+                            if in_app_apply:
+                                in_app_apply.click()
                                 is_easy_apply = True
-                                print_lg("Detected Easy Apply via URL pattern (openSDUIApplyFlow)")
+                                print_lg("Easy Apply detected from the in-app apply URL flag.")
                         except:
                             pass
-                    # Fallback 2: click any Apply button and check if Easy Apply modal appears
+                    # Check 3: click a generic apply button; an Easy Apply modal means yes,
+                    # while a brand-new browser tab means it's an external application instead.
                     if not is_easy_apply:
                         try:
-                            apply_btn = driver.find_element(By.XPATH, ".//button[contains(@class,'jobs-apply-button')]")
-                            if apply_btn:
-                                tabs_before = len(driver.window_handles)
-                                apply_btn.click()
+                            apply_button = driver.find_element(By.XPATH, ".//button[contains(@class,'jobs-apply-button')]")
+                            if apply_button:
+                                tabs_open = len(driver.window_handles)
+                                apply_button.click()
                                 buffer(click_gap)
-                                tabs_after = len(driver.window_handles)
-                                if tabs_after > tabs_before:
-                                    # New tab opened — external apply, close it and go back
+                                if len(driver.window_handles) > tabs_open:
+                                    # A new tab opened -> external apply. Close it and return to LinkedIn.
                                     driver.switch_to.window(driver.window_handles[-1])
-                                    if close_tabs and driver.current_window_handle != linkedIn_tab: driver.close()
+                                    if close_tabs and driver.current_window_handle != linkedIn_tab:
+                                        driver.close()
                                     driver.switch_to.window(linkedIn_tab)
-                                    print_lg("External apply detected via new tab, skipping")
+                                    print_lg("A new tab opened - external application, skipping.")
                                 else:
                                     try:
                                         find_by_class(driver, "jobs-easy-apply-modal")
                                         is_easy_apply = True
-                                        print_lg("Detected Easy Apply via modal appearance after click")
+                                        print_lg("Easy Apply detected from the modal that opened.")
                                     except:
-                                        # Modal didn't appear — dismiss
+                                        # No modal appeared; dismiss whatever popped up.
                                         try: actions.send_keys(Keys.ESCAPE).perform()
                                         except: pass
                         except:
@@ -1137,16 +1102,15 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     break
 
         except (NoSuchWindowException, WebDriverException) as e:
-            print_lg("Browser window closed or session is invalid. Ending application process.", e)
-            raise e # Re-raise to be caught by main
+            print_lg("The browser window was closed or the session became invalid. Stopping.", e)
+            raise e  # let the outer handler deal with it
         except Exception as e:
-            print_lg("Failed to find Job listings!")
+            print_lg("Could not read the job listings.")
             critical_error_log("In Applier", e)
             try:
                 print_lg(driver.page_source, pretty=True)
-            except Exception as page_source_error:
-                print_lg(f"Failed to get page source, browser might have crashed. {page_source_error}")
-            # print_lg(e)
+            except Exception as dump_error:
+                print_lg(f"Could not capture the page source; the browser may have crashed. {dump_error}")
 
         
 def run(total_runs: int) -> int:
@@ -1202,22 +1166,8 @@ def main() -> None:
         #     except Exception as e:
         #         print_lg("Opening OpenAI chatGPT tab failed!")
         if use_AI:
-            if ai_provider == "openai":
-                aiClient = ai_create_openai_client()
-            ##> ------ Yang Li : MARKYangL - Feature ------
-            # Create DeepSeek client
-            elif ai_provider == "deepseek":
-                aiClient = deepseek_create_client()
-            elif ai_provider == "gemini":
-                aiClient = gemini_create_client()
-            ##<
+            aiClient = create_ai_client()
 
-            try:
-                about_company_for_ai = " ".join([word for word in (first_name+" "+last_name).split() if len(word) > 3])
-                print_lg(f"Extracted about company info for AI: '{about_company_for_ai}'")
-            except Exception as e:
-                print_lg("Failed to extract about company info!", e)
-        
         # Start applying to jobs
         driver.switch_to.window(linkedIn_tab)
         total_runs = run(total_runs)
@@ -1237,7 +1187,7 @@ def main() -> None:
         
 
     except (NoSuchWindowException, WebDriverException) as e:
-        print_lg("Browser window closed or session is invalid. Exiting.", e)
+        print_lg("The browser window was closed or the session became invalid. Exiting.", e)
     except Exception as e:
         critical_error_log("In Applier Main", e)
         pyautogui.alert(e,alert_title)
@@ -1279,19 +1229,12 @@ def main() -> None:
             msg = "NOTE: IF YOU HAVE MORE THAN 10 TABS OPENED, PLEASE CLOSE OR BOOKMARK THEM!\n\nOr it's highly likely that application will just open browser and not do anything next time!" 
             pyautogui.alert(msg,"Info")
             print_lg("\n"+msg)
-        ##> ------ Yang Li : MARKYangL - Feature ------
         if use_AI and aiClient:
             try:
-                if ai_provider.lower() == "openai":
-                    ai_close_openai_client(aiClient)
-                elif ai_provider.lower() == "deepseek":
-                    ai_close_openai_client(aiClient)
-                elif ai_provider.lower() == "gemini":
-                    pass # Gemini client does not need to be closed
+                close_ai_client(aiClient)
                 print_lg(f"Closed {ai_provider} AI client.")
             except Exception as e:
                 print_lg("Failed to close AI client:", e)
-        ##<
         try:
             if driver:
                 driver.quit()

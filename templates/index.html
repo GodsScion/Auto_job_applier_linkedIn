@@ -1,201 +1,372 @@
-<!-- ##> ------ Karthik Sarode : karthik.sarode23@gmail.com - UI for excel files ------ -->
+<!--
+  Author:  Sai Vignesh Golla
+  Copyright (c) 2024-2026 Sai Vignesh Golla
+  License: MIT License  (https://opensource.org/license/mit)
+  GitHub:  https://github.com/GodsScion/Auto_job_applier_linkedIn
+-->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Applied Jobs</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Auto Job Applier - Applied Jobs History</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { 
-            border-collapse: collapse; 
+        :root {
+            --bg: #f4f6f9;
+            --card: #ffffff;
+            --ink: #1f2733;
+            --muted: #6b7684;
+            --line: #dce1e8;
+            --brand: #2563eb;
+            --brand-dark: #1d4ed8;
+            --ok: #16a34a;
+            --danger: #dc2626;
+            --thead-bg: #f1f4f8;
+            --row-alt: #fafbfc;
+            --shadow: 0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.06);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f172a;
+                --card: #1a2436;
+                --ink: #e5e9f0;
+                --muted: #93a0b4;
+                --line: #2c3a52;
+                --brand: #5b8def;
+                --brand-dark: #7fa5f2;
+                --ok: #34d399;
+                --danger: #f87171;
+                --thead-bg: #202c42;
+                --row-alt: #17202f;
+                --shadow: 0 1px 3px rgba(0,0,0,.35), 0 1px 2px rgba(0,0,0,.3);
+            }
+        }
+        * { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+        body {
+            margin: 0;
+            overflow-x: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            line-height: 1.5;
+        }
+        header {
+            background: var(--card);
+            border-bottom: 1px solid var(--line);
+            padding: 20px 24px;
+        }
+        header h1 { margin: 0 0 4px; font-size: 20px; }
+        header p { margin: 0; color: var(--muted); font-size: 14px; }
+        .wrap { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+        main.wrap { padding: 24px 16px 40px; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 16px;
+        }
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table.history {
+            border-collapse: collapse;
             width: 100%;
-            margin-top: 20px;
+            min-width: 720px;
+            font-size: 13.5px;
         }
-        th, td { 
-            border: 1px solid #ddd; 
-            padding: 12px; 
-            text-align: left; 
+        table.history th, table.history td {
+            border: 1px solid var(--line);
+            padding: 9px 11px;
+            text-align: left;
+            vertical-align: top;
+            white-space: nowrap;
         }
-        th { 
-            background-color: #f4f4f4; 
-            font-weight: bold;
+        table.history td.wraps { white-space: normal; }
+        table.history th {
+            background: var(--thead-bg);
+            font-weight: 600;
+            user-select: none;
         }
-        tr:nth-child(even) { background-color: #f8f8f8; }
-        a { 
-            color: #0066cc;
-            text-decoration: none;
-        }
-        a:hover { text-decoration: underline; }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .sl-column {
-            width: 50px;
-            text-align: center;
-        }
-        .sort-button {
+        table.history tbody tr:nth-child(even) { background: var(--row-alt); }
+        table.history a { color: var(--brand); text-decoration: none; }
+        table.history a:hover { text-decoration: underline; }
+        .sort-toggle {
             background: none;
             border: none;
+            font: inherit;
+            font-weight: 600;
+            color: inherit;
             cursor: pointer;
-            padding: 0 5px;
-            font-size: 12px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
-        .sort-button:hover {
-            color: #0066cc;
-        }
-        .applied-column {
-            width: 70px;
-            text-align: center;
-        }
+        .sort-toggle:hover { color: var(--brand); }
+        .sort-toggle .arrow { font-size: 11px; color: var(--muted); }
+        .sort-toggle:hover .arrow { color: var(--brand); }
         .tick {
-            color: #4CAF50;
-            font-weight: bold;
+            color: var(--ok);
+            font-weight: 700;
+        }
+        .center { text-align: center; }
+        .placeholder-row td {
+            white-space: normal;
+            text-align: center;
+            color: var(--muted);
+            padding: 28px 12px;
+        }
+        .placeholder-row.error td { color: var(--danger); }
+        .hint {
+            margin: 10px 2px 0;
+            color: var(--muted);
+            font-size: 12.5px;
+        }
+
+        @media (max-width: 640px) {
+            header { padding: 16px 16px; }
+            header h1 { font-size: 18px; }
+            .wrap { padding: 0 12px; }
+            main.wrap { padding: 18px 12px 32px; }
+            .card { padding: 12px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Applied Jobs History</h1>
-        <table id="jobsTable">
-            <thead>
-                <tr>
-                    <th class="sl-column">Sl No</th>
-                    <th>Job Title</th>
-                    <th>Company</th>  
-                    <th>HR Contact</th>
-                    <th>
-                        External Link
-                        <button class="sort-button" onclick="sortByExternalLink()">↕️</button>
-                    </th> 
-                    <th class="applied-column">Applied</th>
-                </tr>
-            </thead>
-            <tbody id="jobsBody"></tbody>
-        </table>
-    </div>
+    <header>
+        <div class="wrap">
+            <h1>Applied Jobs History</h1>
+            <p>Every job the bot has applied to (or queued for you to apply to), in one place.</p>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <div class="card">
+            <div class="table-scroll">
+                <table class="history">
+                    <thead>
+                        <tr>
+                            <th class="center" style="width:44px;">#</th>
+                            <th>Job Title</th>
+                            <th>Company</th>
+                            <th>HR Contact</th>
+                            <th>
+                                <button type="button" class="sort-toggle" id="appSortBtn" aria-label="Sort by Application">
+                                    Application <span class="arrow" id="appSortArrow">&#8645;</span>
+                                </button>
+                            </th>
+                            <th class="center">Applied</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <tr class="placeholder-row"><td colspan="6">Loading applied jobs...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="hint" id="rowCountHint"></p>
+        </div>
+    </main>
 
     <script>
-        let sortOrder = 'asc';
-        let jobsData = [];
-        let appliedJobs = new Set();
+        (function () {
+            'use strict';
 
-        // Replace the createTableRow function with this updated version
-        function createTableRow(job, index) {
-            const row = document.createElement('tr');
-            
-            // Serial Number
-            const slCell = document.createElement('td');
-            slCell.textContent = index + 1;
-            slCell.className = 'sl-column';
-            row.appendChild(slCell);
-            
-            // Job Title with link
-            const titleCell = document.createElement('td');
-            const titleLink = document.createElement('a');
-            titleLink.href = job.Job_Link;
-            titleLink.textContent = job.Title;
-            titleLink.target = '_blank';
-            titleCell.appendChild(titleLink);
-            row.appendChild(titleCell);
-            
-            // Company
-            const companyCell = document.createElement('td');
-            companyCell.textContent = job.Company;
-            row.appendChild(companyCell);
-            
-            // HR Name with link
-            const hrCell = document.createElement('td');
-            if (job.HR_Name && job.HR_Name !== 'Unknown') {
-                const hrLink = document.createElement('a');
-                hrLink.href = job.HR_Link;
-                hrLink.textContent = job.HR_Name;
-                hrLink.target = '_blank';
-                hrCell.appendChild(hrLink);
-            } else {
-                hrCell.textContent = 'N/A';
+            var jobs = [];               // raw data from the server
+            var sortDirection = null;    // null = server order, 'asc' or 'desc' once toggled
+            var tbody = document.getElementById('historyBody');
+            var sortBtn = document.getElementById('appSortBtn');
+            var sortArrow = document.getElementById('appSortArrow');
+            var rowCountHint = document.getElementById('rowCountHint');
+
+            function makeCell(tag, opts) {
+                var node = document.createElement(tag);
+                opts = opts || {};
+                if (opts.className) node.className = opts.className;
+                if (opts.text !== undefined) node.textContent = opts.text;
+                if (opts.center) node.classList.add('center');
+                return node;
             }
-            row.appendChild(hrCell);
-            
-            // External Job Link
-            const extCell = document.createElement('td');
-            const appliedCell = document.createElement('td');
-            appliedCell.className = 'applied-column';
 
-            if (job.External_Job_link === 'Easy Applied') {
-                extCell.textContent = 'Easy Applied';
-                appliedCell.innerHTML = '<span class="tick">✓</span>';
-            } else if (job.External_Job_link) {
-                const extLink = document.createElement('a');
-                extLink.href = job.External_Job_link;
-                extLink.textContent = 'External Link';
-                extLink.target = '_blank';
-                
-                // Add click handler for external link
-                extLink.addEventListener('click', async () => {
-                    try {
-                        const response = await fetch(`/applied-jobs/${job.Job_ID}`, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                        
-                        if (response.ok) {
-                            appliedCell.innerHTML = '<span class="tick">✓</span>';
-                            job.Date_Applied = new Date().toISOString();
-                        }
-                    } catch (error) {
-                        console.error('Error updating applied date:', error);
-                    }
-                });
-                
-                extCell.appendChild(extLink);
-                // Show tick if already applied
-                if (job.Date_Applied !== 'Pending') {
-                    appliedCell.innerHTML = '<span class="tick">✓</span>';
+            function makeLink(href, label, extraClass) {
+                var a = document.createElement('a');
+                a.href = href;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.textContent = label;
+                if (extraClass) a.className = extraClass;
+                return a;
+            }
+
+            function hasHrContact(job) {
+                return !!(job.HR_Name && job.HR_Name !== 'Unknown');
+            }
+
+            // 0 = Easy Applied, 1 = external link available, 2 = nothing to show
+            function applicationRank(job) {
+                if (job.External_Job_link === 'Easy Applied') return 0;
+                if (job.External_Job_link) return 1;
+                return 2;
+            }
+
+            function isAppliedAlready(job) {
+                return !!(job.Date_Applied && job.Date_Applied !== 'Pending');
+            }
+
+            function buildAppliedCell(job) {
+                var td = makeCell('td', { center: true });
+                if (isAppliedAlready(job)) {
+                    var span = document.createElement('span');
+                    span.className = 'tick';
+                    span.setAttribute('aria-label', 'Applied');
+                    span.textContent = '✓';
+                    td.appendChild(span);
                 }
-            } else {
-                extCell.textContent = 'N/A';
+                return td;
             }
-            row.appendChild(extCell);
-            row.appendChild(appliedCell);
-            
-            return row;
-        }
 
-        function sortByExternalLink() {
-            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-            
-            jobsData.sort((a, b) => {
-                const valueA = a.External_Job_link || '';
-                const valueB = b.External_Job_link || '';
-                
-                if (sortOrder === 'asc') {
-                    return valueA.localeCompare(valueB);
+            function markRowApplied(jobId) {
+                var row = tbody.querySelector('tr[data-job-id="' + CSS.escape(String(jobId)) + '"]');
+                var record = jobs.filter(function (j) { return String(j.Job_ID) === String(jobId); })[0];
+                if (record) record.Date_Applied = new Date().toISOString();
+                if (!row) return;
+                var appliedCell = row.querySelector('.applied-cell');
+                if (!appliedCell) return;
+                appliedCell.innerHTML = '';
+                var span = document.createElement('span');
+                span.className = 'tick';
+                span.setAttribute('aria-label', 'Applied');
+                span.textContent = '✓';
+                appliedCell.appendChild(span);
+            }
+
+            function buildApplicationCell(job) {
+                var td = document.createElement('td');
+                if (job.External_Job_link === 'Easy Applied') {
+                    td.textContent = 'Easy Applied';
+                    return td;
+                }
+                if (job.External_Job_link) {
+                    var link = makeLink(job.External_Job_link, 'External link');
+                    link.addEventListener('click', function () {
+                        fetch('/applied-jobs/' + encodeURIComponent(job.Job_ID), { method: 'PUT' })
+                            .then(function (resp) {
+                                if (resp.ok) markRowApplied(job.Job_ID);
+                            })
+                            .catch(function (err) {
+                                console.error('Could not mark job as applied:', err);
+                            });
+                    });
+                    td.appendChild(link);
+                    return td;
+                }
+                td.textContent = 'N/A';
+                return td;
+            }
+
+            function buildRow(job, rowNumber) {
+                var tr = document.createElement('tr');
+                tr.setAttribute('data-job-id', job.Job_ID);
+
+                tr.appendChild(makeCell('td', { center: true, text: String(rowNumber) }));
+
+                var titleCell = document.createElement('td');
+                titleCell.classList.add('wraps');
+                if (job.Job_Link) {
+                    titleCell.appendChild(makeLink(job.Job_Link, job.Title || '(untitled)'));
                 } else {
-                    return valueB.localeCompare(valueA);
+                    titleCell.textContent = job.Title || '(untitled)';
                 }
-            });
-            
-            const tbody = document.getElementById('jobsBody');
-            tbody.innerHTML = '';
-            jobsData.forEach((job, index) => {
-                tbody.appendChild(createTableRow(job, index));
-            });
-        }
+                tr.appendChild(titleCell);
 
-        fetch('http://localhost:5000/applied-jobs')
-            .then(response => response.json())
-            .then(jobs => {
-                jobsData = jobs;
-                const tbody = document.getElementById('jobsBody');
-                jobs.forEach((job, index) => {
-                    tbody.appendChild(createTableRow(job, index));
+                var companyCell = makeCell('td', { text: job.Company || '' });
+                companyCell.classList.add('wraps');
+                tr.appendChild(companyCell);
+
+                var hrCell = document.createElement('td');
+                if (hasHrContact(job) && job.HR_Link) {
+                    hrCell.appendChild(makeLink(job.HR_Link, job.HR_Name));
+                } else if (hasHrContact(job)) {
+                    hrCell.textContent = job.HR_Name;
+                } else {
+                    hrCell.textContent = 'N/A';
+                }
+                tr.appendChild(hrCell);
+
+                tr.appendChild(buildApplicationCell(job));
+
+                var appliedCell = buildAppliedCell(job);
+                appliedCell.classList.add('applied-cell');
+                tr.appendChild(appliedCell);
+
+                return tr;
+            }
+
+            function currentOrder() {
+                if (!sortDirection) return jobs.slice();
+                var withIndex = jobs.map(function (job, i) { return { job: job, i: i }; });
+                withIndex.sort(function (a, b) {
+                    var ra = applicationRank(a.job), rb = applicationRank(b.job);
+                    if (ra !== rb) return sortDirection === 'asc' ? ra - rb : rb - ra;
+                    return a.i - b.i;
                 });
-            })
-            .catch(error => console.error('Error:', error));
+                return withIndex.map(function (entry) { return entry.job; });
+            }
+
+            function showPlaceholder(message, isError) {
+                tbody.innerHTML = '';
+                var tr = document.createElement('tr');
+                tr.className = 'placeholder-row' + (isError ? ' error' : '');
+                var td = document.createElement('td');
+                td.colSpan = 6;
+                td.textContent = message;
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                rowCountHint.textContent = '';
+            }
+
+            function render() {
+                if (!jobs.length) {
+                    showPlaceholder('No applied jobs yet. Run the bot to start building your history.', false);
+                    return;
+                }
+                tbody.innerHTML = '';
+                var ordered = currentOrder();
+                ordered.forEach(function (job, idx) {
+                    tbody.appendChild(buildRow(job, idx + 1));
+                });
+                rowCountHint.textContent = ordered.length + (ordered.length === 1 ? ' job.' : ' jobs.');
+            }
+
+            function toggleSort() {
+                if (sortDirection === 'asc') {
+                    sortDirection = 'desc';
+                    sortArrow.textContent = '↓';
+                } else {
+                    sortDirection = 'asc';
+                    sortArrow.textContent = '↑';
+                }
+                render();
+            }
+
+            sortBtn.addEventListener('click', toggleSort);
+
+            fetch('/applied-jobs')
+                .then(function (resp) {
+                    if (!resp.ok) throw new Error('Server responded with ' + resp.status);
+                    return resp.json();
+                })
+                .then(function (data) {
+                    jobs = Array.isArray(data) ? data : [];
+                    render();
+                })
+                .catch(function (err) {
+                    console.error('Failed to load applied jobs:', err);
+                    showPlaceholder('Could not load applied jobs. Make sure the app is running and try refreshing this page.', true);
+                });
+        })();
     </script>
 </body>
 </html>
-
-<!-- ##< -->

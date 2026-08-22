@@ -2,10 +2,10 @@
 Author:     Sai Vignesh Golla
 LinkedIn:   https://www.linkedin.com/in/saivigneshgolla/
 
-Copyright (C) 2024 Sai Vignesh Golla
+Copyright (c) 2024-2026 Sai Vignesh Golla
 
-License:    GNU Affero General Public License
-            https://www.gnu.org/licenses/agpl-3.0.en.html
+License:    MIT License
+            https://opensource.org/license/mit
             
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
@@ -23,65 +23,40 @@ username = "username@example.com"       # Enter your username in the quotes
 password = "example_password"           # Enter your password in the quotes
 
 
-## Artificial Intelligence (Beta Not-Recommended)
-# Use AI
-use_AI = False                          # True or False, Note: True or False are case-sensitive
-'''
-Note: Set it as True only if you want to use AI, and If you either have a
-1. Local LLM model running on your local machine, with it's APIs exposed. Example softwares to achieve it are:
-    a. Ollama - https://ollama.com/
-    b. llama.cpp - https://github.com/ggerganov/llama.cpp
-    c. LM Studio - https://lmstudio.ai/ (Recommended)
-    d. Jan - https://jan.ai/
-2. OR you have a valid OpenAI API Key, and money to spare, and you don't mind spending it.
-CHECK THE OPENAI API PIRCES AT THEIR WEBSITE (https://openai.com/api/pricing/). 
-'''
+## Artificial Intelligence (optional)
+# Master switch. Turn AI on to let the tool draft answers to application questions
+# and pull the required skills out of job descriptions. It needs either a paid API
+# key or a local model server, so it stays off by default.
+use_AI = False                           # True or False (case-sensitive)
 
-##> ------ Yang Li : MARKYangL - Feature ------
-##> ------ Tim L : tulxoro - Refactor ------
-# Select AI Provider
-ai_provider = "openai"               # "openai", "deepseek", "gemini"
-'''
-Note: Select your AI provider.
-* "openai" - OpenAI API (GPT models) OR OpenAi-compatible APIs (like Ollama)
-* "deepseek" - DeepSeek API (DeepSeek models)
-* "gemini" - Google Gemini API (Gemini models)
-* For any other models, keep it as "openai" if it is compatible with OpenAI's api.
-'''
+# Which AI service to use. The tool reaches all of them through LangChain, so this
+# one setting is usually all you change:
+#   "openai" - OpenAI, or ANY OpenAI-compatible server (Ollama, LM Studio, vLLM,
+#              DeepSeek, ...). Point llm_api_url at that server.
+#   "gemini" - Google Gemini (uses your Google API key; llm_api_url is ignored).
+# ("deepseek" also works and behaves like "openai".)
+ai_provider = "openai"                    # "openai", "gemini", or "deepseek"
 
+# The model name to use. Type whatever your provider offers, for example:
+#   OpenAI:  "gpt-4o-mini", "gpt-4o", "gpt-5-mini"
+#   Local:   "llama-3.2-3b-instruct", "qwen2.5:latest"
+#   Gemini:  "gemini-2.5-flash", "gemini-2.5-pro"
+llm_model = "gpt-4o-mini"
 
+# Your API key. For local servers (Ollama / LM Studio) any placeholder is fine, so
+# leave it as "not-needed". For OpenAI or Gemini, paste a real key.
+llm_api_key = "not-needed"
 
-# Your LLM url or other AI api url and port
-llm_api_url = "https://api.openai.com/v1/"       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/", "https://api.deepseek.com", "https://api.deepseek.com/v1"
-'''
-Note: Don't forget to add / at the end of your url. You may not need this if you are using Gemini.
-'''
+# Base URL of your AI server. Only used by the "openai" provider family.
+#   OpenAI:    "https://api.openai.com/v1/"
+#   LM Studio: "http://localhost:1234/v1/"
+#   Ollama:    "http://localhost:11434/v1/"
+#   DeepSeek:  "https://api.deepseek.com/v1"
+llm_api_url = "https://api.openai.com/v1/"
 
-# Your LLM API key or other AI API key 
-llm_api_key = "not-needed"              # Enter your API key in the quotes, make sure it's valid, if not will result in error.
-'''
-Note: Leave it empty as "" or "not-needed" if not needed. Else will result in error!
-If you are using ollama, you MUST put "not-needed".
-'''
-
-# Your LLM model name or other AI model name
-llm_model = "gpt-5-mini"          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct", "qwen3:latest", "gemini-pro", "gemini-1.5-flash", "gemini-2.5-flash", "deepseek-llm:latest"
-
-llm_spec = "openai"                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"
-'''
-Note: Currently "openai", "deepseek", "gemini" and "openai-like" api endpoints are supported.
-Most LLMs are compatible with openai, so keeping it as "openai-like" will work.
-'''
-
-# # Yor local embedding model name or other AI Embedding model name
-# llm_embedding_model = "nomic-embed-text-v1.5"
-
-# Do you want to stream AI output?
-stream_output = False                    # Examples: True or False. (False is recommended for performance, True is recommended for user experience!)
-'''
-Set `stream_output = True` if you want to stream AI output or `stream_output = False` if not.
-'''
-##
+# Sampling temperature. Leave as None to use the model's own default (some newer
+# models only allow their default). Set a number like 0 or 0.3 to override it.
+llm_temperature = None
 
 
 
@@ -101,4 +76,9 @@ Your support, whether through donations big or small or simply spreading the wor
 Gratefully yours 🙏🏻,
 Sai Vignesh Golla
 '''
+
+# --- Load user settings saved by the local control panel (user_config.json).
+# --- No-op if that file is absent: values fall back to the defaults above.
+from config import _overrides as _o
+_o.apply(__name__, globals())
 ############################################################################################################

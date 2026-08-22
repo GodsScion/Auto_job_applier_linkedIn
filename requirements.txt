@@ -1,24 +1,6 @@
-# Auto Job Applier — Python dependencies
-# Install everything with:  pip install -r requirements.txt
-
-# Browser automation
-selenium
-undetected-chromedriver          # auto-downloads a matching Chrome driver (auto_manage_driver = True)
-setuptools                       # required by undetected-chromedriver on some Python versions
-
-# Desktop dialogs / prompts
+undetected-chromedriver
 pyautogui
-
-# AI layer (provider-agnostic, via LangChain + LangGraph)
-langchain==1.3.14                # core LangChain (init_chat_model, structured output)
-langchain-openai==1.4.2          # OpenAI + any OpenAI-compatible server (Ollama, LM Studio, DeepSeek, vLLM)
-langchain-google-genai==4.3.2    # Google Gemini
-langgraph==1.2.10                # graph orchestration for the question-answer pipeline
-
-# Resume / document generation
-fpdf2                            # PDF output (imported as `fpdf`)
-python-docx                      # .docx output (imported as `docx`)
-
-# Local applied-jobs history web UI (app.py)
-flask
+setuptools
+openai
 flask-cors
+flask

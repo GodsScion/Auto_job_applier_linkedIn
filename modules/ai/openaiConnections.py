@@ -143,7 +143,24 @@ def model_supports_temperature(model_name: str) -> bool:
     Returns:
         bool: True if the model supports temperature adjustments, otherwise False.
     """
-    return model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini"]
+    ##> ------ Syed Talha Ahmed Gardazi : stag7824 - Bug fix ------
+    # Only OpenAI's reasoning models reject `temperature`; everything else accepts it.
+    # This used to be an allow-list of five OpenAI models, which silently dropped the
+    # configured temperature for every other model - including the local
+    # OpenAI-compatible ones suggested in config/secrets.py (LM Studio, Ollama), and
+    # newer OpenAI models such as gpt-4.1. Deny-listing the reasoning families keeps
+    # o1/o3/o4/gpt-5 working while honouring temperature everywhere else.
+    model = model_name.lower().strip()
+    # Strip an OpenRouter/LiteLLM style "provider/" prefix, e.g. "openai/o3-mini".
+    model = model.rsplit("/", 1)[-1]
+    reasoning_model_prefixes = ("o1", "o3", "o4", "gpt-5")
+    for prefix in reasoning_model_prefixes:
+        # Match the family exactly or a variant of it ("o3", "o3-mini", "o3-mini-2025-01-31"),
+        # without catching unrelated names that merely start with the same letters.
+        if model == prefix or model.startswith(prefix + "-"):
+            return False
+    return True
+    ##<
 
 # Function to get chat completion from OpenAI API
 def ai_completion(client: OpenAI, messages: list[dict], response_format: dict = None, temperature: float = 0, stream: bool = stream_output) -> dict | ValueError:

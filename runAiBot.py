@@ -39,9 +39,21 @@ from modules.open_chrome import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
-from modules.ai.openaiConnections import ai_create_openai_client, ai_extract_skills, ai_answer_question, ai_close_openai_client
-from modules.ai.deepseekConnections import deepseek_create_client, deepseek_extract_skills, deepseek_answer_question
-from modules.ai.geminiConnections import gemini_create_client, gemini_extract_skills, gemini_answer_question
+##> ------ Syed Talha Ahmed Gardazi : stag7824 - Bug fix ------
+# Import only the AI provider that is configured. Importing every provider
+# unconditionally made an unused provider's optional dependency mandatory, so
+# a "deepseek" or "openai" user without `google-generativeai` installed
+# crashed on startup with `ModuleNotFoundError: No module named 'google'`.
+if use_AI:
+    selected_ai_provider = ai_provider.lower()
+    # DeepSeek reuses the OpenAI client helpers, so it needs this module too.
+    if selected_ai_provider in ("openai", "deepseek"):
+        from modules.ai.openaiConnections import ai_create_openai_client, ai_extract_skills, ai_answer_question, ai_close_openai_client
+    if selected_ai_provider == "deepseek":
+        from modules.ai.deepseekConnections import deepseek_create_client, deepseek_extract_skills, deepseek_answer_question
+    if selected_ai_provider == "gemini":
+        from modules.ai.geminiConnections import gemini_create_client, gemini_extract_skills, gemini_answer_question
+##<
 
 from typing import Literal
 

@@ -242,6 +242,8 @@ SCHEMA = [
                "Checked first, and an offer always wins - real postings say both. Example: we will sponsor, H-1B transfer, cap-exempt."),
             _f("Filters", "search", "sponsorship_unavailable_phrases", "Phrases that mean they do NOT sponsor", "list",
                "Matched as whole phrases, never substrings, so 'sponsorship of our annual conference' is safe. Example: unable to sponsor, without sponsorship, not eligible for visa sponsorship."),
+            _f("Filters", "search", "skip_jobs_without_sponsorship", "Also skip jobs that say nothing about sponsorship", "bool",
+               "Strict mode. Only does anything when the setting above is on. Applies only where sponsorship is explicitly offered - most postings never mention it either way, so this skips a lot of jobs, including employers who would have sponsored. Worth it only if your runs end on LinkedIn's ~25/day Easy Apply limit, where a slot spent on a silent posting is a slot denied to one that says 'we sponsor'."),
         ],
     },
     {

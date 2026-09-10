@@ -602,7 +602,14 @@ def get_job_description(
         # offer always wins, because real postings say both - "we do not require you to have
         # sponsorship ... we will sponsor H-1B transfers" is an offer, not a refusal. Whole
         # phrases via find_bad_word, so "sponsorship of our annual conference" is not one
-        # either. Silence means APPLY: a wrong skip costs a real job, a wrong apply costs 30s.
+        # either. Silence means APPLY by default: silence is not a refusal, and most postings
+        # are silent. That is a default, not a law - this bot is built to run until LinkedIn's
+        # daily Easy Apply cap fires (dailyEasyApplyLimitReached), so applications are
+        # RATIONED: a wrong apply costs a slot, a wrong skip costs a slot's worth of chance.
+        # Both errors are the same currency, which is why the third state is a user setting
+        # and not a hardcoded choice - see skip_jobs_without_sponsorship. It stays OFF by
+        # default because recall is worst for the seed/Series-A companies most likely to be
+        # silent yet sponsor.
         # ponytail: JD text only. Whether the EMPLOYER has ever sponsored (tier 2, the DOL
         # LCA index) is deliberately not built here - absence from that data is not evidence.
         if (not skip and require_visa == "Yes" and skip_non_sponsoring_jobs
@@ -611,6 +618,10 @@ def get_job_description(
             if no_sponsorship:
                 skipMessage = f'\n{jobDescription}\n\nSays "{no_sponsorship}" and offers no sponsorship. Skipping this job!\n'
                 skipReason = f'Job description excludes visa sponsorship ("{no_sponsorship}")'
+                skip = True
+            elif skip_jobs_without_sponsorship:
+                skipMessage = f'\n{jobDescription}\n\nSays nothing either way about sponsorship. Skipping this job (strict mode)!\n'
+                skipReason = "Job description is silent on visa sponsorship (not a refusal)"
                 skip = True
         # Whole words: substring 'clearance' matched "clearance sale" and 'secret' matched
         # "secretary", skipping jobs that had nothing to do with a clearance. Same bug class

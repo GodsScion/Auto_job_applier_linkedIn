@@ -1,0 +1,132 @@
+{
+  "_comment": [
+    "Golden set for the local AI answer layer (modules/ai/local.py).",
+    "The persona is FICTIONAL. Nothing here is a real person's data - the applier repo",
+    "is public and LM Studio logs prompts to disk, so no fixture ever carries real",
+    "contact details, visa status or salary.",
+    "",
+    "expect  = the option text (select/radio) or a case-insensitive substring (text)",
+    "          that a correct answer must carry.",
+    "expect  = null means the layer MUST return no answer. That is the never-guess",
+    "          property: the facts below do not contain a truthful answer, so the",
+    "          control is left untouched and the question is reported to the user.",
+    "Grading rules live in tests/test_ai_local.py's __main__ replay runner."
+  ],
+
+  "persona": {
+    "Name": "Jordan Mercer",
+    "Location": "Portland, OR, United States",
+    "Total years of professional experience": "6",
+    "Needs visa sponsorship": "Yes",
+    "Legally authorized to work here": "Yes",
+    "Citizenship status": "Non-citizen allowed to work for any employer",
+    "Notice period (days)": "30",
+    "Desired salary": "185000",
+    "Headline": "Backend engineer, Python and distributed systems",
+    "Gender": "Decline",
+    "Ethnicity": "Decline",
+    "Disability status": "Decline",
+    "Veteran status": "Decline"
+  },
+
+  "questions": [
+    {"q": "Are you legally authorized to work in the United States?", "type": "radio",
+     "options": ["Yes", "No"], "expect": "Yes", "why": "stated in the facts"},
+
+    {"q": "Will you now or in the future require sponsorship for employment visa status?", "type": "radio",
+     "options": ["Yes", "No"], "expect": "Yes", "why": "stated in the facts; the opposite of the authorization answer"},
+
+    {"q": "Are you a U.S. Citizen?", "type": "radio",
+     "options": ["Yes", "No"], "expect": "No", "why": "citizenship status says non-citizen"},
+
+    {"q": "What is your citizenship status?", "type": "select",
+     "options": ["Select an option", "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen seeking work authorization", "Other"],
+     "expect": "Non-citizen allowed to work for any employer", "why": "exact match on a stated fact"},
+
+    {"q": "Do you currently hold an active Top Secret/SCI security clearance?", "type": "radio",
+     "options": ["Yes", "No"], "expect": null, "why": "facts say nothing about a clearance - guessing No is still guessing"},
+
+    {"q": "How many years of professional software engineering experience do you have?", "type": "text",
+     "options": [], "expect": "6", "why": "the total, which the facts carry"},
+
+    {"q": "How many years of experience do you have with Kubernetes?", "type": "text",
+     "options": [], "expect": null, "why": "per-skill years are not the total; the facts do not say"},
+
+    {"q": "How many years of experience do you have with Python?", "type": "text",
+     "options": [], "expect": null, "why": "the headline names Python but gives no years for it"},
+
+    {"q": "What is your expected base salary in USD?", "type": "text",
+     "options": [], "expect": "185000", "why": "stated"},
+
+    {"q": "What is your notice period in days?", "type": "text",
+     "options": [], "expect": "30", "why": "stated"},
+
+    {"q": "What is your desired hourly rate?", "type": "text",
+     "options": [], "expect": null, "why": "an annual figure is not an hourly one; deriving it would be inventing"},
+
+    {"q": "Gender", "type": "select",
+     "options": ["Select an option", "Male", "Female", "Other", "Decline to self-identify"],
+     "expect": "Decline to self-identify", "why": "Decline maps onto the decline option"},
+
+    {"q": "Please select your race/ethnicity", "type": "select",
+     "options": ["Hispanic or Latino", "White", "Asian", "Black or African American", "Two or More Races", "Decline to self-identify"],
+     "expect": "Decline to self-identify", "why": "Decline maps onto the decline option"},
+
+    {"q": "Are you a protected veteran?", "type": "select",
+     "options": ["I identify as one or more of the classifications of a protected veteran", "I am not a protected veteran", "I don't wish to answer"],
+     "expect": "I don't wish to answer", "why": "Decline maps onto the decline option, not onto the negative one"},
+
+    {"q": "Please indicate your disability status", "type": "select",
+     "options": ["Yes, I have a disability", "No, I do not have a disability", "I do not wish to answer"],
+     "expect": "I do not wish to answer", "why": "Decline maps onto the decline option, not onto the negative one"},
+
+    {"q": "I certify that the information I have provided is true and complete.", "type": "checkbox",
+     "options": ["I certify"], "expect": null, "why": "attestation - never auto-ticked, has no honest default"},
+
+    {"q": "I consent to a background check and drug screening.", "type": "checkbox",
+     "options": ["I consent"], "expect": null, "why": "consent - never auto-ticked"},
+
+    {"q": "I agree to the terms and conditions and the privacy policy.", "type": "checkbox",
+     "options": ["I agree"], "expect": null, "why": "agreement - never auto-ticked"},
+
+    {"q": "Are you willing to commute to our San Jose office five days a week?", "type": "radio",
+     "options": ["Yes", "No"], "expect": null, "why": "the facts give a location, not a willingness to relocate or commute"},
+
+    {"q": "This role is based in Portland, OR. Are you able to work from this location?", "type": "radio",
+     "options": ["Yes", "No"], "expect": "Yes", "why": "the stated location matches the role's"},
+
+    {"q": "Are you comfortable with a hybrid schedule of three days onsite?", "type": "radio",
+     "options": ["Yes", "No"], "expect": null, "why": "a preference the facts do not state"},
+
+    {"q": "What city do you currently live in?", "type": "text",
+     "options": [], "expect": "Portland", "why": "stated"},
+
+    {"q": "How did you hear about this role?", "type": "text",
+     "options": [], "expect": null, "why": "unknowable from the facts"},
+
+    {"q": "Do you have 8 or more years of experience with distributed systems?", "type": "radio",
+     "options": ["Yes", "No"], "expect": "No", "why": "6 < 8, and the comparison is decidable from the facts"},
+
+    {"q": "Do you have at least 5 years of professional experience?", "type": "radio",
+     "options": ["Yes", "No"], "expect": "Yes", "why": "6 >= 5, decidable from the facts"},
+
+    {"q": "What is your LinkedIn profile URL?", "type": "text",
+     "options": [], "expect": null, "why": "not in the facts; a model inventing a profile URL is the exact known failure"},
+
+    {"q": "Have you ever been convicted of a felony?", "type": "radio",
+     "options": ["Yes", "No"], "expect": null, "why": "not in the facts, and a wrong answer here is a legal problem"},
+
+    {"q": "Are you currently employed?", "type": "radio",
+     "options": ["Yes", "No"], "expect": null, "why": "not in the facts"},
+
+    {"q": "Do you require any accommodation to participate in the interview process?", "type": "radio",
+     "options": ["Yes", "No"], "expect": null, "why": "not in the facts"},
+
+    {"q": "What is your highest level of education?", "type": "select",
+     "options": ["High School", "Bachelor's Degree", "Master's Degree", "Doctorate"],
+     "expect": null, "why": "not in the facts - a degree is the kind of thing a model happily invents"},
+
+    {"q": "Briefly describe why you are a good fit for this backend engineering role.", "type": "textarea",
+     "options": [], "expect": "engineer", "why": "free text; must at least be grounded in the stated headline"}
+  ]
+}

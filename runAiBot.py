@@ -455,6 +455,7 @@ negation_terms = ['no', 'not', 'never', "don't", "doesn't", "won't", "can't", 'c
 # agreements, acknowledgements, authorisations. None of these is ever auto-ticked - and
 # neither is a checkbox that matches nothing, because a box we cannot classify is unsafe
 # too. So this list changes no decision; it names *why* a box was left for the user.
+masters_terms = ['master', 'masters', "master's", 'ms', 'm.s.', 'msc', 'm.sc.', 'graduate degree']
 clearance_terms = ['polygraph', 'clearance', 'secret', 'top secret', 'ts/sci', 'sci']
 attestation_terms = ['certify', 'certifies', 'certification', 'attest', 'attestation',
                      'consent', 'consents', 'agree', 'agreement', 'terms', 'conditions',
@@ -467,7 +468,8 @@ attestation_terms = ['certify', 'certifies', 'certification', 'attest', 'attesta
 # `years_of_experience` is a TOTAL, so it only answers a question that asks for the total.
 total_experience_terms = ['years of experience', 'years experience', 'work experience',
                           'working experience', 'professional experience', 'total experience',
-                          'overall experience', 'industry experience', 'years of work']
+                          'overall experience', 'industry experience', 'years of work',
+                          'technical experience', 'years of technical', 'engineering experience']
 # ...and not when that question is narrowed to one skill: "years of Kubernetes experience",
 # "years of experience IN Kubernetes", "experience WITH Python", "how many years USING AWS".
 skill_qualifier_terms = ['in', 'with', 'using', 'on']
@@ -596,6 +598,20 @@ def get_job_description(
             skipMessage = f'\n{jobDescription}\n\nContains bad word "{bad_word}". Skipping this job!\n'
             skipReason = "Found a Bad Word in About Job"
             skip = True
+        # Sponsorship, tier 1: only what THIS posting says. Offers are checked FIRST and an
+        # offer always wins, because real postings say both - "we do not require you to have
+        # sponsorship ... we will sponsor H-1B transfers" is an offer, not a refusal. Whole
+        # phrases via find_bad_word, so "sponsorship of our annual conference" is not one
+        # either. Silence means APPLY: a wrong skip costs a real job, a wrong apply costs 30s.
+        # ponytail: JD text only. Whether the EMPLOYER has ever sponsored (tier 2, the DOL
+        # LCA index) is deliberately not built here - absence from that data is not evidence.
+        if (not skip and require_visa == "Yes" and skip_non_sponsoring_jobs
+                and not find_bad_word(jobDescription, sponsorship_offered_phrases)):
+            no_sponsorship = find_bad_word(jobDescription, sponsorship_unavailable_phrases)
+            if no_sponsorship:
+                skipMessage = f'\n{jobDescription}\n\nSays "{no_sponsorship}" and offers no sponsorship. Skipping this job!\n'
+                skipReason = f'Job description excludes visa sponsorship ("{no_sponsorship}")'
+                skip = True
         # Whole words: substring 'clearance' matched "clearance sale" and 'secret' matched
         # "secretary", skipping jobs that had nothing to do with a clearance. Same bug class
         # find_bad_word() was written for.
@@ -604,7 +620,7 @@ def get_job_description(
             skipReason = "Asking for Security clearance"
             skip = True
         if not skip:
-            if did_masters and 'master' in jobDescriptionLow:
+            if did_masters and find_bad_word(jobDescriptionLow, masters_terms):
                 print_lg(f'Found the word "master" in \n{jobDescription}')
                 found_masters = 2
             experience_required = extract_years_of_experience(jobDescription)

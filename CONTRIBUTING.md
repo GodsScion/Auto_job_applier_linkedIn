@@ -6,14 +6,14 @@ contributions are welcome, no matter how small or large.
 ## 1. Follow the existing code guidelines
 
 This project already documents its code style, naming conventions, configuration-variable
-rules, and the **attestation format** for contributions. Please read and follow the
+rules, and an optional attestation format for crediting contributions. Please read and follow the
 **Contributor Guidelines** section of the [README](README.md#-contributor-guidelines)
 rather than duplicating it here. In particular:
 
 - **Code guidelines** — function naming/docstrings/type hints, variable naming, and
   configuration-variable rules: see [README → Code Guidelines](README.md#code-guidelines).
-- **Attestation** — every contribution needs an attestation marker in the code, in the
-  form:
+- **Attestation (optional)** — you may add an attestation marker above your code to
+  credit yourself, in the form:
 
   ```python
   ##> ------ <Your full name> : <github id> OR <email> - <Type of change> ------
@@ -21,8 +21,7 @@ rather than duplicating it here. In particular:
   ##<
   ```
 
-  See [README → Attestation](README.md) for full examples. Keeping accurate attestation
-  markers also helps us maintain the contributor records in
+  It is optional and used only for credit. Past contributors are acknowledged in
   [`docs/contributor-consent/contributors.md`](docs/contributor-consent/contributors.md).
 
 ## 2. Where to send pull requests
@@ -35,9 +34,9 @@ change is tested, it is merged into `main` in the next cycle. See
 ## 3. Quick checklist before opening a PR
 
 - [ ] My PR targets the `community-version` branch.
-- [ ] I followed the code and attestation guidelines in the [README](README.md#-contributor-guidelines).
-- [ ] I added an attestation marker for my change.
-- [ ] My contribution is my own work, or I have the right to submit it.
+- [ ] I followed the code guidelines in the [README](README.md#-contributor-guidelines).
+- [ ] I ran the tests (`./run_tests.sh` or `python -m pytest`) and they pass.
+- [ ] My contribution is my own work, or I have the right to submit it, and is offered under the MIT License.
 
 ## 4. Licensing of contributions
 

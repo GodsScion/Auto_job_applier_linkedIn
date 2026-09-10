@@ -54,7 +54,6 @@ from typing import Literal
 
 
 pyautogui.FAILSAFE = False
-# if use_resume_generator:    from resume_generator import is_logged_in_GPT, login_GPT, open_resume_chat, create_custom_resume
 
 
 #< Global Variables and logics
@@ -1323,8 +1322,6 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                 errored = ""
                                 modal = find_by_class(driver, "jobs-easy-apply-modal")
                                 wait_xp_click(modal, next_button_xpath, 1)
-                                # if description != "Unknown":
-                                #     resume = create_custom_resume(description)
                                 resume = "Previous resume"
                                 next_button = True
                                 questions_list = set()
@@ -1486,7 +1483,6 @@ def run(total_runs: int) -> int:
 
 
 
-chatGPT_tab = False
 linkedIn_tab = False
 
 def main() -> None:
@@ -1508,17 +1504,6 @@ def main() -> None:
         
         linkedIn_tab = driver.current_window_handle
 
-        # # Login to ChatGPT in a new tab for resume customization
-        # if use_resume_generator:
-        #     try:
-        #         driver.switch_to.new_window('tab')
-        #         driver.get("https://chat.openai.com/")
-        #         if not is_logged_in_GPT(): login_GPT()
-        #         open_resume_chat()
-        #         global chatGPT_tab
-        #         chatGPT_tab = driver.current_window_handle
-        #     except Exception as e:
-        #         print_lg("Opening OpenAI chatGPT tab failed!")
         if use_AI:
             aiClient = create_ai_client()
 

@@ -92,9 +92,6 @@ auto_manage_driver = True          # True or False, Note: True or False are case
 # Do you want to get alerts on errors related to AI API connection?
 showAiErrorAlerts = False            # True or False, Note: True or False are case-sensitive
 
-# Use ChatGPT for resume building (Experimental Feature can break the application. Recommended to leave it as False) 
-# use_resume_generator = False       # True or False, Note: True or False are case-sensitive ,   This experimental feature may only work with 'auto_manage_driver = True'.
-
 
 
 

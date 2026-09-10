@@ -120,6 +120,37 @@ def test_user_config_is_written_owner_only(client, tmp_path, monkeypatch):
     assert stat.S_IMODE(os.stat(cfg_path).st_mode) == 0o600
 
 
+def test_freeze_pins_settings_the_panel_never_shows(client, tmp_path, monkeypatch):
+    '''The update runs `git stash` + `git pull` and deliberately never pops the stash,
+    so anything _freeze_config misses comes back as the shipped default. It used to
+    pin only the schema keys, silently reverting the 24 settings that had no field.'''
+    app, cfg_path = _isolate(tmp_path, monkeypatch)
+
+    app._freeze_config()
+
+    with open(cfg_path, encoding="utf-8") as f:
+        frozen = json.load(f)
+    for module, keys in app.DEFAULTS.items():
+        assert set(frozen[module]) == set(keys), module
+    assert "stop_before_submit" in frozen["settings"]      # had no panel field
+    assert "llm_temperature" in frozen["secrets"]          # still has none
+
+
+def test_config_save_refuses_a_value_the_bot_would_reject_at_startup(client, tmp_path, monkeypatch):
+    '''modules/validator.py raises on these when the bot starts, which is far too late
+    to tell someone their run will not start.'''
+    _isolate(tmp_path, monkeypatch)
+
+    bad = [("search", "on_site", ["Remote", "Mars"]),        # not a LinkedIn option
+           ("search", "date_posted", "Yesterday"),
+           ("questions", "notice_period", 1.5)]             # check_int raises on a float
+    for section, key, value in bad:
+        resp = client.post("/api/config", json={section: {key: value}})
+        assert resp.status_code == 400, (key, resp.get_json())
+
+    assert client.post("/api/config", json={"questions": {"notice_period": 30.0}}).status_code == 200
+
+
 def test_config_save_rejects_unknown_key(client, tmp_path, monkeypatch):
     import app
     import config._overrides as overrides

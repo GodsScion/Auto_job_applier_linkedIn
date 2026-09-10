@@ -30,6 +30,7 @@ import signal
 import subprocess
 import threading
 import importlib
+from types import ModuleType
 
 import config_schema
 from config import _overrides
@@ -82,6 +83,9 @@ def _load_defaults() -> dict:
     Import each config module with overrides temporarily disabled, so we read
     the untouched Python defaults regardless of whether user_config.json exists
     right now. Returns {config_module: {key: default_value}}.
+
+    Every module global is captured, not just the ones the panel has a field for,
+    so _freeze_config() below can pin a hand-edited setting the panel never shows.
     '''
     original_loader = _overrides.load_user_config
     _overrides.load_user_config = lambda: {}
@@ -101,13 +105,9 @@ def _load_defaults() -> dict:
         # Reload in case they were already imported (with real overrides) earlier.
         for module in modules.values():
             importlib.reload(module)
-        defaults = {}
-        for field in config_schema.iter_fields():
-            module_name = field["config_module"]
-            key = field["key"]
-            module = modules.get(module_name)
-            defaults.setdefault(module_name, {})[key] = getattr(module, key, None)
-        return defaults
+        return {name: {key: value for key, value in vars(module).items()
+                       if not key.startswith("_") and not isinstance(value, ModuleType)}
+                for name, module in modules.items()}
     finally:
         _overrides.load_user_config = original_loader
 
@@ -122,24 +122,22 @@ def _effective_config() -> dict:
     '''
     Return {config_module: {key: value}} of the pristine defaults overlaid with
     the CURRENT contents of user_config.json (re-read from disk on every call).
-    Only keys defined in config_schema are included.
     '''
     effective = copy.deepcopy(DEFAULTS)
     user = _overrides.load_user_config()
-    for field in config_schema.iter_fields():
-        module_name = field["config_module"]
-        key = field["key"]
+    for module_name, values in effective.items():
         section = user.get(module_name)
-        if isinstance(section, dict) and key in section:
-            effective[module_name][key] = section[key]
+        if isinstance(section, dict):
+            values.update({key: value for key, value in section.items() if key in values})
     return effective
 
 
-def _coerce(field_type: str, value):
+def _coerce(field: dict, value):
     '''
     Coerce an incoming JSON value into the type declared for the field in the
     schema. Raises ValueError on invalid numbers so the caller can reject them.
     '''
+    field_type = field["type"]
     if field_type in ("text", "password", "textarea", "select"):
         return "" if value is None else str(value)
 
@@ -153,8 +151,11 @@ def _coerce(field_type: str, value):
             if text == "":
                 raise ValueError("expected a number, got an empty value")
             number = float(text)
-        # Keep whole numbers as ints (the config defaults are ints).
-        if isinstance(number, float) and number.is_integer():
+        # Whole-number settings must stay whole: modules/validator.py raises a
+        # TypeError on 1.5 at startup, which is far too late to tell the user.
+        if field.get("step") == 1:
+            if number != int(number):
+                raise ValueError("expected a whole number, e.g. 30")
             return int(number)
         return number
 
@@ -397,9 +398,17 @@ def api_save_config():
             if field["type"] == "password" and value == SECRET_PLACEHOLDER:
                 continue                    # what GET redacted, sent back untouched
             try:
-                coerced.setdefault(section, {})[key] = _coerce(field["type"], value)
+                clean = _coerce(field, value)
             except ValueError as err:
                 return jsonify({"error": f"Invalid value for '{section}.{key}': {err}"}), 400
+            # modules/validator.py re-checks these when the bot starts. Checking here too
+            # means the panel can never save a value that makes the next run refuse to run.
+            rejected = [item for item in (clean if isinstance(clean, list) else [clean])
+                        if item not in field.get("options", [item])]
+            if rejected:
+                return jsonify({"error": f"Invalid value for '{section}.{key}': "
+                                         f"{rejected[0]!r} is not one of {field['options']}"}), 400
+            coerced.setdefault(section, {})[key] = clean
 
     if unknown:
         return jsonify({"error": "Unknown settings rejected", "unknown": unknown}), 400
@@ -515,9 +524,14 @@ def _freeze_config() -> None:
     is what stops the update reverting them to the shipped defaults, because
     config/_overrides.py re-applies the JSON over whatever `git pull` writes.
 
-    ponytail: this pins every schema key to today's value, so a later change to
-    a shipped default stops reaching that user. Acceptable - a hand-edited file
-    was already pinned. Freeze only the keys that differ from HEAD if it bites.
+    It pins EVERY setting in config/*.py, including the ones the panel has no
+    field for: `git stash` parks the user's edits and self_update() deliberately
+    never pops that stash, so anything not pinned here comes back as the shipped
+    default after an update.
+
+    ponytail: this pins every setting to today's value, so a later change to a
+    shipped default stops reaching that user. Acceptable - a hand-edited file was
+    already pinned. Freeze only the keys that differ from HEAD if it bites.
     '''
     current = _overrides.load_user_config()
     for section, values in _effective_config().items():

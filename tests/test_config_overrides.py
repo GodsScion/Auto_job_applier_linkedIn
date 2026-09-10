@@ -63,3 +63,60 @@ def test_load_user_config_reads_valid_json(monkeypatch, tmp_path):
     good.write_text('{"secrets": {"use_AI": true}}', encoding="utf-8")
     monkeypatch.setattr(overrides, "USER_CONFIG_PATH", str(good))
     assert overrides.load_user_config() == {"secrets": {"use_AI": True}}
+
+
+# ---------------------------------------------------------------------------
+# The control panel derives its fields from config/*.py, and docs/config-*.md
+# describes the same settings in prose. Both used to be hand-synced and both
+# drifted: 24 settings had no panel field while the docs claimed 3, and the docs
+# named two settings that do not exist. These turn that drift into a red test.
+# ---------------------------------------------------------------------------
+import importlib
+import pathlib
+import re
+
+import config_schema
+
+_ROOT = pathlib.Path(__file__).resolve().parent.parent
+# Its default is None, which no form control can express - see docs/configuration.md.
+_NOT_IN_PANEL = {"llm_temperature"}
+
+
+def _config_keys():
+    '''Every setting name defined in config/*.py.'''
+    return {key for name in config_schema.MODULES
+            for key in vars(importlib.import_module("config." + name))
+            if not key.startswith("_")}
+
+
+def test_panel_has_a_field_for_every_setting():
+    fields = {field["key"] for field in config_schema.iter_fields()}
+    assert _config_keys() - fields == _NOT_IN_PANEL
+    assert fields - _config_keys() == set()      # and never invents one
+
+
+def test_docs_and_config_name_the_same_settings():
+    docs = "\n".join(page.read_text(encoding="utf-8")
+                     for page in sorted((_ROOT / "docs").glob("config-*.md")))
+    named = set(re.findall(r"`([a-z][a-z0-9]*(?:_[a-zA-Z0-9]+)+)`", docs))
+    keys = _config_keys()
+    invented = sorted(named - keys)
+    undocumented = sorted(keys - set(re.findall(r"`(\w+)`", docs)))
+    assert not invented, f"docs name settings config/*.py does not have: {invented}"
+    assert not undocumented, f"settings no docs page mentions: {undocumented}"
+
+
+def test_field_types_come_from_the_config_file():
+    '''The parser is the only thing standing between a config comment and the form.'''
+    fields = {field["key"]: field for field in config_schema.iter_fields()}
+    assert fields["require_visa"]["type"] == "select"          # trailing `# "Yes" or "No"`
+    assert fields["require_visa"]["options"] == ["Yes", "No"]
+    assert fields["on_site"]["type"] == "list"                 # `# (multiple select) ...`
+    assert fields["on_site"]["options"] == ["On-site", "Remote", "Hybrid"]
+    assert fields["companies"].get("options") is None          # dynamic: any value goes
+    assert fields["recent_employer"]["type"] == "text"         # its `Eg:` is not a vocabulary
+    assert fields["cover_letter"]["type"] == "textarea"        # a default with line breaks
+    assert fields["password"]["type"] == "password"
+    assert fields["click_gap"]["step"] == 1                    # a whole-number setting
+    assert "sponsorship" in fields["skip_non_sponsoring_jobs"]["help"]
+    assert "lakhs" in fields["desired_salary"]["help"]         # the triple-quoted note below

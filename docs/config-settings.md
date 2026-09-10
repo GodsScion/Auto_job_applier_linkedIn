@@ -58,15 +58,15 @@ Two things worth knowing:
 - It takes priority over `pause_before_submit` — the application is discarded before the
   confirmation dialog would appear.
 
-`stop_before_submit` is only settable by editing `config/settings.py`; it has no field in
-the control panel.
+`stop_before_submit` is in the **Run settings** tab, and settable by editing
+`config/settings.py`.
 
 ## In development
 
 | Setting | Status |
 |---|---|
 | `generated_resume_path` | Folder for generated resumes. Part of the **experimental, in-development** resume generator |
-| `connect_hr`, `connect_request_message` | Commented out in the file. Would send connection requests to recruiters with an optional personalised message (LinkedIn allows only 10 personalised invitations a month without Premium) |
+| connect_hr, connect_request_message (commented out, so not settings yet) | Would send connection requests to recruiters with an optional personalised message (LinkedIn allows only 10 personalised invitations a month without Premium) |
 
 ---
 

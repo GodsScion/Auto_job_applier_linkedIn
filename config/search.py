@@ -46,27 +46,44 @@ This is below format: QUESTION = VALID_ANSWER
 
 '''
 
+# How should LinkedIn sort the results?
 sort_by = ""                       # "Most recent", "Most relevant" or ("" to not select) 
+# How recently must a job have been posted?
 date_posted = "Past week"         # "Any time", "Past month", "Past week", "Past 24 hours" or ("" to not select)
-salary = ""                        # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"
+# Only show jobs paying at least this much.
+salary = ""                        # "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+" or ("" to not select)
 
+# Only apply to jobs that use LinkedIn's Easy Apply. Recommended, since the tool cannot fill in an employer's own application site.
 easy_apply_only = True             # True or False, Note: True or False are case-sensitive
 
+# What experience levels are you looking for?
 experience_level = []              # (multiple select) "Internship", "Entry level", "Associate", "Mid-Senior level", "Director", "Executive"
+# What kind of employment are you looking for?
 job_type = []                      # (multiple select) "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship", "Other"
+# Where do you want to work from?
 on_site = []                       # (multiple select) "On-site", "Remote", "Hybrid"
 
+# Only apply at these companies. Names must match LinkedIn exactly, capitals included.
 companies = []                     # (dynamic multiple select) make sure the name you type in list exactly matches with the company name you're looking for, including capitals. 
                                    # Eg: "7-eleven", "Google","X, the moonshot factory","YouTube","CapitalG","Adometry (acquired by Google)","Meta","Apple","Byte Dance","Netflix", "Snowflake","Mineral.ai","Microsoft","JP Morgan","Barclays","Visa","American Express", "Snap Inc", "JPMorgan Chase & Co.", "Tata Consultancy Services", "Recruiting from Scratch", "Epic", and so on...
+# Only apply to jobs in these locations, as LinkedIn spells them.
 location = []                      # (dynamic multiple select)
+# Only apply to jobs in these industries.
 industry = []                      # (dynamic multiple select)
+# Only apply to jobs in these job functions.
 job_function = []                  # (dynamic multiple select)
+# Only apply to jobs whose title LinkedIn groups under these.
 job_titles = []                    # (dynamic multiple select)
+# Only apply to jobs offering these benefits.
 benefits = []                      # (dynamic multiple select)
+# Only apply to jobs with these commitments, e.g. career growth or work-life balance.
 commitments = []                   # (dynamic multiple select)
 
+# Only apply to jobs with fewer than 10 applicants so far.
 under_10_applicants = False        # True or False, Note: True or False are case-sensitive
+# Only apply where you already have a connection.
 in_your_network = False            # True or False, Note: True or False are case-sensitive
+# Only apply to employers who identify as fair-chance employers.
 fair_chance_employer = False       # True or False, Note: True or False are case-sensitive
 
 
@@ -91,7 +108,6 @@ about_company_good_words = []      # (dynamic multiple search) or leave empty as
 # Avoid applying to these companies if they have these bad words in their 'Job Description' section...  (In development)
 bad_words = ["US Citizen","USA Citizen","No C2C", "No Corp2Corp", ".NET", "Embedded Programming", "PHP", "Ruby", "CNC"]                     # (dynamic multiple search) or leave empty as []. Case Insensitive. Ex: ["word_1", "phrase 1", "word word", "polygraph", "US Citizenship", "Security Clearance"]
 
-# Do you have an active Security Clearance? (True for Yes and False for No)
 # Skip jobs whose description says visa sponsorship is NOT available?
 # ONLY does anything when config/questions.py has require_visa = "Yes". If you don't need
 # sponsorship this setting is completely inert - no cost, no change in behaviour.
@@ -118,6 +134,8 @@ sponsorship_unavailable_phrases = ["will not sponsor", "do not sponsor", "does n
 # spent on a silent posting is a slot denied to one that says "we sponsor". If your runs
 # never hit the cap, leave this off - every skip is then pure loss.
 skip_jobs_without_sponsorship = False   # True or False, Note: True or False are case-sensitive
+
+# Do you have an active Security Clearance? (True for Yes and False for No)
 security_clearance = False         # True or False, Note: True or False are case-sensitive
 
 # Do you have a Masters degree? (True for Yes and False for No). If True, the tool will apply to jobs containing the word 'master' in their job description and if it's experience required <= current_experience + 2 and current_experience is not set as -1. 

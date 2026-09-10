@@ -37,16 +37,15 @@ linkedIn = "https://www.linkedin.com/in/saivigneshgolla/"       # "https://www.l
 # This is NOT `require_visa`, which asks whether you need sponsorship. Someone on a valid work visa answers "Yes" to both.
 legally_authorized = "Yes"         # "Yes" or "No"
 
-# What is the status of your citizenship? # If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
-# Valid options are: "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident" or "Other"
-us_citizenship = "U.S. Citizen/Permanent Resident"
+# What is the status of your citizenship? Some companies make this one compulsory.
+us_citizenship = "U.S. Citizen/Permanent Resident"      # "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident", "Other" or ("" to not select)
 
 # Are you comfortable commuting to this job's location?
 comfortable_commuting = "Yes"      # "Yes" or "No"
 
 
 
-## SOME ANNOYING QUESTIONS BY COMPANIES 🫠 ##
+# >>>>>>>>>>> Salary, notice period and other common questions 🫠 <<<<<<<<<<<
 
 # What to enter in your desired salary question (American and European), What is your expected CTC (South Asian and others)?, only enter in numbers as some companies only allow numbers,
 desired_salary = 1200000          # 80000, 90000, 100000 or 120000 and so on... Do NOT use quotes
@@ -89,7 +88,7 @@ then it will divide by 30 or 7 and answer respectively. Examples:
 '''
 
 # Your LinkedIn headline in quotes Eg: "Software Engineer @ Google, Masters in Computer Science", "Recent Grad Student @ MIT, Computer Science"
-linkedin_headline = "Full Stack Developer with Masters in Computer Science and 4+ years of experience" # "Headline" or "" to leave this question unanswered
+linkedin_headline = "Full Stack Developer with Masters in Computer Science and 4+ years of experience" # Enter your headline, or leave it empty as "" to skip the question
 
 # Your summary in quotes, use \n to add line breaks if using single quotes "Summary".You can skip \n if using triple quotes """Summary"""
 linkedin_summary = """
@@ -116,17 +115,16 @@ Note: If left empty as "", the tool will not answer the question. However, note 
 ''' 
 
 # Name of your most recent employer
-recent_employer = "Not Applicable" # "", "Lala Company", "Google", "Snowflake", "Databricks"
+recent_employer = "Not Applicable" # Enter the company name. Eg: "Google", "Snowflake", "Not Applicable"
 
 # Example question: "On a scale of 1-10 how much experience do you have building web or mobile applications? 1 being very little or only in school, 10 being that you have built and launched applications to real users"
-confidence_level = "8"             # Any number between "1" to "10" including 1 and 10, put it in quotes ""
+confidence_level = "8"             # A number from 1 to 10, in quotes. Eg: "8"
 ##
 
 
 
 # >>>>>>>>>>> RELATED SETTINGS <<<<<<<<<<<
 
-## Allow Manual Inputs
 # Should the tool pause before every submit application during easy apply to let you check the information?
 pause_before_submit = True         # True or False, Note: True or False are case-sensitive
 '''

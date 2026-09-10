@@ -716,6 +716,17 @@ def _ask_model(*args):
     return local._chat(*args) if use_AI else None
 
 
+def real_options(option_texts: list[str] | None) -> list[str]:
+    '''
+    The options minus LinkedIn's "Select an option" placeholder, which is not an answer.
+
+    One helper because the answer file is keyed on this list: the reader and the recorder
+    have to agree on it exactly, or a question is recorded under one key and looked up
+    under another and the user's answer is never found.
+    '''
+    return [text for text in (option_texts or []) if text != "Select an option"]
+
+
 def ai_option(question: str, option_texts: list[str]) -> int | None:
     '''
     Index of the option to pick, or None to leave the control untouched.
@@ -724,7 +735,11 @@ def ai_option(question: str, option_texts: list[str]) -> int | None:
     hand-typed answer that matches no real option is dropped exactly like an invented
     one - the answer file is an input to validate, not a store to trust.
     '''
-    return local.answer_select(question, option_texts, match_answer_to_option, FACTS, _ask_model)
+    # The placeholder is hidden from the model and the choice mapped back onto the real
+    # index: a picked placeholder reads as answered while the form stays blocked.
+    real = real_options(option_texts)
+    picked = local.answer_select(question, real, match_answer_to_option, FACTS, _ask_model)
+    return option_texts.index(real[picked]) if picked is not None else None
 
 
 def remember_unanswered(question: str, kind: str, options: list[str] | None = None) -> None:
@@ -735,7 +750,7 @@ def remember_unanswered(question: str, kind: str, options: list[str] | None = No
     on every future run, forever - the summary at the end of a run scrolled past and was
     gone. Answer it once in the file and it is answered from then on.
     '''
-    if cache.record(question, kind, options):
+    if cache.record(question, kind, real_options(options)):
         print_lg(f'Recorded "{question}" in {cache.PATH} - fill in its "answer" there and '
                  'the bot will use it on the next run.')
 

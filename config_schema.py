@@ -25,13 +25,6 @@ no home in a config file: which tab a setting belongs to, whether it hides under
 
 The panel NEVER edits config/*.py. It reads and writes only `user_config.json`,
 which those modules load over their defaults (see config/_overrides.py).
-
-Each derived field is a dict:
-    {"section", "config_module", "key", "label", "type", "help",
-     "options"?, "step"?, "advanced"?, "ai"?, "models_by_provider"?}
-
-Field types:
-    text / password / textarea / number / bool / select / list
 '''
 
 import ast
@@ -142,7 +135,13 @@ def _note_below(body, position, assign):
 
 
 def _options(trailing):
-    '''Legal values from a trailing comment like `# "Yes" or "No"`, blank first.'''
+    '''Legal values from a trailing comment like `# "Yes" or "No"`, blank first.
+
+    ponytail: two quoted values means a vocabulary unless the comment says "Eg:". A
+    comment that lists examples without saying so would wrongly become a dropdown;
+    tests/test_config_overrides.py pins the awkward ones. Read the comment shape from
+    a marker like `(multiple select)` if writing `Eg:` ever stops being the habit.
+    '''
     if _EXAMPLE.search(trailing):
         return []
     found = _QUOTED.findall(trailing)

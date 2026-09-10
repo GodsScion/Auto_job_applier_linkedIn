@@ -28,6 +28,10 @@ import urllib.error
 
 import pytest
 
+# pytest.ini puts the project root on the path; the __main__ replay runner at the
+# bottom is run directly, so it has to put it there itself.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from modules.ai import cache, fit, local
 
 

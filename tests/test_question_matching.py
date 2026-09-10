@@ -42,6 +42,7 @@ def bot():
 
 
 STATE = "Teststate"
+CITY = "Testville"   # never the author's real city: this file is tracked in a public repo
 CITIZENSHIP = "Non-citizen allowed to work for any employer"
 CITIZENSHIP_OPTIONS = ["Select an option", "U.S. Citizen/Permanent Resident",
                        "Non-citizen allowed to work for any employer", CITIZENSHIP,
@@ -649,7 +650,7 @@ def test_an_unrecognised_dropdown_question_is_left_unanswered(bot, monkeypatch):
 def yes_no_text_question(bot, monkeypatch, question):
     '''A text question, with the typeahead follow-up stubbed so a wrong answer to a
     Yes/No question fails on the assertion rather than on `actions` being None.'''
-    monkeypatch.setattr(bot, "current_city", "Fremont")
+    monkeypatch.setattr(bot, "current_city", "Testville")
     monkeypatch.setattr(bot, "sleep", lambda *a: None)
     monkeypatch.setattr(bot, "actions", FakeActions())
     return text_question(bot, monkeypatch, question)
@@ -665,7 +666,7 @@ def test_a_yes_no_text_question_is_never_answered_with_the_city(bot, monkeypatch
 
     bot.answer_questions(modal, set(), "Remote")
 
-    assert field.value != "Fremont", f'typed the city into "{question}"'
+    assert field.value != "Testville", f'typed the city into "{question}"'
     assert field.value == "", f'answered "{field.value}"'
     assert bot.unanswered_questions, "and it has to be reported so the job is skipped"
     assert question in next(iter(bot.unanswered_questions))
@@ -720,7 +721,7 @@ def test_a_pre_existing_textarea_answer_is_never_wiped(bot, monkeypatch):
 @pytest.mark.parametrize("configured", ["Yes", "No"])
 def test_the_commuting_question_is_answered_from_config_not_the_city(bot, monkeypatch, configured):
     '''Verbatim from a live form, and the reason `comfortable_commuting` exists: it
-    carries the whole word "location", so it was answered "Fremont".'''
+    carries the whole word "location", so it was answered "Testville".'''
     monkeypatch.setattr(bot, "comfortable_commuting", configured)
     question = "Are you comfortable commuting to this job's location?"
     modal, field = yes_no_text_question(bot, monkeypatch, question)
@@ -732,12 +733,12 @@ def test_the_commuting_question_is_answered_from_config_not_the_city(bot, monkey
 
 
 @pytest.mark.parametrize("options", [["Select an option", "Yes", "No"],
-                                     ["Select an option", "Yes", "No", "Fremont"]])
+                                     ["Select an option", "Yes", "No", "Testville"]])
 def test_the_commuting_dropdown_is_answered_not_left_to_luck(bot, monkeypatch, options):
     '''As a <select> it only survived because a city string cannot match a Yes/No option.
     With the city ON OFFER it would have been picked.'''
     monkeypatch.setattr(bot, "comfortable_commuting", "Yes")
-    monkeypatch.setattr(bot, "current_city", "Fremont")
+    monkeypatch.setattr(bot, "current_city", "Testville")
     modal, select = dropdown(bot, monkeypatch,
                              "Are you comfortable commuting to this job's location?", options)
 
@@ -759,11 +760,11 @@ def test_the_commuting_radio_is_answered(bot, monkeypatch):
 
 def test_a_real_location_field_still_gets_the_city(bot, monkeypatch):
     '''Guard against over-correcting: only a Yes/No QUESTION is skipped, not a field.'''
-    monkeypatch.setattr(bot, "current_city", "Fremont")
+    monkeypatch.setattr(bot, "current_city", "Testville")
     monkeypatch.setattr(bot, "sleep", lambda *a: None)
     monkeypatch.setattr(bot, "actions", FakeActions())
     modal, field = text_question(bot, monkeypatch, "City")
 
     bot.answer_questions(modal, set(), "Remote")
 
-    assert field.value == "Fremont"
+    assert field.value == "Testville"

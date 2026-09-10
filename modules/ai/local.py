@@ -69,6 +69,8 @@ def _cfg_get(name: str, default: str) -> str:
 # 2.85 GB model on the first request.
 TIERS = {1: (8, 30), 2: (128, 60), 3: (512, 120)}
 
+_down = False       # set once the server proves unreachable; see `_chat`
+
 
 def _chat(system: str, user: str, schema: dict, tier: int):
     '''
@@ -79,6 +81,12 @@ def _chat(system: str, user: str, schema: dict, tier: int):
     profile block, so LM Studio's prompt prefix cache skips re-prefilling both
     across calls. Never interpolate variable text into `system`.
     '''
+    global _down
+    # Nothing is listening and nothing in a run will change that, so the first refusal
+    # ends it. Without this every question of every job pays another connect attempt, and
+    # a DNS miss or a firewalled host pays it in seconds rather than microseconds.
+    if _down:
+        return None
     max_tokens, timeout = TIERS[tier]
     body = {
         "model": _cfg_get("local_llm_model", "qwen/qwen3.5-4b"),
@@ -100,6 +108,10 @@ def _chat(system: str, user: str, schema: dict, tier: int):
         return parsed if isinstance(parsed, dict) else None
     except Exception as e:
         # Down, hung, or talking nonsense - all the same to the caller: no answer.
+        # A connect-level OSError (refused, unreachable, DNS) means there is no server;
+        # a TimeoutError does NOT - LM Studio just-in-time loads the model, so the first
+        # call against a working server can legitimately run long.
+        _down = isinstance(getattr(e, "reason", None), OSError) and not isinstance(e.reason, TimeoutError)
         logger.warning("Local AI tier %s call failed, falling through to no answer. %s", tier, e)
         return None
 

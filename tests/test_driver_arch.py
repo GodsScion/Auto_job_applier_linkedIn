@@ -12,6 +12,7 @@ No browser, no network: everything the shim touches outside the process is stubb
 License: MIT  (https://opensource.org/license/mit)
 '''
 
+import os
 import subprocess
 import sys
 from unittest import mock
@@ -19,16 +20,11 @@ from unittest import mock
 import pytest
 
 import undetected_chromedriver as uc
-import modules.helpers as helpers
 from selenium.webdriver.common.selenium_manager import SeleniumManager
 
+import modules.open_chrome as oc          # importing this must NOT open a browser
 
-# ---------------------------------------------------------------------------
-# modules/open_chrome.py opens a real browser at import time. Stub the four things
-# that reach outside the process, import it once, then every test works on the real
-# module. binary_paths raising also makes the import exercise the fallback path.
-# ---------------------------------------------------------------------------
-_chrome_kwargs = []
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class _FakeChrome:
@@ -39,17 +35,35 @@ class _FakeChrome:
         pass
 
 
-with mock.patch.object(uc, "Chrome", _FakeChrome), \
-     mock.patch.object(helpers, "make_directories", lambda paths: None), \
-     mock.patch.object(helpers, "get_default_temp_profile", lambda: "/tmp/not-a-real-profile"), \
-     mock.patch.object(SeleniumManager, "binary_paths", side_effect=OSError("no selenium manager")):
-    import modules.open_chrome as oc
+_chrome_kwargs = []
 
 
-def test_import_time_launch_fell_back_to_ucs_own_download():
+def test_importing_the_module_starts_nothing(tmp_path):
+    '''The launch used to run at module scope, so `import runAiBot` opened Chrome.
+    A real check, not a mock: import it in a clean interpreter in an empty folder and
+    see that nothing createChromeSession() makes ever appears.'''
+    probe = ("import modules.open_chrome as oc\n"
+             "assert (oc.options, oc.driver, oc.actions, oc.wait) == (None, None, None, None)\n")
+    done = subprocess.run([sys.executable, "-c", probe], cwd=tmp_path, capture_output=True,
+                          text=True, timeout=300, env=dict(os.environ, PYTHONPATH=ROOT))
+    assert done.returncode == 0, done.stderr
+    # Only createChromeSession() makes these, and a driver download would land under ~/.
+    for evidence_of_a_launch in ("all excels", "all resumes", "logs/screenshots"):
+        assert not (tmp_path / evidence_of_a_launch).exists(), evidence_of_a_launch
+
+
+def test_launch_falls_back_to_ucs_own_download(monkeypatch):
     '''With Selenium Manager broken, the launch must still happen the old way.'''
-    assert _chrome_kwargs, "modules.open_chrome never constructed a driver"
+    _chrome_kwargs.clear()
+    monkeypatch.setattr(oc.uc, "Chrome", _FakeChrome)
+    monkeypatch.setattr(oc, "make_directories", lambda paths: None)
+    monkeypatch.setattr(oc, "get_default_temp_profile", lambda: "/tmp/not-a-real-profile")
+    monkeypatch.setattr(SeleniumManager, "binary_paths", mock.Mock(side_effect=OSError("no selenium manager")))
+
+    assert oc.start_browser()[1] is oc.driver          # returns what it publishes
+    assert _chrome_kwargs, "start_browser() never constructed a driver"
     assert "driver_executable_path" not in _chrome_kwargs[0]
+    monkeypatch.setattr(oc, "driver", None)            # leave the module as we found it
 
 
 def test_selenium_manager_failure_returns_none(monkeypatch):

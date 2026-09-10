@@ -10,8 +10,6 @@ License:    MIT License
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 Support me: https://github.com/sponsors/GodsScion
-
-version:    26.01.20.5.08
 '''
 
 from config.settings import click_gap, smooth_scroll
@@ -91,21 +89,6 @@ def wait_xp_click(driver: WebDriver | WebElement, xpath: str, time: float=5.0, s
         logger.warning('Click Failed! Nothing visible matching "%s" (%s)', xpath, type(e).__name__)
         return False
 
-def multi_sel(driver: WebDriver, texts: list, time: float=5.0) -> None:
-    '''
-    - For each text in the `texts`, tries to find and click `span` element with that text.
-    - Will spend a max of `time` seconds in searching for each element.
-    '''
-    for text in texts:
-        wait_span_click(driver, text, time, False)
-        try:
-            button = wait_for_displayed(driver, text_xpath("span", text), time)
-            scroll_to_view(driver, button)
-            button.click()
-            buffer(click_gap)
-        except Exception as e:
-            logger.warning("Click Failed! Didn't find '%s' (%s)", text, type(e).__name__)
-
 def multi_sel_noWait(driver: WebDriver, texts: list, actions: ActionChains = None) -> None:
     '''
     - For each text in the `texts`, tries to find and click `span` element with that class.
@@ -158,16 +141,6 @@ def scroll_to_view(driver: WebDriver, element: WebElement, top: bool = False, sm
         return driver.execute_script('arguments[0].scrollIntoView();', element)
     behavior = "smooth" if smooth_scroll else "instant"
     return driver.execute_script('arguments[0].scrollIntoView({block: "center", behavior: "'+behavior+'" });', element)
-
-# Enter input text functions
-def text_input_by_ID(driver: WebDriver, id: str, value: str, time: float=5.0) -> None | Exception:
-    '''
-    Enters `value` into the input field with the given `id` if found, else throws NotFoundException.
-    - `time` is the max time to wait for the element to be found.
-    '''
-    username_field = WebDriverWait(driver, time).until(EC.presence_of_element_located((By.ID, id)))
-    username_field.send_keys(Keys.CONTROL + "a")
-    human_type(username_field, value)
 
 def try_xp(driver: WebDriver, xpath: str, click: bool=True) -> WebElement | bool:
     try:

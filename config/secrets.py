@@ -10,8 +10,6 @@ License:    MIT License
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 Support me: https://github.com/sponsors/GodsScion
-
-version:    24.12.3.10.30
 '''
 
 
@@ -75,7 +73,7 @@ THANK YOU for using my tool 😊! Wishing you the best in your job hunt 🙌🏻
 
 Sharing is caring! If you found this tool helpful, please share it with your peers 🥺. Your support keeps this project alive.
 
-Support my work on <PATREON_LINK>. Together, we can help more job seekers.
+Support my work at https://github.com/sponsors/GodsScion. Together, we can help more job seekers.
 
 As an independent developer, I pour my heart and soul into creating tools like this, driven by the genuine desire to make a positive impact.
 

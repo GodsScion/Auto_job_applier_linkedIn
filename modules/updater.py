@@ -4,8 +4,6 @@ License:    MIT License
             https://opensource.org/license/mit
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
-version:    26.01.20.5.08
-
 Update check for the control panel: compare the local VERSION file with the one
 on the default branch, and offer a one-button `git pull` to fast-forward.
 

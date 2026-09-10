@@ -20,7 +20,6 @@ SECURITY: this app handles LinkedIn credentials, so it binds to 127.0.0.1 only
 '''
 
 from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
 import csv
 from datetime import datetime
 import os
@@ -37,7 +36,6 @@ from config import _overrides
 from modules import updater
 
 app = Flask(__name__)
-CORS(app)
 
 # Project root is the folder this file lives in.
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -46,6 +44,32 @@ LOG_PATH = os.path.join(ROOT, ".bot_run.log")
 PID_PATH = os.path.join(ROOT, ".bot_run.pid")
 
 PATH = 'all excels/'
+
+# What /api/config sends instead of a stored password or API key. A bare CORS(app) used
+# to put a wildcard Access-Control-Allow-Origin on this route, so any page open in the
+# user's browser could read the LinkedIn password off 127.0.0.1 in cleartext. POST treats
+# this exact string as "unchanged", so saving the form can never blank a secret the user
+# was never shown.
+SECRET_PLACEHOLDER = "********"
+
+
+def _redacted(config: dict) -> dict:
+    '''Blank out every stored secret before a config dict leaves the process. Mutates
+    and returns `config`; the caller owns a freshly built dict in both call sites.'''
+    for field in config_schema.iter_fields():
+        section = config.get(field["config_module"])
+        if field["type"] == "password" and isinstance(section, dict) and section.get(field["key"]):
+            section[field["key"]] = SECRET_PLACEHOLDER
+    return config
+
+
+def _write_user_config(data: dict) -> None:
+    '''Save user_config.json readable by its owner only. It holds the LinkedIn password,
+    the AI key, the legal name, phone, street address and EEO answers, and a fresh
+    json.dump lands 0644 - world-readable on any shared or multi-user machine.'''
+    with open(USER_CONFIG_PATH, "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=2, ensure_ascii=False)
+    os.chmod(USER_CONFIG_PATH, 0o600)
 
 
 # ===========================================================================
@@ -339,9 +363,9 @@ def api_get_config():
     '''
     Returns the effective config: pristine defaults overlaid with the current
     user_config.json, grouped by config module (secrets, personals, questions,
-    search, settings).
+    search, settings), with every stored secret replaced by SECRET_PLACEHOLDER.
     '''
-    return jsonify(_effective_config())
+    return jsonify(_redacted(_effective_config()))
 
 
 @app.route('/api/config', methods=['POST'])
@@ -370,6 +394,8 @@ def api_save_config():
             if field is None:
                 unknown.append(f"{section}.{key}")
                 continue
+            if field["type"] == "password" and value == SECRET_PLACEHOLDER:
+                continue                    # what GET redacted, sent back untouched
             try:
                 coerced.setdefault(section, {})[key] = _coerce(field["type"], value)
             except ValueError as err:
@@ -388,12 +414,11 @@ def api_save_config():
         current[section] = target
 
     try:
-        with open(USER_CONFIG_PATH, "w", encoding="utf-8") as file:
-            json.dump(current, file, indent=2, ensure_ascii=False)
+        _write_user_config(current)
     except OSError as err:
         return jsonify({"error": f"Could not save settings: {err}"}), 500
 
-    return jsonify(current)
+    return jsonify(_redacted(current))
 
 
 @app.route('/api/run', methods=['POST'])
@@ -500,8 +525,7 @@ def _freeze_config() -> None:
             current[section] = {}
         for key, value in values.items():
             current[section].setdefault(key, value)
-    with open(USER_CONFIG_PATH, "w", encoding="utf-8") as file:
-        json.dump(current, file, indent=2, ensure_ascii=False)
+    _write_user_config(current)
 
 
 @app.route('/api/update-check', methods=['GET'])

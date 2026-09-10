@@ -49,6 +49,7 @@ These are set by editing the `.py` file, and have no control-panel field:
 |---|---|---|
 | `stop_before_submit` | `config/settings.py` | [Settings](config-settings.md#dry-runs-stop_before_submit) |
 | `legally_authorized` | `config/questions.py` | [Questions](config-questions.md#work-authorization) |
+| `comfortable_commuting` | `config/questions.py` | [Questions](config-questions.md#commuting) |
 
 ---
 

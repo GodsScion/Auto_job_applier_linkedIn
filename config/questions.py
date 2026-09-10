@@ -43,6 +43,9 @@ legally_authorized = "Yes"         # "Yes" or "No"
 # Valid options are: "U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident" or "Other"
 us_citizenship = "U.S. Citizen/Permanent Resident"
 
+# Are you comfortable commuting to this job's location?
+comfortable_commuting = "Yes"      # "Yes" or "No"
+
 
 
 ## SOME ANNOYING QUESTIONS BY COMPANIES 🫠 ##

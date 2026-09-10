@@ -117,6 +117,29 @@ def test_label_has_matches_whole_words_only(bot):
     assert not bot.label_has("sexual orientation", 'sex')
 
 
+@pytest.mark.parametrize("label, expected", [
+    # Yes/No questions. A field-shaped rung must not claim any of these.
+    ("Are you comfortable commuting to this job's location?", True),
+    ("Do you have an active security clearance?", True),
+    ("Is your current address in the United States?", True),
+    ("Have you worked at Acme before?", True),
+    ("Would you consider a hybrid schedule?", True),
+    # NOT Yes/No questions - each one names a field and must keep its rung.
+    ("What city do you live in?", False),
+    ("Current location", False),
+    ("Location (City, State)", False),
+    ("Where are you located?", False),
+    ("How many years of experience do you have?", False),
+    ("Address", False),
+    ("Please describe your ideal role.", False),
+    ("Are you comfortable with a long commute", False),   # no "?" - not asked as a question
+    ("Isabella, confirm your street", False),             # "is" is not the word "Is"
+])
+def test_asks_yes_no_needs_both_halves(bot, label, expected):
+    assert bot.asks_yes_no(label) is expected
+    assert bot.asks_yes_no(label.lower()) is expected     # the call sites lower-case first
+
+
 def test_work_authorization_beats_location(bot):
     '''The live failure: "...United States?" was routed to the location branch.'''
     assert bot.work_authorization_answer(
@@ -688,3 +711,57 @@ def test_a_pre_existing_textarea_answer_is_never_wiped(bot, monkeypatch):
     assert field.value == written, "the user's own answer was overwritten"
     assert not field.cleared
     assert not bot.unanswered_questions, "it is answered - it must not block the job"
+
+
+
+
+@pytest.mark.parametrize("configured", ["Yes", "No"])
+def test_the_commuting_question_is_answered_from_config_not_the_city(bot, monkeypatch, configured):
+    '''Verbatim from a live form, and the reason `comfortable_commuting` exists: it
+    carries the whole word "location", so it was answered "Fremont".'''
+    monkeypatch.setattr(bot, "comfortable_commuting", configured)
+    question = "Are you comfortable commuting to this job's location?"
+    modal, field = yes_no_text_question(bot, monkeypatch, question)
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert field.value == configured, f'answered "{field.value}" to "{question}"'
+    assert not bot.unanswered_questions
+
+
+@pytest.mark.parametrize("options", [["Select an option", "Yes", "No"],
+                                     ["Select an option", "Yes", "No", "Fremont"]])
+def test_the_commuting_dropdown_is_answered_not_left_to_luck(bot, monkeypatch, options):
+    '''As a <select> it only survived because a city string cannot match a Yes/No option.
+    With the city ON OFFER it would have been picked.'''
+    monkeypatch.setattr(bot, "comfortable_commuting", "Yes")
+    monkeypatch.setattr(bot, "current_city", "Fremont")
+    modal, select = dropdown(bot, monkeypatch,
+                             "Are you comfortable commuting to this job's location?", options)
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert select.picked == "Yes", f'picked "{select.picked}"'
+
+
+def test_the_commuting_radio_is_answered(bot, monkeypatch):
+    monkeypatch.setattr(bot, "comfortable_commuting", "Yes")
+    modal, mouse, _ = radio_group(bot, monkeypatch,
+                                  "Are you comfortable commuting to this job's location?",
+                                  ["Yes", "No"])
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert mouse.clicked.text == "Yes"
+
+
+def test_a_real_location_field_still_gets_the_city(bot, monkeypatch):
+    '''Guard against over-correcting: only a Yes/No QUESTION is skipped, not a field.'''
+    monkeypatch.setattr(bot, "current_city", "Fremont")
+    monkeypatch.setattr(bot, "sleep", lambda *a: None)
+    monkeypatch.setattr(bot, "actions", FakeActions())
+    modal, field = text_question(bot, monkeypatch, "City")
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert field.value == "Fremont"

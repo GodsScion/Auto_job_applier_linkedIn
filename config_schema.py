@@ -236,6 +236,12 @@ SCHEMA = [
                "Exceptions to the list above: apply anyway if the 'About company' section contains one of these words, comma-separated. Example: Robert Half."),
             _f("Filters", "search", "bad_words", "Skip jobs with these words", "list",
                "Skip a job if any of these words or phrases appear in its description, comma-separated and case-insensitive. Example: US Citizen, No C2C, PHP."),
+            _f("Filters", "search", "skip_non_sponsoring_jobs", "Skip jobs that say they won't sponsor a visa", "bool",
+               "Only does anything when 'Do you need visa sponsorship?' is set to Yes. Reads the job description: if it says sponsorship is not available, the job is skipped. A description that says nothing about sponsorship is still applied to."),
+            _f("Filters", "search", "sponsorship_offered_phrases", "Phrases that mean they DO sponsor", "list",
+               "Checked first, and an offer always wins - real postings say both. Example: we will sponsor, H-1B transfer, cap-exempt."),
+            _f("Filters", "search", "sponsorship_unavailable_phrases", "Phrases that mean they do NOT sponsor", "list",
+               "Matched as whole phrases, never substrings, so 'sponsorship of our annual conference' is safe. Example: unable to sponsor, without sponsorship, not eligible for visa sponsorship."),
         ],
     },
     {

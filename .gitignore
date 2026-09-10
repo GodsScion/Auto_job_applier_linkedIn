@@ -22,3 +22,7 @@ apikeys.py
 user_config.json
 .bot_run.log
 .bot_run.pid
+
+# Cached AI answers to application questions — your own answers, never commit
+.ai_answer_cache.json
+.ai_answer_cache.json.tmp

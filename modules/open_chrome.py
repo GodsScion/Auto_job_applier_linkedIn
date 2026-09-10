@@ -10,8 +10,6 @@ License:    MIT License
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 Support me: https://github.com/sponsors/GodsScion
-
-version:    26.01.20.5.08
 '''
 
 from modules.helpers import get_default_temp_profile, make_directories

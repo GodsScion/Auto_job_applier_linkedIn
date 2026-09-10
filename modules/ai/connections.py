@@ -167,7 +167,7 @@ class ExtractedSkills(BaseModel):
     nice_to_have: list[str] = Field(default_factory=list, description="Skills listed as preferred or beneficial but not mandatory")
 
 
-def extract_skills(client: Optional[AIClient], job_description: str, stream: bool = False) -> dict:
+def extract_skills(client: Optional[AIClient], job_description: str) -> dict:
     '''
     Extract and classify skills from a job description.
     Returns a dict with the five skill buckets, or an ``{"error": ...}`` dict on failure.
@@ -197,7 +197,6 @@ class _AnswerState(TypedDict, total=False):
     options: Optional[list]
     question_type: str
     job_description: Optional[str]
-    about_company: Optional[str]
     user_information: Optional[str]
     prompt: str
     raw: str
@@ -208,20 +207,19 @@ def _build_answer_graph(model):
     '''
     Compile a small LangGraph pipeline for answering a form question:
 
-        build_prompt -> generate -> (route by question type) -> format_text | select_option
+        build_prompt -> generate -> format_text
 
-    Free-text questions are returned as-is; select questions are snapped to one of
-    the allowed options. The graph gives us a clean seam to extend later (validation,
-    retries, resume/cover-letter nodes).
+    Free text only. There was a select_option node that snapped the model's reply to an
+    allowed option and fell back to `return {"answer": raw}` - an unvalidated model string
+    straight into a form field, i.e. a guess. Nothing ever reached it (runAiBot only ever
+    passes question_type "text"/"textarea"; dropdowns and radios go through
+    match_answer_to_option), so it is gone rather than left armed.
     '''
     def build_prompt(state: _AnswerState) -> dict:
         prompt = ai_answer_prompt.format(state.get("user_information") or "N/A", state.get("question") or "")
         jd = state.get("job_description")
         if jd and jd != "Unknown":
             prompt += f"\n\nJob description:\n{jd}"
-        about = state.get("about_company")
-        if about and about != "Unknown":
-            prompt += f"\n\nAbout the company:\n{about}"
         options = state.get("options")
         if options:
             prompt += "\n\nAnswer with exactly one of these options:\n" + "\n".join(f"- {o}" for o in options)
@@ -234,34 +232,14 @@ def _build_answer_graph(model):
     def format_text(state: _AnswerState) -> dict:
         return {"answer": (state.get("raw") or "").strip()}
 
-    def select_option(state: _AnswerState) -> dict:
-        raw = (state.get("raw") or "").strip()
-        options = state.get("options") or []
-        for opt in options:                       # exact
-            if raw == opt:
-                return {"answer": opt}
-        low = raw.lower()
-        for opt in options:                       # case-insensitive
-            if low == opt.lower():
-                return {"answer": opt}
-        for opt in options:                       # substring (either direction)
-            if opt.lower() in low or low in opt.lower():
-                return {"answer": opt}
-        return {"answer": raw}
-
-    def route(state: _AnswerState) -> str:
-        return "select" if state.get("question_type") in ("single_select", "multiple_select") else "text"
-
     graph = StateGraph(_AnswerState)
     graph.add_node("build_prompt", build_prompt)
     graph.add_node("generate", generate)
     graph.add_node("format_text", format_text)
-    graph.add_node("select_option", select_option)
     graph.add_edge(START, "build_prompt")
     graph.add_edge("build_prompt", "generate")
-    graph.add_conditional_edges("generate", route, {"text": "format_text", "select": "select_option"})
+    graph.add_edge("generate", "format_text")
     graph.add_edge("format_text", END)
-    graph.add_edge("select_option", END)
     return graph.compile()
 
 
@@ -271,9 +249,7 @@ def answer_question(
     options: Optional[list] = None,
     question_type: str = "text",
     job_description: Optional[str] = None,
-    about_company: Optional[str] = None,
     user_information_all: Optional[str] = None,
-    stream: bool = False,
 ) -> str:
     '''
     Generate an answer to a single application-form question.
@@ -287,7 +263,6 @@ def answer_question(
             "options": options,
             "question_type": question_type,
             "job_description": job_description,
-            "about_company": about_company,
             "user_information": user_information_all,
         })
         answer = final.get("answer", "") or ""

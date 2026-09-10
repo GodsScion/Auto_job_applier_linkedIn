@@ -15,7 +15,7 @@ version:    26.01.20.5.08
 '''
 
 from config.settings import click_gap, smooth_scroll
-from modules.helpers import buffer, human_type, print_lg, sleep
+from modules.helpers import buffer, human_type, logger, print_lg, sleep
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -72,7 +72,7 @@ def wait_span_click(driver: WebDriver, text: str, time: float=5.0, click: bool=T
                 buffer(click_gap)
             return button
         except Exception as e:
-            print_lg("Click Failed! Didn't find '"+text+"'", f"({type(e).__name__})")
+            logger.warning("Click Failed! Didn't find '%s' (%s)", text, type(e).__name__)
             return False
 
 def wait_xp_click(driver: WebDriver | WebElement, xpath: str, time: float=5.0, scrollTop: bool=False) -> WebElement | bool:
@@ -88,7 +88,7 @@ def wait_xp_click(driver: WebDriver | WebElement, xpath: str, time: float=5.0, s
         buffer(click_gap)
         return button
     except Exception as e:
-        print_lg(f'Click Failed! Nothing visible matching "{xpath}"', f"({type(e).__name__})")
+        logger.warning('Click Failed! Nothing visible matching "%s" (%s)', xpath, type(e).__name__)
         return False
 
 def multi_sel(driver: WebDriver, texts: list, time: float=5.0) -> None:
@@ -104,7 +104,7 @@ def multi_sel(driver: WebDriver, texts: list, time: float=5.0) -> None:
             button.click()
             buffer(click_gap)
         except Exception as e:
-            print_lg("Click Failed! Didn't find '"+text+"'", f"({type(e).__name__})")
+            logger.warning("Click Failed! Didn't find '%s' (%s)", text, type(e).__name__)
 
 def multi_sel_noWait(driver: WebDriver, texts: list, actions: ActionChains = None) -> None:
     '''
@@ -121,7 +121,7 @@ def multi_sel_noWait(driver: WebDriver, texts: list, actions: ActionChains = Non
             buffer(click_gap)
         except Exception as e:
             if actions: company_search_click(driver,actions,text)
-            else:   print_lg("Click Failed! Didn't find '"+text+"'", f"({type(e).__name__})")
+            else:   logger.warning("Click Failed! Didn't find '%s' (%s)", text, type(e).__name__)
 
 def boolean_button_click(driver: WebDriver, actions: ActionChains, text: str) -> None:
     '''
@@ -135,7 +135,7 @@ def boolean_button_click(driver: WebDriver, actions: ActionChains, text: str) ->
         actions.move_to_element(button).click().perform()
         buffer(click_gap)
     except Exception as e:
-        print_lg("Click Failed! Didn't find '"+text+"'", f"({type(e).__name__})")
+        logger.warning("Click Failed! Didn't find '%s' (%s)", text, type(e).__name__)
 
 # Find functions
 def find_by_class(driver: WebDriver, class_name: str, time: float=5.0) -> WebElement | Exception:
@@ -179,21 +179,21 @@ def try_xp(driver: WebDriver, xpath: str, click: bool=True) -> WebElement | bool
             return driver.find_element(By.XPATH, xpath)
     except NoSuchElementException: return False     # simply not on the page, nothing to report
     except Exception as e:
-        print_lg(f'Failed to {"click" if click else "find"} element with xpath "{xpath}"!', e)
+        logger.warning('Failed to %s element with xpath "%s"! %s', "click" if click else "find", xpath, e)
         return False
 
 def try_linkText(driver: WebDriver, linkText: str) -> WebElement | bool:
     try:    return driver.find_element(By.LINK_TEXT, linkText)
     except NoSuchElementException:  return False
     except Exception as e:
-        print_lg(f'Failed to find link "{linkText}"!', e)
+        logger.warning('Failed to find link "%s"! %s', linkText, e)
         return False
 
 def try_find_by_classes(driver: WebDriver, classes: list[str]) -> WebElement | ValueError:
     for cla in classes:
         try:    return driver.find_element(By.CLASS_NAME, cla)
         except NoSuchElementException: pass
-        except Exception as e:  print_lg(f'Failed to find element with class "{cla}"!', e)
+        except Exception as e:  logger.warning('Failed to find element with class "%s"! %s', cla, e)
     raise ValueError("Failed to find an element with given classes")
 
 def company_search_click(driver: WebDriver, actions: ActionChains, companyName: str) -> None:
@@ -218,4 +218,4 @@ def text_input(actions: ActionChains, textInputEle: WebElement | bool, value: st
         sleep(2)
         actions.send_keys(Keys.ENTER).perform()
     else:
-        print_lg(f'{textFieldName} input was not given!')
+        logger.warning('%s input was not given!', textFieldName)

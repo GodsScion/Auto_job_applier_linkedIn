@@ -77,13 +77,11 @@ def test_non_darwin_never_shells_out_to_codesign(monkeypatch, platform):
     FileNotFoundError("codesign"),                                  # no Xcode command line tools
     subprocess.CalledProcessError(1, "codesign"),                   # signing itself failed
 ])
-def test_codesign_failure_is_logged_not_raised(monkeypatch, boom):
+def test_codesign_failure_is_logged_not_raised(monkeypatch, boom, log_records):
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setattr(oc.subprocess, "run", mock.Mock(side_effect=boom))
-    logged = []
-    monkeypatch.setattr(oc, "print_lg", lambda *m, **k: logged.append(" ".join(str(x) for x in m)))
     oc._adhoc_sign("/some/chromedriver")                            # must not raise
-    assert any("-9" in line for line in logged), logged
+    assert any("-9" in r.getMessage() for r in log_records), log_records
 
 
 def test_patch_happens_before_signing_and_never_on_the_selenium_cache(monkeypatch, tmp_path):

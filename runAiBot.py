@@ -195,13 +195,11 @@ def login_LN() -> None:
         try:
             fill_visible_input(By.CSS_SELECTOR, login_email_css, username)
         except Exception as e:
-            print_lg("Couldn't find username field.")
-            print_lg(e)
+            logger.warning("Couldn't find username field. %s", e)
         try:
             fill_visible_input(By.CSS_SELECTOR, login_password_css, password)
         except Exception as e:
-            print_lg("Couldn't find password field.")
-            print_lg(e)
+            logger.warning("Couldn't find password field. %s", e)
         # Find the login submit button and click it. Only one of the duplicated "Sign in"
         # buttons is on screen, so this has to click the displayed one.
         if not wait_xp_click(driver, sign_in_button_xpath):
@@ -211,16 +209,14 @@ def login_LN() -> None:
             profile_button = find_by_class(driver, "profile__details")
             profile_button.click()
         except Exception as e2:
-            print_lg(e1, e2)
-            print_lg("Couldn't Login!")
+            logger.warning("Couldn't Login! %s %s", e1, e2)
 
     try:
         # Wait until we land on the feed. That URL now carries query params, so match a prefix.
         wait.until(EC.url_contains("linkedin.com/feed"))
         return print_lg("Login successful!")
     except Exception as e:
-        print_lg("Seems like login attempt failed! Possibly due to wrong credentials or already logged in! Try logging in manually!")
-        print_lg(e)
+        logger.warning("Seems like login attempt failed! Possibly due to wrong credentials or already logged in! Try logging in manually! %s", e)
         manual_login_retry(is_logged_in_LN, 2)
 #>
 
@@ -262,7 +258,7 @@ def set_search_location() -> None:
             try_xp(driver, ".//button[@aria-label='Cancel']")
         except Exception as e:
             try_xp(driver, ".//button[@aria-label='Cancel']")
-            print_lg("Failed to update search location, continuing with default location!", e)
+            logger.warning("Failed to update search location, continuing with default location! %s", e)
 
 
 def recommended_filter_wait(gap: int) -> int:
@@ -325,7 +321,7 @@ def apply_filters() -> None:
             pause_after_filters = False
 
     except Exception as e:
-        print_lg("Setting the preferences failed!")
+        logger.warning("Setting the preferences failed!")
         pyautogui.confirm(f"Faced error while applying filters. Please make sure correct filters are selected, click on show results and click on any button of this dialog, I know it sucks. Can't turn off Pause after search when error occurs! ERROR: {e}", ["Doesn't look good, but Continue XD", "Look's good, Continue"])
         # print_lg(e)
 
@@ -341,7 +337,7 @@ def get_page_info() -> tuple[WebElement | None, int | None]:
         # ".//" keeps this inside the pagination element; a leading "//" searches the whole document.
         current_page = int(pagination_element.find_element(By.XPATH, ".//button[contains(@class, 'active')]").text)
     except Exception as e:
-        print_lg("Failed to find Pagination element, hence couldn't scroll till end!")
+        logger.warning("Failed to find Pagination element, hence couldn't scroll till end!")
         pagination_element = None
         current_page = None
         print_lg(e)
@@ -396,7 +392,7 @@ def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_j
     try: 
         if not skip: job_details_button.click()
     except Exception as e:
-        print_lg(f'Failed to click "{title} | {company}" job on details button. Job ID: {job_id}!') 
+        logger.warning('Failed to click "%s | %s" job on details button. Job ID: %s!', title, company, job_id)
         # print_lg(e)
         discard_job()
         job_details_button.click() # To pass the error outside
@@ -642,13 +638,13 @@ def get_job_description(
         if jobDescription == "Unknown":
             # We never read the description, so the bad words, security clearance and
             # experience filters never ran. Skip instead of applying to an unread job.
-            print_lg("Unable to extract job description!", e)
+            logger.warning("Unable to extract job description! %s", e)
             skipReason = "Unable to read the job description"
             skipMessage = f'\nCouldn\'t read the job description, so none of the skip filters could run. Skipping this job!\n{e}\n'
             skip = True
         else:
             experience_required = "Error in extraction"
-            print_lg("Unable to extract years of experience required!", e)
+            logger.warning("Unable to extract years of experience required! %s", e)
     return jobDescription, experience_required, skip, skipReason, skipMessage
         
 
@@ -883,7 +879,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         try:
                             ai_answer = answer_question(aiClient, label_org, question_type="text", job_description=job_description, user_information_all=user_information_all)
                         except Exception as e:
-                            print_lg("Failed to get AI answer!", e)
+                            logger.warning("Failed to get AI answer! %s", e)
                     if ai_answer and isinstance(ai_answer, str) and ai_answer.strip():
                         answer = ai_answer.strip()
                         print_lg(f'AI answered "{label_org}": "{answer}"')
@@ -922,7 +918,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         try:
                             ai_answer = answer_question(aiClient, label_org, question_type="textarea", job_description=job_description, user_information_all=user_information_all)
                         except Exception as e:
-                            print_lg("Failed to get AI answer!", e)
+                            logger.warning("Failed to get AI answer! %s", e)
                     if ai_answer and isinstance(ai_answer, str) and ai_answer.strip():
                         answer = ai_answer.strip()
                         print_lg(f'AI answered "{label_org}": "{answer}"')
@@ -1011,7 +1007,7 @@ def external_apply(pagination_element: WebElement, job_id: str, job_link: str, r
         return False, application_link, tabs_count
     except Exception as e:
         # print_lg(e)
-        print_lg("Failed to apply!")
+        logger.warning("Failed to apply!")
         failed_job(job_id, job_link, resume, date_listed, "Probably didn't find Apply button or unable to switch tabs.", e, application_link, screenshot_name)
         global failed_count
         failed_count += 1
@@ -1050,7 +1046,7 @@ def follow_company(modal: WebDriver = driver) -> None:
         if follow_checkbox_input and follow_checkbox_input.is_selected() != follow_companies:
             try_xp(modal, ".//label[@for='follow-company-checkbox']")
     except Exception as e:
-        print_lg("Failed to update follow companies checkbox!", e)
+        logger.warning("Failed to update follow companies checkbox! %s", e)
     
 
 
@@ -1073,7 +1069,7 @@ def failed_job(job_id: str, job_link: str, resume: str, date_listed, error: str,
             writer.writerow({key: truncate_for_csv(value) for key, value in record.items()})
             file.close()
     except Exception as e:
-        print_lg("Failed to update failed jobs list!", e)
+        logger.error("Failed to update failed jobs list!", exc_info=e)
         pyautogui.alert("Failed to update the excel of failed jobs!\nProbably because of 1 of the following reasons:\n1. The file is currently open or in use by another program\n2. Permission denied to write to the file\n3. Failed to find the file", "Failed Logging")
 
 
@@ -1115,7 +1111,7 @@ def submitted_jobs(job_id: str, title: str, company: str, work_location: str, wo
             writer.writerow({key: truncate_for_csv(value) for key, value in record.items()})
         csv_file.close()
     except Exception as e:
-        print_lg("Failed to update submitted jobs list!", e)
+        logger.error("Failed to update submitted jobs list!", exc_info=e)
         pyautogui.alert("Failed to update the excel of applied jobs!\nProbably because of 1 of the following reasons:\n1. The file is currently open or in use by another program\n2. Permission denied to write to the file\n3. Failed to find the file", "Failed Logging")
 
 
@@ -1143,10 +1139,10 @@ def discard_job() -> None:
     for dismiss in (lambda: try_xp(driver, ".//button[@data-test-modal-close-btn]"),
                     lambda: actions.send_keys(Keys.ESCAPE).perform()):
         try: dismiss()
-        except Exception as e: print_lg("Couldn't dismiss the application modal.", e)
+        except Exception as e: logger.warning("Couldn't dismiss the application modal. %s", e)
         wait_xp_click(driver, discard_button_xpath, 5)
         if not easy_apply_modal_is_open(): return
-    print_lg("Warning: the Easy Apply modal is still open after trying to discard it.")
+    logger.warning("The Easy Apply modal is still open after trying to discard it.")
 
 
 def questions_are_stalled(previous_blocked: set | None) -> bool:
@@ -1234,7 +1230,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                         skip_count += 1
                         continue
                     except Exception as e:
-                        print_lg("Failed to scroll to About Company!")
+                        logger.warning("Failed to scroll to About Company!")
                         # print_lg(e)
 
 
@@ -1276,7 +1272,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                             time_posted_text = time_posted_text.replace("Reposted", "")
                         date_listed = calculate_date_posted(time_posted_text.strip())
                     except Exception as e:
-                        print_lg("Failed to calculate the date posted!",e)
+                        logger.warning("Failed to calculate the date posted! %s", e)
 
 
                     description, experience_required, skip, reason, message = get_job_description()
@@ -1293,7 +1289,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                             skills = extract_skills(aiClient, description)
                             print_lg(f"Extracted skills using {ai_provider} AI")
                         except Exception as e:
-                            print_lg("Failed to extract skills:", e)
+                            logger.warning("Failed to extract skills: %s", e)
                             skills = "Error extracting skills"
 
                     uploaded = False
@@ -1400,7 +1396,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                         date_applied = datetime.now()
                                         wait_span_click(driver, "Done", 2)
                                     else:
-                                        print_lg("Since, Submit Application failed, discarding the job application...")
+                                        logger.warning("Since, Submit Application failed, discarding the job application...")
                                         # if screenshot_name == "Not Available":  screenshot_name = screenshot(driver, job_id, "Failed to click Submit application")
                                         # else:   screenshot_name = [screenshot_name, screenshot(driver, job_id, "Failed to click Submit application")]
                                         if errored == "nose": discard_reason = "Failed to click Submit application 😑"
@@ -1424,7 +1420,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                             continue
 
                         except Exception as e:
-                            print_lg("Failed to Easy apply!")
+                            logger.warning("Failed to Easy apply!")
                             # print_lg(e)
                             critical_error_log("Somewhere in Easy Apply process",e)
                             failed_job(job_id, job_link, resume, date_listed, "Problem in Easy Applying", e, application_link, screenshot_name)
@@ -1462,15 +1458,15 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     break
 
         except (NoSuchWindowException, WebDriverException) as e:
-            print_lg("The browser window was closed or the session became invalid. Stopping.", e)
+            logger.error("The browser window was closed or the session became invalid. Stopping.", exc_info=e)
             raise e  # let the outer handler deal with it
         except Exception as e:
-            print_lg("Could not read the job listings.")
+            logger.error("Could not read the job listings.")
             critical_error_log("In Applier", e)
             try:
                 print_lg(driver.page_source, pretty=True)
             except Exception as dump_error:
-                print_lg(f"Could not capture the page source; the browser may have crashed. {dump_error}")
+                logger.warning("Could not capture the page source; the browser may have crashed. %s", dump_error)
 
         
 def run(total_runs: int) -> int:
@@ -1537,7 +1533,7 @@ def main() -> None:
         
 
     except (NoSuchWindowException, WebDriverException) as e:
-        print_lg("The browser window was closed or the session became invalid. Exiting.", e)
+        logger.error("The browser window was closed or the session became invalid. Exiting.", exc_info=e)
     except Exception as e:
         critical_error_log("In Applier Main", e)
         pyautogui.alert(e,alert_title)
@@ -1584,7 +1580,7 @@ def main() -> None:
                 close_ai_client(aiClient)
                 print_lg(f"Closed {ai_provider} AI client.")
             except Exception as e:
-                print_lg("Failed to close AI client:", e)
+                logger.warning("Failed to close AI client: %s", e)
         try:
             if driver:
                 driver.quit()

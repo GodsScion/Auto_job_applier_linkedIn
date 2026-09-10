@@ -179,17 +179,15 @@ def test_try_xp_pauses_after_clicking(monkeypatch):
     assert waited, "clicks must go through buffer(), gapless clicking is what gets flagged"
 
 
-def test_try_xp_is_quiet_when_the_element_is_simply_absent(monkeypatch):
+def test_try_xp_is_quiet_when_the_element_is_simply_absent(log_records):
     from selenium.common.exceptions import NoSuchElementException
-    logged = []
-    monkeypatch.setattr("modules.clickers_and_finders.print_lg", lambda *a, **k: logged.append(a))
     assert try_xp(FakeDriver(error=NoSuchElementException("nope")), "//button") is False
-    assert logged == []
+    assert log_records == []
 
 
-def test_try_xp_reports_unexpected_failures(monkeypatch):
+def test_try_xp_reports_unexpected_failures(log_records):
+    import logging
     from selenium.common.exceptions import ElementClickInterceptedException
-    logged = []
-    monkeypatch.setattr("modules.clickers_and_finders.print_lg", lambda *a, **k: logged.append(a))
     assert try_xp(FakeDriver(error=ElementClickInterceptedException("covered")), "//button") is False
-    assert logged, "an intercepted click must not look the same as a missing element"
+    assert log_records, "an intercepted click must not look the same as a missing element"
+    assert log_records[0].levelno == logging.WARNING

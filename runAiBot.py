@@ -10,8 +10,6 @@ License:    MIT License
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 Support me: https://github.com/sponsors/GodsScion
-
-version:    26.01.20.5.08
 '''
 
 
@@ -1629,9 +1627,15 @@ def main() -> None:
     pyautogui.alert("Please consider sponsoring this project at:\n\nhttps://github.com/sponsors/GodsScion\n\n", "Support the project", "Okay")
     total_runs = 1
     try:
-        global linkedIn_tab, tabs_count, useNewResume, aiClient
+        global linkedIn_tab, tabs_count, useNewResume, aiClient, options, driver, actions, wait
         alert_title = "Error Occurred. Closing Browser!"
         validate_config()
+
+        # Open the browser only AFTER the config validates. `modules.open_chrome` used to
+        # do this at import, so a typo in config cost you a Chrome window and a driver
+        # download before anything checked it. The star import copied None into this
+        # module's names, so they have to be rebound here.
+        options, driver, actions, wait = start_browser()
         
         if not os.path.exists(default_resume_path):
             pyautogui.alert(text='Your default resume "{}" is missing! Please update it\'s folder path "default_resume_path" in config.py\n\nOR\n\nAdd a resume with exact name and path (check for spelling mistakes including cases).\n\n\nFor now the bot will continue using your previous upload from LinkedIn!'.format(default_resume_path), title="Missing Resume", button="OK")

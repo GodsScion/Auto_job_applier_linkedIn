@@ -44,12 +44,11 @@ CHOOSABLE = [q for q in QUESTIONS if q["type"] in ("select", "radio")]
 
 @pytest.fixture(scope="module")
 def validator():
-    '''runAiBot's real `match_answer_to_option`, with a stubbed browser session so
-    importing it never opens Chrome. The AI layer is tested against the REAL
-    validator: a stub one would prove nothing about the invariant.'''
-    fake_chrome = types.ModuleType("modules.open_chrome")
-    fake_chrome.options = fake_chrome.driver = fake_chrome.actions = fake_chrome.wait = None
-    sys.modules.setdefault("modules.open_chrome", fake_chrome)
+    '''runAiBot's real `match_answer_to_option`. The AI layer is tested against the
+    REAL validator - a stub one would prove nothing about the invariant. No browser
+    stub is needed: importing runAiBot opens nothing, the launch is in start_browser().
+    The stub that used to be here lacked start_browser, so it silently built a runAiBot
+    missing a name the real module has, and made the suite order-dependent.'''
     import runAiBot
     return runAiBot.match_answer_to_option
 
@@ -381,9 +380,6 @@ def _replay(base_url=None):
     cache.PATH = os.path.join(tempfile.mkdtemp(), "replay.json")   # a cold cache, or we grade the cache
     cache._data = None
 
-    fake_chrome = types.ModuleType("modules.open_chrome")
-    fake_chrome.options = fake_chrome.driver = fake_chrome.actions = fake_chrome.wait = None
-    sys.modules.setdefault("modules.open_chrome", fake_chrome)
     import runAiBot
 
     right = wrong = 0

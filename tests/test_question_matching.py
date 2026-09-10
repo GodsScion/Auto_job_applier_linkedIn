@@ -31,10 +31,12 @@ from selenium.common.exceptions import NoSuchElementException
 
 @pytest.fixture(scope="module")
 def bot():
-    '''Import runAiBot with a stubbed browser session, so importing it never opens Chrome.'''
-    fake_chrome = types.ModuleType("modules.open_chrome")
-    fake_chrome.options = fake_chrome.driver = fake_chrome.actions = fake_chrome.wait = None
-    sys.modules["modules.open_chrome"] = fake_chrome
+    '''
+    Import runAiBot. No stub needed any more: modules/open_chrome.py no longer opens a
+    browser at import, it waits for start_browser(). The stub that used to live here was
+    worse than nothing - it lacked start_browser, so it built a runAiBot missing a name
+    the real module has, and the difference only showed up when another test file needed it.
+    '''
     import runAiBot
     return runAiBot
 

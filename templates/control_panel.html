@@ -353,7 +353,7 @@
                 return li;
             }
             if (field.type === 'number') {
-                var nu = el('input', { type: 'number', id: id, step: 'any' });
+                var nu = el('input', { type: 'number', id: id, step: field.step || 'any' });
                 nu.value = asText(value);
                 return nu;
             }

@@ -4,49 +4,92 @@ License:    MIT License
             https://opensource.org/license/mit
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
-Describes every user-editable setting that the local control panel (app.py +
-templates/control_panel.html) exposes in the browser.
+The field schema the local control panel (app.py + templates/control_panel.html)
+renders its forms from, DERIVED from config/*.py rather than hand-copied.
 
-The panel NEVER edits the config/*.py files. It reads and writes only
-`user_config.json` at the project root, which the config/*.py modules load and
-apply over their built-in defaults (see config/_overrides.py). This schema is
-the single source of truth the web UI renders forms from.
+config/*.py is the single source of truth. This module parses those files with
+`ast` and turns every top-level literal assignment into a form field:
 
-Each field is a dict:
-    {
-      "section":       tab it appears under in the UI (Account, Profile, ...),
-      "config_module": the config/*.py module the setting lives in. This is ALSO
-                       the key used for it inside user_config.json, so it must
-                       match the module name exactly (secrets, personals,
-                       questions, search, settings),
-      "key":           the variable name in that module,
-      "label":         short human label,
-      "type":          one of text, password, textarea, number, bool, select, list,
-      "help":          plain-language explanation (from the config comments),
-      "options":       list of allowed values (select fields only),
-      "advanced":      (optional) True -> shown under a collapsible "Advanced
-                       options" section so the default view stays simple,
-      "ai":            (optional) True -> the field only matters when "Use AI" is
-                       on, so the UI disables it while AI is turned off,
-      "models_by_provider": (optional) suggestions for the model field, keyed by
-                       AI provider; the UI shows them as a dropdown but still
-                       accepts any typed-in model name,
-    }
+  * the comment lines directly ABOVE an assignment - plus a triple-quoted note
+    right below it - become the field's help text,
+  * the trailing comment lists the legal values, so
+    `require_visa = "No"   # "Yes" or "No"` becomes a dropdown,
+  * the literal's type picks the control: bool -> checkbox, int -> number,
+    list -> comma-separated, a string with line breaks -> textarea,
+  * `# >>>>> Something <<<<<` headers group the settings inside a file.
+
+Nothing about a setting is written down twice, so nothing can drift out of sync.
+The only things kept here are the ones that exist ONLY in the browser and have
+no home in a config file: which tab a setting belongs to, whether it hides under
+"Advanced options", and whether it is an AI-only field.
+
+The panel NEVER edits config/*.py. It reads and writes only `user_config.json`,
+which those modules load over their defaults (see config/_overrides.py).
+
+Each derived field is a dict:
+    {"section", "config_module", "key", "label", "type", "help",
+     "options"?, "step"?, "advanced"?, "ai"?, "models_by_provider"?}
 
 Field types:
-    text      - single line of text
-    password  - single line, masked in the browser (with a show/hide toggle)
-    textarea  - multi-line text
-    number    - stored as a number (int/float), not quoted
-    bool      - True / False checkbox
-    select    - pick one from "options"
-    list      - comma-separated text in the UI, stored as a JSON list
+    text / password / textarea / number / bool / select / list
 '''
 
+import ast
+import os
+import re
 
-# Suggested model names per provider. These are only suggestions shown in a
-# dropdown; any model name can still be typed in, since providers add and rename
-# models often. Local models (Ollama / LM Studio) use the "openai" provider.
+_CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
+
+# The config files, in the order the docs tell people to fill them in.
+MODULES = ("secrets", "personals", "questions", "search", "settings")
+
+# Tabs, in the order the panel shows them.
+TAB_ORDER = ("Account", "Profile", "Search", "Filters", "Run settings")
+
+# Which tab a file's settings land on, plus the two `>>>>> ... <<<<<` groups and
+# the one setting that belong somewhere other than their file's tab.
+TAB_BY_MODULE = {"secrets": "Account", "personals": "Profile", "questions": "Profile",
+                 "search": "Search", "settings": "Run settings"}
+TAB_BY_GROUP = {("questions", "RELATED SETTINGS"): "Run settings",
+                ("search", "SKIP IRRELEVANT JOBS"): "Filters"}
+TAB_BY_KEY = {"showAiErrorAlerts": "Account"}   # an AI switch that lives in settings.py
+
+# Tucked under the collapsible "Advanced options" block, so the everyday view stays short.
+ADVANCED = {
+    "llm_api_url", "local_llm_api_url", "local_llm_model", "showAiErrorAlerts",
+    "street", "state", "zipcode", "country",
+    "ethnicity", "gender", "disability_status", "veteran_status",
+    "linkedin_headline", "linkedin_summary", "cover_letter", "user_information_all",
+    "recent_employer", "confidence_level", "overwrite_previous_answers",
+    "switch_number", "randomize_search_order", "sort_by", "salary", "companies",
+    "location", "industry", "job_function", "job_titles", "benefits", "commitments",
+    "did_masters", "security_clearance", "under_10_applicants", "in_your_network",
+    "fair_chance_employer", "pause_after_filters",
+    "close_tabs", "follow_companies", "run_non_stop", "alternate_sortby",
+    "cycle_date_posted", "stop_date_cycle_at_24hr", "generated_resume_path",
+    "file_name", "failed_file_name", "logs_folder_path", "log_level", "click_gap",
+    "disable_extensions", "safe_mode", "smooth_scroll", "keep_screen_awake",
+    "auto_manage_driver",
+}
+
+# Only meaningful while "Use AI" is on; the panel greys these out while it is off.
+AI_FIELDS = {"ai_provider", "llm_model", "llm_api_key", "llm_api_url",
+             "local_llm_api_url", "local_llm_model", "user_information_all",
+             "showAiErrorAlerts"}
+
+# Labels that read badly when derived from the variable name.
+LABELS = {"username": "LinkedIn email", "password": "LinkedIn password", "use_AI": "Use AI",
+          "ai_provider": "AI provider", "llm_model": "AI model", "llm_api_key": "AI API key",
+          "llm_api_url": "AI API URL", "local_llm_api_url": "Local AI server URL",
+          "local_llm_model": "Local AI model", "showAiErrorAlerts": "Show AI error alerts",
+          "linkedIn": "LinkedIn profile URL", "linkedin_headline": "LinkedIn headline",
+          "linkedin_summary": "LinkedIn summary", "us_citizenship": "Citizenship status",
+          "require_visa": "Need visa sponsorship?", "current_ctc": "Current salary",
+          "did_masters": "I have a master's degree"}
+
+# Suggested model names per provider. Only suggestions shown in a dropdown; any model
+# name can still be typed in, since providers add and rename models often. Local models
+# (Ollama / LM Studio) use the "openai" provider.
 AI_MODELS = {
     "openai": [
         "gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "o4-mini",
@@ -60,222 +103,133 @@ AI_MODELS = {
     ],
 }
 
+_GROUP = re.compile(r"#+\s*>{3,}\s*(.*?)\s*<{3,}")      # `# >>>>> Job Search Filters <<<<<`
+_BANNER = re.compile(r"^#*\s*$|>{3}|<{3}|^#{3,}")       # separator lines, not help
+_QUOTED = re.compile(r'"([^"]*)"')
+# A trailing comment listing EXAMPLES is not a list of legal values.
+_EXAMPLE = re.compile(r"\beg:|\be\.g|\bex:|example|and so on|etc\b", re.IGNORECASE)
 
-def _f(section, config_module, key, label, ftype, help,
-       options=None, advanced=False, ai=False, models_by_provider=None):
+
+def _label(key):
+    '''"phone_number" -> "Phone number", "showAiErrorAlerts" -> "Show Ai Error Alerts".'''
+    if key in LABELS:
+        return LABELS[key]
+    text = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", key.replace("_", " "))
+    return text[0].upper() + text[1:]
+
+
+def _help_above(lines, index):
+    '''The comment block directly above 0-based line `index`, as one paragraph.'''
+    block = []
+    index -= 1
+    while index >= 0 and lines[index].startswith("#"):
+        if not _BANNER.search(lines[index]):
+            block.append(lines[index].lstrip("#").strip())
+        index -= 1
+    return " ".join(reversed(block))
+
+
+def _note_below(body, position, assign):
+    '''A triple-quoted note written right under an assignment, e.g. the "in lakhs"
+    worked examples under `desired_salary`. Anything further down the file belongs
+    to the next section, not to this setting.'''
+    following = body[position + 1] if position + 1 < len(body) else None
+    if (isinstance(following, ast.Expr) and isinstance(following.value, ast.Constant)
+            and isinstance(following.value.value, str)
+            and following.lineno - assign.end_lineno <= 2):
+        return " ".join(following.value.value.split())
+    return ""
+
+
+def _options(trailing):
+    '''Legal values from a trailing comment like `# "Yes" or "No"`, blank first.'''
+    if _EXAMPLE.search(trailing):
+        return []
+    found = _QUOTED.findall(trailing)
+    if len(found) < 2:
+        return []
+    if "" in found:
+        found = [""] + [option for option in found if option != ""]
+    return found
+
+
+def _field(module, key, default, help_text, trailing, group):
     field = {
-        "section": section,
-        "config_module": config_module,
+        "section": TAB_BY_KEY.get(key) or TAB_BY_GROUP.get((module, group))
+                   or TAB_BY_MODULE[module],
+        "config_module": module,
         "key": key,
-        "label": label,
-        "type": ftype,
-        "help": help,
+        "label": _label(key),
+        "type": "text",
+        "help": help_text,
     }
-    if options is not None:
+    options = _options(trailing)
+    if isinstance(default, bool):
+        field["type"] = "bool"
+    elif isinstance(default, (int, float)):
+        field["type"] = "number"
+        # Every numeric setting is a whole number today; `step` says so to the browser
+        # and to app.py, which rejects 1.5 the same way modules/validator.py does.
+        field["step"] = 1 if isinstance(default, int) else "any"
+    elif isinstance(default, list):
+        field["type"] = "list"
+    elif "password" in key or key.endswith("api_key"):
+        field["type"] = "password"
+    elif "\n" in default:
+        field["type"] = "textarea"
+    elif options:
+        field["type"] = "select"
+    if options:
         field["options"] = options
-    if advanced:
+    if key in ADVANCED:
         field["advanced"] = True
-    if ai:
+    if key in AI_FIELDS:
         field["ai"] = True
-    if models_by_provider is not None:
-        field["models_by_provider"] = models_by_provider
+    if key == "llm_model":
+        field["models_by_provider"] = AI_MODELS
     return field
 
 
-# ---------------------------------------------------------------------------
-# The schema, grouped into tabs. Each tab is {"section", "fields": [...]}.
-# Within a tab, fields marked advanced=True are tucked into a collapsible
-# "Advanced options" section by the UI so the everyday view stays simple.
-# ---------------------------------------------------------------------------
-SCHEMA = [
-    {
-        "section": "Account",
-        "fields": [
-            _f("Account", "secrets", "username", "LinkedIn email", "text",
-               "The email address you sign in to LinkedIn with. Optional - if left blank the tool tries the browser's saved login, and asks you to log in by hand if that fails."),
-            _f("Account", "secrets", "password", "LinkedIn password", "password",
-               "Your LinkedIn password. Stored only on this computer in user_config.json (never uploaded anywhere). Optional - leave blank to log in manually."),
-            _f("Account", "secrets", "use_AI", "Use AI", "bool",
-               "Master switch for AI help (tailoring answers, resumes and cover letters). Turn this on only if you have a paid API key or a local AI model running. While it's off, all the AI settings below are disabled."),
-            _f("Account", "secrets", "ai_provider", "AI provider", "select",
-               "Which AI service to use. Pick 'openai' for OpenAI or any OpenAI-compatible service (including local ones like Ollama or LM Studio), 'deepseek' for DeepSeek, or 'gemini' for Google Gemini.",
-               options=["openai", "deepseek", "gemini"], ai=True),
-            _f("Account", "secrets", "llm_model", "AI model", "text",
-               "The model to use. Pick a suggestion from the list or type any model name your provider supports.",
-               ai=True, models_by_provider=AI_MODELS),
-            _f("Account", "secrets", "llm_api_key", "AI API key", "password",
-               "Your AI service API key. Use 'not-needed' for local models like Ollama. A wrong key causes errors while AI is on.",
-               ai=True),
-            # --- advanced AI plumbing ---
-            _f("Account", "secrets", "llm_api_url", "AI API URL", "text",
-               "The address of your AI service. Examples: https://api.openai.com/v1/ , http://localhost:1234/v1/ , https://api.deepseek.com . Keep the trailing slash. You may not need this for Gemini.",
-               ai=True, advanced=True),
-            _f("Account", "settings", "showAiErrorAlerts", "Show AI error alerts", "bool",
-               "Pop up an alert if there's a problem connecting to the AI service.",
-               ai=True, advanced=True),
-        ],
-    },
-    {
-        "section": "Profile",
-        "fields": [
-            # --- everyday details ---
-            _f("Profile", "personals", "first_name", "First name", "text",
-               "Your legal first name."),
-            _f("Profile", "personals", "middle_name", "Middle name", "text",
-               "Your middle name. Leave blank if you don't have one."),
-            _f("Profile", "personals", "last_name", "Last name", "text",
-               "Your legal last name."),
-            _f("Profile", "personals", "phone_number", "Phone number", "text",
-               "A valid phone number. Applications often require this."),
-            _f("Profile", "personals", "current_city", "Current city", "text",
-               "The city you live in. If left blank, the tool fills in the job's location instead."),
-            _f("Profile", "questions", "years_of_experience", "Years of experience", "text",
-               "What to answer for 'how many years of experience do you have' questions. A number in text, e.g. 0, 1, 3, 5."),
-            _f("Profile", "questions", "require_visa", "Need visa sponsorship?", "select",
-               "Do you need visa sponsorship now or in the future?",
-               options=["Yes", "No"]),
-            _f("Profile", "questions", "us_citizenship", "Citizenship status", "select",
-               "Your work-authorization / citizenship status for US applications.",
-               options=["U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident", "Other"]),
-            _f("Profile", "questions", "desired_salary", "Desired salary", "number",
-               "Your expected salary or CTC as a plain number (no currency symbols or commas), e.g. 100000. Some forms only accept numbers."),
-            _f("Profile", "questions", "current_ctc", "Current salary", "number",
-               "Your current salary or CTC as a plain number, e.g. 80000."),
-            _f("Profile", "questions", "notice_period", "Notice period (days)", "number",
-               "Your notice period in days, e.g. 0, 15, 30. The tool converts to weeks or months if a form asks that way."),
-            _f("Profile", "questions", "linkedIn", "LinkedIn profile URL", "text",
-               "The link to your LinkedIn profile, e.g. https://www.linkedin.com/in/yourname ."),
-            _f("Profile", "questions", "website", "Portfolio website", "text",
-               "Link to your portfolio or personal website. Leave blank to skip this question."),
-            _f("Profile", "questions", "default_resume_path", "Default resume path", "text",
-               "Path to the resume file to upload, relative to the project folder, e.g. all resumes/default/resume.pdf . If the file is missing, the tool keeps your last resume on LinkedIn."),
-            # --- advanced / less-common details ---
-            _f("Profile", "personals", "street", "Street address", "text",
-               "Your street address. Some applications require it.", advanced=True),
-            _f("Profile", "personals", "state", "State / region", "text",
-               "Your state or region.", advanced=True),
-            _f("Profile", "personals", "zipcode", "ZIP / postal code", "text",
-               "Your ZIP or postal code.", advanced=True),
-            _f("Profile", "personals", "country", "Country", "text",
-               "The country you live in.", advanced=True),
-            _f("Profile", "personals", "ethnicity", "Ethnicity / race", "select",
-               "Used for optional US equal-opportunity questions. Choose 'Decline' to prefer not to answer. A blank leaves the question unanswered, but some companies make it required.",
-               options=["", "Decline", "Hispanic/Latino", "American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "Other"], advanced=True),
-            _f("Profile", "personals", "gender", "Gender", "select",
-               "Used for optional equal-opportunity questions. Choose 'Decline' to prefer not to answer, or leave blank to skip (some companies require it).",
-               options=["", "Male", "Female", "Other", "Decline"], advanced=True),
-            _f("Profile", "personals", "disability_status", "Disability status", "select",
-               "Do you have, or have a record of, a disability? Choose 'Decline' to prefer not to answer.",
-               options=["Yes", "No", "Decline"], advanced=True),
-            _f("Profile", "personals", "veteran_status", "Veteran status", "select",
-               "Your veteran status. Choose 'Decline' to prefer not to answer.",
-               options=["Yes", "No", "Decline"], advanced=True),
-            _f("Profile", "questions", "linkedin_headline", "LinkedIn headline", "text",
-               "A short professional headline, e.g. 'Full Stack Developer, MSc Computer Science, 4+ years experience'. Leave blank to skip.", advanced=True),
-            _f("Profile", "questions", "linkedin_summary", "LinkedIn summary", "textarea",
-               "A few sentences about your background and skills. Used to answer 'tell us about yourself' style questions. Leave blank to skip.", advanced=True),
-            _f("Profile", "questions", "cover_letter", "Cover letter", "textarea",
-               "A default cover letter to submit when one is requested. Leave blank to skip.", advanced=True),
-            _f("Profile", "questions", "recent_employer", "Most recent employer", "text",
-               "The name of your most recent employer.", advanced=True),
-            _f("Profile", "questions", "confidence_level", "Confidence level (1-10)", "text",
-               "For 'on a scale of 1-10, how much experience...' questions. Any number from 1 to 10.", advanced=True),
-        ],
-    },
-    {
-        "section": "Search",
-        "fields": [
-            _f("Search", "search", "search_terms", "Search terms", "list",
-               "Job titles to search for, separated by commas, e.g. Software Engineer, Python Developer, Full Stack Developer."),
-            _f("Search", "search", "search_location", "Search location", "text",
-               "Where to look for jobs. Examples: United States, India, 'Chicago, Illinois, United States'. Leave blank to not set a location."),
-            _f("Search", "search", "date_posted", "Date posted", "select",
-               "Only include jobs posted within this window. Leave blank to not filter by date.",
-               options=["", "Any time", "Past month", "Past week", "Past 24 hours"]),
-            _f("Search", "search", "easy_apply_only", "Easy Apply only", "bool",
-               "Only apply to jobs that use LinkedIn's Easy Apply. Recommended on."),
-            _f("Search", "search", "experience_level", "Experience level", "list",
-               "Filter by experience level, comma-separated. Valid values: Internship, Entry level, Associate, Mid-Senior level, Director, Executive. Leave blank for all."),
-            _f("Search", "search", "job_type", "Job type", "list",
-               "Filter by job type, comma-separated. Valid values: Full-time, Part-time, Contract, Temporary, Volunteer, Internship, Other. Leave blank for all."),
-            _f("Search", "search", "on_site", "On-site / Remote", "list",
-               "Filter by work setting, comma-separated. Valid values: On-site, Remote, Hybrid. Leave blank for all."),
-            _f("Search", "search", "current_experience", "Your years of experience", "number",
-               "Your actual years of experience. Jobs asking for more than this are skipped. Set to -1 to ignore required experience and apply to everything."),
-            # --- advanced search options ---
-            _f("Search", "search", "switch_number", "Applications before switching term", "number",
-               "How many applications to submit for one search term before moving on to the next. A number greater than 0.", advanced=True),
-            _f("Search", "search", "randomize_search_order", "Randomize search order", "bool",
-               "Shuffle the order your search terms are used.", advanced=True),
-            _f("Search", "search", "sort_by", "Sort results by", "select",
-               "How LinkedIn should sort results. Leave blank to not change it.",
-               options=["", "Most recent", "Most relevant"], advanced=True),
-            _f("Search", "search", "salary", "Minimum salary", "select",
-               "Only include jobs at or above this salary. Leave blank to not filter by salary.",
-               options=["", "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"], advanced=True),
-            _f("Search", "search", "companies", "Only these companies", "list",
-               "Only apply at these companies, comma-separated. Names must match LinkedIn exactly (including capitals). Leave blank for all companies.", advanced=True),
-            _f("Search", "search", "did_masters", "I have a master's degree", "bool",
-               "If on, jobs mentioning 'master' are still considered when their required experience is within about 2 years of yours.", advanced=True),
-            _f("Search", "search", "security_clearance", "I have a security clearance", "bool",
-               "Whether you hold an active security clearance.", advanced=True),
-            _f("Search", "search", "under_10_applicants", "Under 10 applicants only", "bool",
-               "Only apply to jobs with fewer than 10 applicants so far.", advanced=True),
-            _f("Search", "search", "in_your_network", "In your network only", "bool",
-               "Only apply to jobs at companies where you have a connection.", advanced=True),
-            _f("Search", "search", "fair_chance_employer", "Fair-chance employers only", "bool",
-               "Only apply to employers who identify as fair-chance employers.", advanced=True),
-        ],
-    },
-    {
-        "section": "Filters",
-        "fields": [
-            _f("Filters", "search", "about_company_bad_words", "Skip companies with these words", "list",
-               "Skip a company if any of these words appear in its 'About company' section, comma-separated. Example: Staffing, Recruiting."),
-            _f("Filters", "search", "about_company_good_words", "Keep companies with these words", "list",
-               "Exceptions to the list above: apply anyway if the 'About company' section contains one of these words, comma-separated. Example: Robert Half."),
-            _f("Filters", "search", "bad_words", "Skip jobs with these words", "list",
-               "Skip a job if any of these words or phrases appear in its description, comma-separated and case-insensitive. Example: US Citizen, No C2C, PHP."),
-            _f("Filters", "search", "skip_non_sponsoring_jobs", "Skip jobs that say they won't sponsor a visa", "bool",
-               "Only does anything when 'Do you need visa sponsorship?' is set to Yes. Reads the job description: if it says sponsorship is not available, the job is skipped. A description that says nothing about sponsorship is still applied to."),
-            _f("Filters", "search", "sponsorship_offered_phrases", "Phrases that mean they DO sponsor", "list",
-               "Checked first, and an offer always wins - real postings say both. Example: we will sponsor, H-1B transfer, cap-exempt."),
-            _f("Filters", "search", "sponsorship_unavailable_phrases", "Phrases that mean they do NOT sponsor", "list",
-               "Matched as whole phrases, never substrings, so 'sponsorship of our annual conference' is safe. Example: unable to sponsor, without sponsorship, not eligible for visa sponsorship."),
-            _f("Filters", "search", "skip_jobs_without_sponsorship", "Also skip jobs that say nothing about sponsorship", "bool",
-               "Strict mode. Only does anything when the setting above is on. Applies only where sponsorship is explicitly offered - most postings never mention it either way, so this skips a lot of jobs, including employers who would have sponsored. Worth it only if your runs end on LinkedIn's ~25/day Easy Apply limit, where a slot spent on a silent posting is a slot denied to one that says 'we sponsor'."),
-        ],
-    },
-    {
-        "section": "Run settings",
-        "fields": [
-            _f("Run settings", "settings", "run_in_background", "Run in background", "bool",
-               "Hide the Chrome window while it works. Note: turning this on disables the 'pause before submit' and 'pause on hard questions' safety pauses."),
-            _f("Run settings", "questions", "pause_before_submit", "Pause before submitting", "bool",
-               "Pause on the final screen of each application so you can review it before it's sent. Recommended on. Ignored when 'Run in background' is on."),
-            _f("Run settings", "questions", "pause_at_failed_question", "Pause on hard questions", "bool",
-               "Pause and wait for you when the tool can't confidently answer a question. If off, it answers randomly. Ignored when 'Run in background' is on."),
-            # --- advanced run options ---
-            _f("Run settings", "settings", "auto_manage_driver", "Manage Chrome driver automatically", "bool",
-               "Let the tool download and match the right Chrome driver for you. Recommended on so you don't have to install it yourself.", advanced=True),
-            _f("Run settings", "settings", "safe_mode", "Safe mode", "bool",
-               "Open Chrome in a clean guest profile. Turn on if Chrome is slow to start or you have several browser profiles.", advanced=True),
-            _f("Run settings", "settings", "click_gap", "Pause between clicks (seconds)", "number",
-               "Roughly how many seconds to wait between actions. A whole number, e.g. 0, 1, 2.", advanced=True),
-            _f("Run settings", "settings", "keep_screen_awake", "Keep screen awake", "bool",
-               "Stop your computer from sleeping while the tool runs. Turn off if you'd rather manage sleep in your system settings.", advanced=True),
-            _f("Run settings", "settings", "close_tabs", "Close external application tabs", "bool",
-               "Close tabs opened for external (non-Easy-Apply) applications. If off, remember to close all tabs before closing the browser.", advanced=True),
-            _f("Run settings", "settings", "follow_companies", "Follow companies after applying", "bool",
-               "Automatically follow a company on LinkedIn after applying to it.", advanced=True),
-            _f("Run settings", "settings", "log_level", "Log detail", "select",
-               "How much detail to write to logs/log.txt and show while the tool runs. INFO is the normal running commentary, DEBUG adds everything, WARNING and ERROR show only problems.",
-               options=["DEBUG", "INFO", "WARNING", "ERROR"], advanced=True),
-            _f("Run settings", "questions", "overwrite_previous_answers", "Overwrite saved answers", "bool",
-               "Replace answers you've previously entered on LinkedIn with the ones configured here.", advanced=True),
-        ],
-    },
-]
+def _parse(module):
+    '''Every top-level literal assignment in config/<module>.py, as a field dict.'''
+    with open(os.path.join(_CONFIG_DIR, module + ".py"), encoding="utf-8") as handle:
+        source = handle.read()
+    lines = source.splitlines()
+    body = ast.parse(source).body
+    groups, group = [], ""          # the `>>>>> ... <<<<<` header each line sits under
+    for line in lines:
+        found = _GROUP.match(line.strip())
+        group = found.group(1) if found else group
+        groups.append(group)
+    fields = []
+    for position, node in enumerate(body):
+        if not (isinstance(node, ast.Assign) and len(node.targets) == 1
+                and isinstance(node.targets[0], ast.Name)):
+            continue
+        key = node.targets[0].id
+        try:
+            default = ast.literal_eval(node.value)
+        except ValueError:
+            continue                    # an import or an expression, not a setting
+        if key.startswith("_") or default is None:
+            continue                    # `None` carries no type a form control can render
+        # Bytes, because ast column offsets are UTF-8 offsets and comments carry emoji.
+        end = lines[node.value.end_lineno - 1].encode("utf-8")
+        trailing = end[node.value.end_col_offset:].decode("utf-8").strip()
+        help_text = " ".join(filter(None, [_help_above(lines, node.lineno - 1),
+                                           _note_below(body, position, node)]))
+        fields.append(_field(module, key, default, help_text, trailing,
+                             groups[node.lineno - 1]))
+    return fields
+
+
+def _build():
+    fields = [field for module in MODULES for field in _parse(module)]
+    return [{"section": tab, "fields": [f for f in fields if f["section"] == tab]}
+            for tab in TAB_ORDER]
+
+
+SCHEMA = _build()
 
 
 def iter_fields():

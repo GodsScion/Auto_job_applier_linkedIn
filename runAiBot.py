@@ -134,6 +134,12 @@ stop_before_submit = globals().get("stop_before_submit", False)
 # working instead of dying with a NameError on the first Easy Apply dropdown.
 legally_authorized = globals().get("legally_authorized", "Yes")
 
+# "Are you comfortable commuting to this job's location?" is a Yes/No question that
+# carries the whole word "location", so it needs an answer of its own - the city is a
+# wrong answer, not a missing one. Belongs in config/questions.py; read defensively so an
+# older config keeps working instead of dying with a NameError on the first Easy Apply form.
+comfortable_commuting = globals().get("comfortable_commuting", "Yes")
+
 #>
 
 
@@ -427,6 +433,21 @@ def label_has(label: str, *words: str) -> bool:
     return find_bad_word(label, list(words)) is not None
 
 
+def asks_yes_no(label: str) -> bool:
+    '''
+    True when the label reads as a Yes/No QUESTION rather than naming a field. Every
+    field-shaped rung in `answer_questions` matches on a single word - 'location',
+    'address', 'name', 'experience' - so "Are you comfortable commuting to this job's
+    location?" claimed the city rung and got the user's CITY typed into a Yes/No box.
+    Both halves are needed: "What city do you live in?" is a question but not a Yes/No
+    one, and "Current location" / "Location (City, State)" open with neither.
+    '''
+    label = label.strip().lower()
+    return label.endswith('?') and label.startswith(
+        ('are ', 'is ', 'do ', 'does ', 'did ', 'can ', 'will ', 'would ', 'have ',
+         'has ', 'should '))
+
+
 # Work-authorization wording overlaps the location questions ("United States" contains
 # "state") and the two families collide in every branch below, so it is classified first.
 visa_terms = ['sponsor', 'sponsors', 'sponsorship', 'visa', 'visas', 'work permit', 'h-1b', 'h1b']
@@ -659,7 +680,13 @@ def upload_resume(modal: WebElement, resume: str) -> tuple[bool, str]:
 # Function to answer common questions for Easy Apply
 def answer_common_questions(label: str, answer: str | None) -> str | None:
     auth_answer = work_authorization_answer(label)
-    return auth_answer if auth_answer is not None else answer
+    if auth_answer is not None: return auth_answer
+    # This is the last rung in all three branches, so one entry answers the commuting
+    # question as a <select>, a radio group and a text input. Only when it really is
+    # asked as Yes/No: "What is your commute time?" is not a question "Yes" answers.
+    if asks_yes_no(label) and label_has(label, 'commute', 'commuting', 'commutable'):
+        return comfortable_commuting
+    return answer
 
 
 # Function to answer the questions for Easy Apply
@@ -717,6 +744,13 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     answer = disability_status
                 elif label_has(label, 'proficiency'):
                     answer = 'Professional'
+                elif asks_yes_no(label):
+                    # The rung below matches on one word, so a Yes/No QUESTION that merely
+                    # mentions a field claimed it: "Are you comfortable commuting to this
+                    # job's location?" would be answered with the user's city. As a dropdown
+                    # that only survived because a city cannot match a Yes/No option - put
+                    # the city on the option list and it gets picked and submitted.
+                    answer = answer_common_questions(label, answer)
                 elif label_has(label, 'location', 'city', 'state', 'country'):
                     if label_has(label, 'country'):
                         answer = country
@@ -818,6 +852,14 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
             if not prev_answer or overwrite_previous_answers:
                 auth_answer = work_authorization_answer(label)
                 if auth_answer is not None: answer = auth_answer
+                elif asks_yes_no(label):
+                    # Every rung below names a FIELD and matches on a single word, so a
+                    # Yes/No QUESTION that merely mentions one claimed it: "Are you
+                    # comfortable commuting to this job's location?" carries the whole word
+                    # "location" and got the user's CITY typed into a Yes/No box, and "Do
+                    # you have 5 years of experience?" got his total years. The 'email'
+                    # guard below is this same bug, patched one instance at a time.
+                    answer = answer_common_questions(label, answer)
                 elif label_has(label, 'experience', 'years'):
                     # Only the total. "How many years of Kubernetes experience do you have?"
                     # and "...experience with Python?" ask about ONE skill, and the user's
@@ -892,12 +934,18 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         print_lg(f'No answer for the text question "{label_org}". Leaving it empty - add it to config/questions.py.')
                         randomly_answered_questions.add((label_org, "text"))
                         unanswered_questions.add(label_org)
-                text.clear()
-                human_type(text, answer)
-                if do_actions:
-                    sleep(2)
-                    actions.send_keys(Keys.ARROW_DOWN)
-                    actions.send_keys(Keys.ENTER).perform()
+                # Only touch the control when we actually determined an answer. On the
+                # never-guess path above `answer` is still "", and clear()+human_type("")
+                # wipes whatever was there - LinkedIn's own prefill of the email, phone or
+                # city box - and submits it blank. `!= ""` and not truthiness: a notice
+                # period or salary of 0 is a real answer.
+                if answer != "":
+                    text.clear()
+                    human_type(text, answer)
+                    if do_actions:
+                        sleep(2)
+                        actions.send_keys(Keys.ARROW_DOWN)
+                        actions.send_keys(Keys.ENTER).perform()
             questions_list.add((label, text.get_attribute("value"), "text", prev_answer))
             continue
 
@@ -925,8 +973,13 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     else:
                         randomly_answered_questions.add((label_org, "textarea"))
                         unanswered_questions.add(label_org)
-            text_area.clear()
-            human_type(text_area, answer)
+                # Both of these sat at indent 12, OUTSIDE the gate above. So a textarea the
+                # user had already filled in was emptied even with overwrite_previous_answers
+                # off, and an unrecognised question - which reports itself and answers "" -
+                # was emptied too and submitted blank. Same guard as the text branch.
+                if answer != "":
+                    text_area.clear()
+                    human_type(text_area, answer)
             questions_list.add((label, text_area.get_attribute("value"), "textarea", prev_answer))
             continue
 

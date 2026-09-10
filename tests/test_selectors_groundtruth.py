@@ -11,6 +11,7 @@ Stdlib only - `html.parser`. lxml and bs4 are not dependencies of this project.
 License: MIT  (https://opensource.org/license/mit)
 '''
 
+import glob
 import inspect
 import os
 import sys
@@ -123,15 +124,20 @@ def bot():
 @pytest.fixture(scope="module")
 def sources():
     '''
-    Source of the two selector-carrying modules with `#` comments stripped, so a dead
-    selector *named in a comment* (this file's own history is full of them) doesn't
-    fail the "it never came back" tests. String literals are kept - that is where
-    locators live.
+    Every `.py` file in the project with `#` comments stripped, so a dead selector
+    *named in a comment* (this file's own history is full of them) doesn't fail the
+    "it never came back" tests. String literals are kept - that is where locators live.
+
+    This used to be a literal list of the two modules that carry selectors today. Move
+    one locator into a new module and the six `not in` tests below keep passing while
+    checking nothing, so sweep the repo instead of naming files.
     '''
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     out = {}
-    for rel in ("runAiBot.py", os.path.join("modules", "clickers_and_finders.py")):
-        with open(os.path.join(root, rel), encoding="utf-8") as f:
+    for path in sorted(glob.glob(os.path.join(root, "**", "*.py"), recursive=True)):
+        rel = os.path.relpath(path, root)
+        if {".venv", "tests", "__pycache__"} & set(rel.split(os.sep)): continue
+        with open(path, encoding="utf-8") as f:
             # untokenize() rebuilds from the original positions, so the remaining code
             # keeps its exact spelling - the "did it come back" checks stay meaningful.
             kept = [t for t in tokenize.generate_tokens(f.readline) if t.type != tokenize.COMMENT]
@@ -143,6 +149,16 @@ def test_source_fixture_is_not_vacuous(sources):
     '''Guard for every `not in sources[...]` assertion below: code text must survive.'''
     assert "By.CSS_SELECTOR, login_email_css" in sources["runAiBot.py"]
     assert "def pick_first_displayed" in sources[os.path.join("modules", "clickers_and_finders.py")]
+    # Those `not in` tests sweep every file, so an empty sweep - or one that stopped
+    # reaching the file a locator lives in - passes them all. Pin the LIVE replacement
+    # for each dead locator: a dead one and its replacement move together, so a missing
+    # replacement means the sweep changed, not that the bug stayed fixed.
+    everything = "".join(sources.values())
+    for live in ("By.CSS_SELECTOR, login_email_css",     # replaced By.ID, "username"
+                 "data-occludable-job-id",               # replaced job-card-container__*
+                 "jobs-apply-button-id",                 # the anchor, not artdeco-button--3
+                 "data-test-form-element"):              # replaced jobs-easy-apply-form-element
+        assert live in everything, live
 
 
 # =================================================================================

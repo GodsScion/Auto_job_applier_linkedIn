@@ -117,6 +117,29 @@ def test_label_has_matches_whole_words_only(bot):
     assert not bot.label_has("sexual orientation", 'sex')
 
 
+@pytest.mark.parametrize("label, expected", [
+    # Yes/No questions. A field-shaped rung must not claim any of these.
+    ("Are you comfortable commuting to this job's location?", True),
+    ("Do you have an active security clearance?", True),
+    ("Is your current address in the United States?", True),
+    ("Have you worked at Acme before?", True),
+    ("Would you consider a hybrid schedule?", True),
+    # NOT Yes/No questions - each one names a field and must keep its rung.
+    ("What city do you live in?", False),
+    ("Current location", False),
+    ("Location (City, State)", False),
+    ("Where are you located?", False),
+    ("How many years of experience do you have?", False),
+    ("Address", False),
+    ("Please describe your ideal role.", False),
+    ("Are you comfortable with a long commute", False),   # no "?" - not asked as a question
+    ("Isabella, confirm your street", False),             # "is" is not the word "Is"
+])
+def test_asks_yes_no_needs_both_halves(bot, label, expected):
+    assert bot.asks_yes_no(label) is expected
+    assert bot.asks_yes_no(label.lower()) is expected     # the call sites lower-case first
+
+
 def test_work_authorization_beats_location(bot):
     '''The live failure: "...United States?" was routed to the location branch.'''
     assert bot.work_authorization_answer(
@@ -542,11 +565,13 @@ class FakeTextInput(FakeElement):
     def __init__(self, value=""):
         super().__init__()
         self.value = value
+        self.cleared = False
 
     def get_attribute(self, name):
         return self.value if name == "value" else None
 
     def clear(self):
+        self.cleared = True
         self.value = ""
 
 
@@ -616,3 +641,127 @@ def test_an_unrecognised_dropdown_question_is_left_unanswered(bot, monkeypatch):
     assert select.selected == "Select an option"
     assert bot.unanswered_questions
     assert {answer for _, answer, kind, _ in questions_list if kind == "select"} == {"Select an option"}
+
+
+# --------------------------- a field-shaped rung vs a Yes/No question --------------
+def yes_no_text_question(bot, monkeypatch, question):
+    '''A text question, with the typeahead follow-up stubbed so a wrong answer to a
+    Yes/No question fails on the assertion rather than on `actions` being None.'''
+    monkeypatch.setattr(bot, "current_city", "Fremont")
+    monkeypatch.setattr(bot, "sleep", lambda *a: None)
+    monkeypatch.setattr(bot, "actions", FakeActions())
+    return text_question(bot, monkeypatch, question)
+
+
+def test_a_yes_no_text_question_is_never_answered_with_the_city(bot, monkeypatch):
+    '''The family, not the instance: a rung that names a FIELD ("city", "location",
+    "address", "name", "phone"...) matches on one word, so any Yes/No QUESTION that
+    merely mentions the field claimed it. There is no configured answer for this one,
+    so the honest outcome is unanswered - never the user's city.'''
+    question = "Are you able to relocate to this job's location?"
+    modal, field = yes_no_text_question(bot, monkeypatch, question)
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert field.value != "Fremont", f'typed the city into "{question}"'
+    assert field.value == "", f'answered "{field.value}"'
+    assert bot.unanswered_questions, "and it has to be reported so the job is skipped"
+    assert question in next(iter(bot.unanswered_questions))
+
+
+# --------------------------- the textarea branch -----------------------------------
+def textarea_question(bot, monkeypatch, label_text, value=""):
+    '''Builds a modal holding one textarea question; returns (modal, FakeTextInput).'''
+    monkeypatch.setattr(bot, "print_lg", lambda *a, **k: None)
+    monkeypatch.setattr(bot, "use_AI", False)
+    monkeypatch.setattr(bot, "human_type",
+                        lambda target, text: setattr(target, "value", target.value + (text or "")))
+    field = FakeTextInput(value)
+    question = FakeElement(children={".//textarea": field,
+                                     ".//label[@for]": FakeElement(text=label_text)})
+    return FakeElement(children={".//div[@data-test-form-element]": [question]}), field
+
+
+def test_an_unrecognised_textarea_question_is_left_unanswered(bot, monkeypatch):
+    '''The textarea twin of the radio and checkbox never-guess paths. `clear()` and
+    `human_type()` ran unconditionally, so a question with no configured answer was
+    still emptied and submitted blank.'''
+    question = "Describe a time you disagreed with your manager."
+    modal, field = textarea_question(bot, monkeypatch, question)
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert field.value == "", f'typed "{field.value}" into "{question}"'
+    assert not field.cleared, "an unanswered control must be left untouched, not emptied"
+    assert bot.unanswered_questions, "and it has to be reported so the job is skipped"
+    assert question in next(iter(bot.unanswered_questions))
+
+
+def test_a_pre_existing_textarea_answer_is_never_wiped(bot, monkeypatch):
+    '''`overwrite_previous_answers = False` skips the answer ladder, but `clear()` and
+    `human_type(text_area, "")` sat OUTSIDE that gate - so what the user wrote himself
+    was deleted and the box submitted empty.'''
+    monkeypatch.setattr(bot, "overwrite_previous_answers", False)
+    written = "I once disagreed with a rollout plan and we shipped a canary instead."
+    modal, field = textarea_question(bot, monkeypatch,
+                                     "Describe a time you disagreed with your manager.", written)
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert field.value == written, "the user's own answer was overwritten"
+    assert not field.cleared
+    assert not bot.unanswered_questions, "it is answered - it must not block the job"
+
+
+
+
+@pytest.mark.parametrize("configured", ["Yes", "No"])
+def test_the_commuting_question_is_answered_from_config_not_the_city(bot, monkeypatch, configured):
+    '''Verbatim from a live form, and the reason `comfortable_commuting` exists: it
+    carries the whole word "location", so it was answered "Fremont".'''
+    monkeypatch.setattr(bot, "comfortable_commuting", configured)
+    question = "Are you comfortable commuting to this job's location?"
+    modal, field = yes_no_text_question(bot, monkeypatch, question)
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert field.value == configured, f'answered "{field.value}" to "{question}"'
+    assert not bot.unanswered_questions
+
+
+@pytest.mark.parametrize("options", [["Select an option", "Yes", "No"],
+                                     ["Select an option", "Yes", "No", "Fremont"]])
+def test_the_commuting_dropdown_is_answered_not_left_to_luck(bot, monkeypatch, options):
+    '''As a <select> it only survived because a city string cannot match a Yes/No option.
+    With the city ON OFFER it would have been picked.'''
+    monkeypatch.setattr(bot, "comfortable_commuting", "Yes")
+    monkeypatch.setattr(bot, "current_city", "Fremont")
+    modal, select = dropdown(bot, monkeypatch,
+                             "Are you comfortable commuting to this job's location?", options)
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert select.picked == "Yes", f'picked "{select.picked}"'
+
+
+def test_the_commuting_radio_is_answered(bot, monkeypatch):
+    monkeypatch.setattr(bot, "comfortable_commuting", "Yes")
+    modal, mouse, _ = radio_group(bot, monkeypatch,
+                                  "Are you comfortable commuting to this job's location?",
+                                  ["Yes", "No"])
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert mouse.clicked.text == "Yes"
+
+
+def test_a_real_location_field_still_gets_the_city(bot, monkeypatch):
+    '''Guard against over-correcting: only a Yes/No QUESTION is skipped, not a field.'''
+    monkeypatch.setattr(bot, "current_city", "Fremont")
+    monkeypatch.setattr(bot, "sleep", lambda *a: None)
+    monkeypatch.setattr(bot, "actions", FakeActions())
+    modal, field = text_question(bot, monkeypatch, "City")
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert field.value == "Fremont"

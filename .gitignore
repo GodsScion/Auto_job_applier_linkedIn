@@ -26,3 +26,11 @@ user_config.json
 # Cached AI answers to application questions — your own answers, never commit
 .ai_answer_cache.json
 .ai_answer_cache.json.tmp
+
+# Session working docs — handoffs, audits and design notes. These describe the
+# author's own config (phone, city, visa status) and sometimes quote it verbatim.
+# This repo is PUBLIC; they are local notes, never shipped.
+HANDOFF-*.md
+REPORT-*.md
+DESIGN-*.md
+PRODUCT.md

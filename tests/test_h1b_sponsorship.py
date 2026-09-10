@@ -26,18 +26,13 @@ behaviour, not the user's own config/search.py.
 License: MIT  (https://opensource.org/license/mit)
 '''
 
-import sys
-import types
 
 import pytest
 
 
 @pytest.fixture(scope="module")
 def bot():
-    '''Import runAiBot with a stubbed browser session, so importing it never opens Chrome.'''
-    fake_chrome = types.ModuleType("modules.open_chrome")
-    fake_chrome.options = fake_chrome.driver = fake_chrome.actions = fake_chrome.wait = None
-    sys.modules["modules.open_chrome"] = fake_chrome
+    '''runAiBot. Importing it opens no browser: the launch lives in open_chrome.start_browser().'''
     import runAiBot
     return runAiBot
 

@@ -10,8 +10,10 @@ of the control panel.
 | `username` | Your LinkedIn username/email |
 | `password` | Your LinkedIn password |
 
-**Both are optional.** If you leave them at their defaults, the tool logs in using the
+**Both are optional.** If you leave them **at their defaults**, the tool logs in using the
 browser's saved profile, or asks you to log in manually in the Chrome window it opens.
+Leave them as they are rather than blanking them: a value shorter than 5 characters is
+rejected when the tool starts.
 
 Nothing here leaves your computer. `config/secrets.py` and `user_config.json` stay on disk.
 
@@ -31,7 +33,18 @@ options covers every provider.
 | `llm_model` | The model name your provider offers. OpenAI: `"gpt-4o-mini"`, `"gpt-4o"`, `"gpt-5-mini"`. Local: `"llama-3.2-3b-instruct"`, `"qwen2.5:latest"`. Gemini: `"gemini-2.5-flash"`, `"gemini-2.5-pro"` |
 | `llm_api_key` | Your provider's API key. For local servers any placeholder works — leave it as `"not-needed"` |
 | `llm_api_url` | Base URL of the server. Used by the `"openai"` provider family only. OpenAI: `"https://api.openai.com/v1/"`. LM Studio: `"http://localhost:1234/v1/"`. Ollama: `"http://localhost:11434/v1/"`. DeepSeek: `"https://api.deepseek.com/v1"` |
-| `llm_temperature` | Sampling temperature. Leave as `None` to use the model's own default — **some newer models only allow their default**. Set a number like `0` or `0.3` to override |
+| `llm_temperature` | Sampling temperature. Leave as `None` to use the model's own default — **some newer models only allow their default**. Set a number like `0` or `0.3` to override. The only setting with no control-panel field, because `None` is not something a form control can say |
+
+## The local model
+
+A second, smaller model running on your own machine answers short form questions faster and
+for free (`modules/ai/local.py`). It is separate from the provider settings above: those
+pick your cloud service, these point at your own. The defaults are [LM Studio](https://lmstudio.ai/)'s.
+
+| Setting | What it is |
+|---|---|
+| `local_llm_api_url` | Address of the local server, e.g. `"http://127.0.0.1:1234/v1"` |
+| `local_llm_model` | The model name, exactly as the local server lists it |
 
 What the AI actually uses to answer questions comes from `user_information_all` in
 [`config/questions.py`](config-questions.md#experience-and-profile).

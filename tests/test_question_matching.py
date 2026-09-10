@@ -542,11 +542,13 @@ class FakeTextInput(FakeElement):
     def __init__(self, value=""):
         super().__init__()
         self.value = value
+        self.cleared = False
 
     def get_attribute(self, name):
         return self.value if name == "value" else None
 
     def clear(self):
+        self.cleared = True
         self.value = ""
 
 
@@ -616,3 +618,73 @@ def test_an_unrecognised_dropdown_question_is_left_unanswered(bot, monkeypatch):
     assert select.selected == "Select an option"
     assert bot.unanswered_questions
     assert {answer for _, answer, kind, _ in questions_list if kind == "select"} == {"Select an option"}
+
+
+# --------------------------- a field-shaped rung vs a Yes/No question --------------
+def yes_no_text_question(bot, monkeypatch, question):
+    '''A text question, with the typeahead follow-up stubbed so a wrong answer to a
+    Yes/No question fails on the assertion rather than on `actions` being None.'''
+    monkeypatch.setattr(bot, "current_city", "Fremont")
+    monkeypatch.setattr(bot, "sleep", lambda *a: None)
+    monkeypatch.setattr(bot, "actions", FakeActions())
+    return text_question(bot, monkeypatch, question)
+
+
+def test_a_yes_no_text_question_is_never_answered_with_the_city(bot, monkeypatch):
+    '''The family, not the instance: a rung that names a FIELD ("city", "location",
+    "address", "name", "phone"...) matches on one word, so any Yes/No QUESTION that
+    merely mentions the field claimed it. There is no configured answer for this one,
+    so the honest outcome is unanswered - never the user's city.'''
+    question = "Are you able to relocate to this job's location?"
+    modal, field = yes_no_text_question(bot, monkeypatch, question)
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert field.value != "Fremont", f'typed the city into "{question}"'
+    assert field.value == "", f'answered "{field.value}"'
+    assert bot.unanswered_questions, "and it has to be reported so the job is skipped"
+    assert question in next(iter(bot.unanswered_questions))
+
+
+# --------------------------- the textarea branch -----------------------------------
+def textarea_question(bot, monkeypatch, label_text, value=""):
+    '''Builds a modal holding one textarea question; returns (modal, FakeTextInput).'''
+    monkeypatch.setattr(bot, "print_lg", lambda *a, **k: None)
+    monkeypatch.setattr(bot, "use_AI", False)
+    monkeypatch.setattr(bot, "human_type",
+                        lambda target, text: setattr(target, "value", target.value + (text or "")))
+    field = FakeTextInput(value)
+    question = FakeElement(children={".//textarea": field,
+                                     ".//label[@for]": FakeElement(text=label_text)})
+    return FakeElement(children={".//div[@data-test-form-element]": [question]}), field
+
+
+def test_an_unrecognised_textarea_question_is_left_unanswered(bot, monkeypatch):
+    '''The textarea twin of the radio and checkbox never-guess paths. `clear()` and
+    `human_type()` ran unconditionally, so a question with no configured answer was
+    still emptied and submitted blank.'''
+    question = "Describe a time you disagreed with your manager."
+    modal, field = textarea_question(bot, monkeypatch, question)
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert field.value == "", f'typed "{field.value}" into "{question}"'
+    assert not field.cleared, "an unanswered control must be left untouched, not emptied"
+    assert bot.unanswered_questions, "and it has to be reported so the job is skipped"
+    assert question in next(iter(bot.unanswered_questions))
+
+
+def test_a_pre_existing_textarea_answer_is_never_wiped(bot, monkeypatch):
+    '''`overwrite_previous_answers = False` skips the answer ladder, but `clear()` and
+    `human_type(text_area, "")` sat OUTSIDE that gate - so what the user wrote himself
+    was deleted and the box submitted empty.'''
+    monkeypatch.setattr(bot, "overwrite_previous_answers", False)
+    written = "I once disagreed with a rollout plan and we shipped a canary instead."
+    modal, field = textarea_question(bot, monkeypatch,
+                                     "Describe a time you disagreed with your manager.", written)
+
+    bot.answer_questions(modal, set(), "Remote")
+
+    assert field.value == written, "the user's own answer was overwritten"
+    assert not field.cleared
+    assert not bot.unanswered_questions, "it is answered - it must not block the job"

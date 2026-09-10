@@ -108,6 +108,18 @@ sponsorship_offered_phrases = ["visa sponsorship available", "sponsorship availa
 # A description that says nothing about sponsorship is applied to - silence is not a refusal.
 sponsorship_unavailable_phrases = ["will not sponsor", "do not sponsor", "does not sponsor", "cannot sponsor", "unable to sponsor", "not able to sponsor", "not offer sponsorship", "not provide sponsorship", "does not provide immigration", "no visa sponsorship", "without sponsorship", "without the need for sponsorship", "sponsorship not available", "sponsorship is not available", "not eligible for visa sponsorship", "must be a us citizen", "must be a u.s. citizen"]     # (dynamic multiple search) Case Insensitive.
 
+
+# STRICT MODE: also skip jobs whose description says NOTHING about sponsorship either way?
+# Only does anything when require_visa = "Yes" AND skip_non_sponsoring_jobs = True.
+# True  = apply only where sponsorship is affirmatively offered. Most postings never mention
+#         sponsorship at all, so this skips a LOT of jobs, including many employers who would
+#         in fact have sponsored you. Silence is not a refusal.
+# False = (default) silence is treated as "maybe", and the job is applied to.
+# Why anyone would turn it on: LinkedIn caps Easy Apply at roughly 25 applications a day, so
+# applications are a rationed daily resource. If your runs end on the daily limit, a slot
+# spent on a silent posting is a slot denied to one that says "we sponsor". If your runs
+# never hit the cap, leave this off - every skip is then pure loss.
+skip_jobs_without_sponsorship = False   # True or False, Note: True or False are case-sensitive
 security_clearance = False         # True or False, Note: True or False are case-sensitive
 
 # Do you have a Masters degree? (True for Yes and False for No). If True, the tool will apply to jobs containing the word 'master' in their job description and if it's experience required <= current_experience + 2 and current_experience is not set as -1. 

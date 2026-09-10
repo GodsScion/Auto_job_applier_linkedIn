@@ -9,8 +9,11 @@ What it must get right, and why each case is here:
 * No substring matching. This codebase has shipped five naive-substring bugs already
   ('state' in "United States", 'no' in "Non-citizen", 'java' in "JavaScript"). Matching
   goes through find_bad_word, so "sponsorship of our annual conference" is not a refusal.
-* Silence means APPLY. Most postings say nothing about sponsorship. Absence of evidence is
-  never a skip: a wrong skip costs a real job, a wrong apply costs thirty seconds.
+* Silence means APPLY *by default*. Most postings say nothing about sponsorship, and
+  silence is not a refusal. It is a default, not a law: LinkedIn rations Easy Apply at
+  ~25/day, so a wrong apply costs a slot and a wrong skip costs a slot's worth of chance -
+  same currency. skip_jobs_without_sponsorship is the opt-in that flips it, and the tests
+  below pin both states, including that it cannot bypass skip_non_sponsoring_jobs.
 * Inert unless asked for. require_visa != "Yes" or skip_non_sponsoring_jobs = False must
   change nothing at all.
 
@@ -64,6 +67,7 @@ def pinned_config(bot, monkeypatch):
     '''Pin every setting the assertions depend on, and keep the other filters out of it.'''
     monkeypatch.setattr(bot, "require_visa", "Yes")
     monkeypatch.setattr(bot, "skip_non_sponsoring_jobs", True)
+    monkeypatch.setattr(bot, "skip_jobs_without_sponsorship", False)   # strict mode off = shipped default
     monkeypatch.setattr(bot, "sponsorship_offered_phrases", OFFERED)
     monkeypatch.setattr(bot, "sponsorship_unavailable_phrases", UNAVAILABLE)
     monkeypatch.setattr(bot, "bad_words", [])                 # no bad-word skip
@@ -173,6 +177,61 @@ def test_nothing_is_skipped_while_the_setting_is_off(bot, monkeypatch):
     assert reason is None
 
 
+# ------------------------------ strict mode: skip on silence -----------------------------
+SILENT = "Senior Python engineer. You will own our data pipeline and mentor two juniors."
+
+
+@pytest.fixture
+def strict(bot, monkeypatch):
+    monkeypatch.setattr(bot, "skip_jobs_without_sponsorship", True)
+
+
+def test_strict_mode_skips_a_posting_that_says_nothing_about_sponsorship(bot, monkeypatch, strict):
+    skip, reason, message = scan(bot, monkeypatch, SILENT)
+
+    assert skip is True
+    # Silence and refusal are different facts and the user has to be able to tell them apart
+    # in the log and in the CSV, or a tunable false positive looks like an untunable one.
+    assert "silent" in reason.lower()
+    assert "not a refusal" in reason.lower()
+    assert "excludes visa sponsorship" not in reason      # that wording is for an actual refusal
+    assert message
+
+
+def test_strict_mode_still_applies_when_sponsorship_is_offered(bot, monkeypatch, strict):
+    skip, reason, _message = scan(bot, monkeypatch,
+        "This role is cap-exempt and we sponsor H-1B transfers.")
+
+    assert skip is False
+    assert reason is None
+
+
+def test_strict_mode_reports_a_refusal_as_a_refusal_not_as_silence(bot, monkeypatch, strict):
+    skip, reason, _message = scan(bot, monkeypatch, REFUSAL)
+
+    assert skip is True
+    assert "not eligible for visa sponsorship" in reason
+    assert "silent" not in reason.lower()
+
+
+def test_strict_mode_is_inert_when_the_user_does_not_need_sponsorship(bot, monkeypatch, strict):
+    monkeypatch.setattr(bot, "require_visa", "No")
+
+    skip, reason, _message = scan(bot, monkeypatch, SILENT)
+
+    assert skip is False
+    assert reason is None
+
+
+def test_strict_mode_cannot_bypass_the_master_switch(bot, monkeypatch, strict):
+    '''skip_non_sponsoring_jobs is the master switch. Strict mode is a modifier on it, not a
+    second way in - off means the whole filter is off, however strict mode is set.'''
+    monkeypatch.setattr(bot, "skip_non_sponsoring_jobs", False)
+
+    assert scan(bot, monkeypatch, SILENT) == (False, None, None)
+    assert scan(bot, monkeypatch, REFUSAL) == (False, None, None)
+
+
 # --------------- the settings must exist and be tunable without editing code -------------
 def test_the_settings_exist_in_the_config_file(bot):
     '''Existence only. The user's own values are his to set, so nothing here asserts them -
@@ -180,5 +239,6 @@ def test_the_settings_exist_in_the_config_file(bot):
     import config.search as search
 
     assert isinstance(search.skip_non_sponsoring_jobs, bool)
+    assert search.skip_jobs_without_sponsorship is False   # strict mode ships OFF, non-negotiable
     assert search.sponsorship_offered_phrases          # tunable without editing code
     assert search.sponsorship_unavailable_phrases

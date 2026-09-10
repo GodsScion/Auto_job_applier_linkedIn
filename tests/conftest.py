@@ -8,7 +8,36 @@ failing tests first, then counts (ran / passed / failed / skipped), then an
 overall verdict line.
 '''
 
+import logging
+
 import pytest
+
+
+class _CaptureHandler(logging.Handler):
+    '''Collects LogRecords so tests can assert on level as well as text.'''
+    def __init__(self):
+        super().__init__()
+        self.records = []
+
+    def emit(self, record):
+        self.records.append(record)
+
+
+@pytest.fixture
+def log_records():
+    '''
+    Records emitted by the tool's logger. It deliberately does not propagate to the
+    root logger (so a stray basicConfig can never double-print for a user), which is
+    why pytest's built-in `caplog` cannot see it.
+    '''
+    from modules.helpers import logger
+    handler = _CaptureHandler()
+    previous_level = logger.level
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+    yield handler.records
+    logger.removeHandler(handler)
+    logger.setLevel(previous_level)
 
 
 @pytest.fixture

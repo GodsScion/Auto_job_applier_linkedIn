@@ -64,6 +64,11 @@ file_name = "all excels/all_applied_applications_history.csv"
 failed_file_name = "all excels/all_failed_applications_history.csv"
 logs_folder_path = "logs/"
 
+# How much detail to write to logs/log.txt and print while the tool runs.
+# "DEBUG" for everything, "INFO" for the normal running commentary, "WARNING" for only
+# what went wrong, "ERROR" for only crashes. Anything unrecognised falls back to "INFO".
+log_level = "INFO"                  # "DEBUG", "INFO", "WARNING" or "ERROR" (case-insensitive)
+
 # Set the maximum amount of time allowed to wait between each click in secs
 click_gap = 1                       # Enter max allowed secs to wait approximately. (Only Non Negative Integers Eg: 0,1,2,3,....)
 

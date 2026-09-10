@@ -26,7 +26,7 @@ else:
 import os, shutil, subprocess, sys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
-from modules.helpers import find_default_profile_directory, critical_error_log, print_lg
+from modules.helpers import find_default_profile_directory, critical_error_log, logger, print_lg
 from selenium.common.exceptions import SessionNotCreatedException
 
 def _adhoc_sign(path: str) -> None:
@@ -36,7 +36,7 @@ def _adhoc_sign(path: str) -> None:
         subprocess.run(["codesign", "--force", "--sign", "-", path], check=True, capture_output=True)
     except Exception as e:
         # Not fatal, plenty of Macs run unsigned binaries fine. Say what to look for if it isn't one.
-        print_lg("Couldn't ad-hoc re-sign the Chrome driver ({}). If Chrome dies with 'Status code was: -9', install the Xcode command line tools: xcode-select --install".format(type(e).__name__))
+        logger.warning("Couldn't ad-hoc re-sign the Chrome driver (%s). If Chrome dies with 'Status code was: -9', install the Xcode command line tools: xcode-select --install", type(e).__name__)
 
 
 def get_managed_driver_path() -> str | None:
@@ -66,7 +66,7 @@ def get_managed_driver_path() -> str | None:
         _adhoc_sign(target)                             # ...which breaks the code signature, hence the re-sign, in this order
         return target                                   # uc.Chrome() then sees it already patched and leaves the signature alone
     except Exception as e:
-        print_lg("Selenium Manager couldn't resolve a Chrome driver ({}: {}). Falling back to undetected_chromedriver's own download.".format(type(e).__name__, e))
+        logger.warning("Selenium Manager couldn't resolve a Chrome driver (%s: %s). Falling back to undetected_chromedriver's own download.", type(e).__name__, e)
         return None
 
 
@@ -93,7 +93,7 @@ def createChromeSession(isRetry: bool = False):
         driver = uc.Chrome(options=options, driver_executable_path=driver_path) if driver_path else uc.Chrome(options=options)
     else:
         # ponytail: warning only, no stealth patching here. Set auto_manage_driver = True if LinkedIn starts blocking.
-        print_lg("auto_manage_driver is False, so we're using plain Selenium with NO anti-detection at all. LinkedIn may flag or block this session, set auto_manage_driver = True in config/settings.py if that happens.")
+        logger.warning("auto_manage_driver is False, so we're using plain Selenium with NO anti-detection at all. LinkedIn may flag or block this session, set auto_manage_driver = True in config/settings.py if that happens.")
         driver = webdriver.Chrome(options=options) #, service=Service(executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe"))
     driver.maximize_window()
     wait = WebDriverWait(driver, 5)
@@ -104,12 +104,13 @@ try:
     options, driver, actions, wait = None, None, None, None
     options, driver, actions, wait = createChromeSession()
 except SessionNotCreatedException as e:
-    critical_error_log("Failed to create Chrome Session, retrying with guest profile", e)
+    # Recoverable: the guest-profile retry below usually succeeds, so this is not an ERROR.
+    logger.warning("Failed to create Chrome Session, retrying with guest profile", exc_info=e)
     options, driver, actions, wait = createChromeSession(True)
 except Exception as e:
     msg = 'Seems like Google Chrome is out dated. Update browser and try again! \n\n\nIf issue persists, try Safe Mode. Set, safe_mode = True in config.py \n\nPlease check GitHub discussions/support for solutions https://github.com/GodsScion/Auto_job_applier_linkedIn \n                                   OR \nReach out in discord ( https://discord.gg/fFp7uUzWCY )'
     if isinstance(e,TimeoutError): msg = "Couldn't download Chrome-driver. Set auto_manage_driver = False in config!"
-    print_lg(msg)
+    logger.error(msg)
     critical_error_log("In Opening Chrome", e)
     from pyautogui import alert
     alert(msg, "Error in opening chrome")

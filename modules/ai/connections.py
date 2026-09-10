@@ -37,7 +37,7 @@ from langgraph.graph import StateGraph, START, END
 
 import config.secrets as cfg
 from config.settings import showAiErrorAlerts
-from modules.helpers import print_lg, critical_error_log, convert_to_json
+from modules.helpers import print_lg, critical_error_log, logger, convert_to_json
 from modules.ai.prompts import extract_skills_prompt, ai_answer_prompt
 
 try:
@@ -181,7 +181,7 @@ def extract_skills(client: Optional[AIClient], job_description: str, stream: boo
         return result.model_dump()
     except Exception as e:
         # Some local or older models don't support structured output — fall back to plain JSON parsing.
-        print_lg("Structured skill extraction unavailable, falling back to plain parsing.", e)
+        logger.warning("Structured skill extraction unavailable, falling back to plain parsing. %s", e)
         try:
             return convert_to_json(_msg_text(client.model.invoke(prompt)))
         except Exception as e2:

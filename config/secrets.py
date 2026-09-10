@@ -59,6 +59,14 @@ llm_api_url = "https://api.openai.com/v1/"
 llm_temperature = None
 
 
+## Local model (modules/ai/local.py) — the fast tiered path for form questions.
+# This is separate from the settings above on purpose: those pick your cloud
+# provider, these point at a small model running on your own machine. Defaults
+# are LM Studio's. Leave them alone unless you moved the server or the model.
+local_llm_api_url = "http://127.0.0.1:1234/v1"
+local_llm_model = "qwen/qwen3.5-4b"
+
+
 
 
 ############################################################################################################

@@ -48,3 +48,51 @@ Question:
 {}
 """
 #<
+
+
+# =========================================================================== #
+# Local-model prompts (modules/ai/local.py)
+#
+# Written for a SMALL local model - Qwen3.5-4B 4-bit at ~20 tok/s generation,
+# ~158 tok/s prefill (measured 2026-09-10, see LOCAL-LLM-HANDOFF.md). Three
+# rules a 4B follows; eight it does not. Every rule below earns its tokens:
+#
+#   - Output SHAPE is enforced by `response_format` json_schema (constrained
+#     decoding), never by asking politely. So these prompts carry no "reply in
+#     JSON", no "no markdown fences", no "do not restate the question" - the
+#     grammar makes those outcomes impossible and the words would be paid for
+#     on every single call.
+#   - Each block is a STATIC prefix. The variable tail (profile, question,
+#     options, job description) is appended by the caller so LM Studio's prompt
+#     prefix cache survives across calls. Never interpolate into these strings.
+#   - "truthful" is load-bearing, not decoration. It is the word that produces
+#     NONE instead of a plausible invention, and NONE is what preserves the
+#     bot's never-guess property.
+# =========================================================================== #
+
+##> Tier 1 - constrained choice for <select> and radio groups. ~7 output tokens.
+local_select_system = """You fill in job application forms for one candidate.
+Choose the option number that is TRUTHFUL for this candidate.
+If no option is truthful, or the facts below do not say, choose NONE."""
+#<
+
+
+##> Tier 2 - short free text for text inputs. ~30-80 output tokens.
+local_text_system = """You fill in job application forms for one candidate.
+Answer in the candidate's own voice, using only the facts below.
+If the question asks for a number, answer with digits only.
+If the facts do not contain a truthful answer, answer exactly NONE."""
+#<
+
+
+##> Tier 3 - long form, cached once per company. ~200-500 output tokens.
+local_long_system = """Write the requested application text for this candidate.
+Use only the facts and role summary below - invent no employer, skill or date.
+Under 900 characters, plain prose, no salutation and no sign-off."""
+#<
+
+
+##> Fit score - one number and one short reason. ~20 output tokens.
+local_fit_system = """Score how well this candidate matches this role.
+"s" is 0-100. "r" is the single strongest reason, under 12 words."""
+#<

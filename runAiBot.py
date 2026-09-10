@@ -892,12 +892,18 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         print_lg(f'No answer for the text question "{label_org}". Leaving it empty - add it to config/questions.py.')
                         randomly_answered_questions.add((label_org, "text"))
                         unanswered_questions.add(label_org)
-                text.clear()
-                human_type(text, answer)
-                if do_actions:
-                    sleep(2)
-                    actions.send_keys(Keys.ARROW_DOWN)
-                    actions.send_keys(Keys.ENTER).perform()
+                # Only touch the control when we actually determined an answer. On the
+                # never-guess path above `answer` is still "", and clear()+human_type("")
+                # wipes whatever was there - LinkedIn's own prefill of the email, phone or
+                # city box - and submits it blank. `!= ""` and not truthiness: a notice
+                # period or salary of 0 is a real answer.
+                if answer != "":
+                    text.clear()
+                    human_type(text, answer)
+                    if do_actions:
+                        sleep(2)
+                        actions.send_keys(Keys.ARROW_DOWN)
+                        actions.send_keys(Keys.ENTER).perform()
             questions_list.add((label, text.get_attribute("value"), "text", prev_answer))
             continue
 
@@ -925,8 +931,13 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     else:
                         randomly_answered_questions.add((label_org, "textarea"))
                         unanswered_questions.add(label_org)
-            text_area.clear()
-            human_type(text_area, answer)
+                # Both of these sat at indent 12, OUTSIDE the gate above. So a textarea the
+                # user had already filled in was emptied even with overwrite_previous_answers
+                # off, and an unrecognised question - which reports itself and answers "" -
+                # was emptied too and submitted blank. Same guard as the text branch.
+                if answer != "":
+                    text_area.clear()
+                    human_type(text_area, answer)
             questions_list.add((label, text_area.get_attribute("value"), "textarea", prev_answer))
             continue
 

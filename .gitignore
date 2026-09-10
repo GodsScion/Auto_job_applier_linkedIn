@@ -9,8 +9,12 @@ logs
 
 old
 
-secrets.py
-config/personals.py
+# NOTE: config/*.py are TRACKED on purpose - they are the shipped defaults and
+# the documentation of every option. Listing them here did nothing (gitignore
+# never applies to an already-tracked file) while implying your edits were safe.
+# Your own settings belong in user_config.json (ignored below); the control
+# panel writes it, config/_overrides.py applies it over these defaults, and the
+# in-app updater copies your live values into it before it pulls.
 .venv
 apikeys.py
 

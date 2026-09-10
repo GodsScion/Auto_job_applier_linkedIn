@@ -17,6 +17,7 @@ version:    26.01.20.5.08
 
 # Imports
 import os
+import sys
 import csv
 import re
 import time
@@ -25,7 +26,7 @@ import pyautogui
 # Raise the CSV field-size cap so very long job descriptions don't trip the writer.
 csv.field_size_limit(1000000)
 
-from random import choice, shuffle, randint
+from random import choice, shuffle
 from datetime import datetime
 
 from selenium.webdriver.common.by import By
@@ -59,9 +60,22 @@ pyautogui.FAILSAFE = False
 #< Global Variables and logics
 
 if run_in_background == True:
+    run_non_stop = False
+
+# pyautogui's alert/confirm are blocking Tk modals. Nobody can click them in a headless
+# run, nor when app.py launches this through Popen with stdout redirected to a log file,
+# so the process hangs forever and reads as "the bot does nothing". Work that out once
+# and degrade every dialog in this file to a log line.
+interactive_session = not run_in_background and bool(getattr(sys.stdout, "isatty", lambda: False)())
+if not interactive_session:
     pause_at_failed_question = False
     pause_before_submit = False
-    run_non_stop = False
+    pause_after_filters = False
+    def _suppressed_dialog(text: str = "", title: str = "", *args, **kwargs) -> None:
+        print_lg(f'[Dialog suppressed, non-interactive run] {title}: {text}')
+        return None
+    pyautogui.alert = _suppressed_dialog
+    pyautogui.confirm = _suppressed_dialog
 
 first_name = first_name.strip()
 middle_name = middle_name.strip()
@@ -70,6 +84,23 @@ full_name = first_name + " " + middle_name + " " + last_name if middle_name else
 
 useNewResume = True
 randomly_answered_questions = set()
+# Questions the LAST `answer_questions` pass could not answer at all - reset every pass.
+# Two identical passes in a row means the form can never advance on its own.
+unanswered_questions = set()
+
+class StoppedBeforeSubmit(Exception):
+    '''
+    Raised when `stop_before_submit` deliberately halts a fully-filled application at the
+    Review step. Nothing failed - the bot did exactly what it was told - so this is counted
+    as a skip, not a failure, and must not be logged to the failed-applications CSV.
+    '''
+
+
+class UnansweredQuestions(Exception):
+    '''
+    Raised when required questions have no answer in `config/questions.py`. The job is
+    skipped, not failed - there is nothing broken to retry, the user has to add answers.
+    '''
 
 tabs_count = 1
 easy_applied_count = 0
@@ -95,18 +126,52 @@ notice_period = str(notice_period)
 aiClient = None
 about_company_for_ai = None  # filled in later, once we're processing a specific job
 
+# Dry run: fill everything in, reach the Review step, then discard instead of submitting.
+# Belongs in config/settings.py; read defensively so an older config keeps working.
+stop_before_submit = globals().get("stop_before_submit", False)
+
+# "Are you legally authorized to work here?" is a different question from "do you need
+# sponsorship?". Belongs in config/questions.py; read defensively so an older config keeps
+# working instead of dying with a NameError on the first Easy Apply dropdown.
+legally_authorized = globals().get("legally_authorized", "Yes")
+
 #>
 
 
 #< Login Functions
+# The login page is React now: no <form>, no button[type=submit], empty name attributes and
+# ids that are regenerated useId() values. Visible text is the only stable handle left, and it
+# has to be an EXACT match - "Sign in with Apple" sits above the real button in the DOM and a
+# contains() would pick that one.
+sign_in_button_xpath = '//button[normalize-space(.)="Sign in"]'
+# The same rewrite removed id="username" / id="password" and name="session_key". `type` is all
+# that is left, and the page renders a hidden duplicate of both fields - hence first-displayed.
+login_email_css = "input[type='email']"
+login_password_css = "input[type='password']"
+
+
+def fill_visible_input(by: str, value: str, text: str, time: float = 5.0) -> None:
+    '''
+    Types `text` into the first *displayed* element matching the locator.
+    LinkedIn renders hidden 0x0 duplicates of the login fields and `find_element` returns
+    the hidden one first, so anything typed into it goes nowhere.
+    '''
+    field = WebDriverWait(driver, time).until(
+        lambda d: pick_first_displayed(d.find_elements(by, value)))
+    field.clear()
+    human_type(field, text)
+
+
 def is_logged_in_LN() -> bool:
     '''
     Function to check if user is logged-in in LinkedIn
     * Returns: `True` if user is logged-in or `False` if not
     '''
-    if driver.current_url == "https://www.linkedin.com/feed/": return True
+    # The feed URL now carries query params (?trk=...), so match a prefix, not the whole URL.
+    if driver.current_url.startswith("https://www.linkedin.com/feed"): return True
     if try_linkText(driver, "Sign in"): return False
-    if try_xp(driver, '//button[@type="submit" and contains(text(), "Sign in")]'):  return False
+    # click=False: this is a check, it must not press Sign in as a side effect.
+    if try_xp(driver, sign_in_button_xpath, False):  return False
     if try_linkText(driver, "Join now"): return False
     print_lg("Didn't find Sign in link, so assuming user is logged in!")
     return True
@@ -129,32 +194,34 @@ def login_LN() -> None:
     try:
         wait.until(EC.presence_of_element_located((By.LINK_TEXT, "Forgot password?")))
         try:
-            text_input_by_ID(driver, "username", username, 1)
+            fill_visible_input(By.CSS_SELECTOR, login_email_css, username)
         except Exception as e:
             print_lg("Couldn't find username field.")
-            # print_lg(e)
+            print_lg(e)
         try:
-            text_input_by_ID(driver, "password", password, 1)
+            fill_visible_input(By.CSS_SELECTOR, login_password_css, password)
         except Exception as e:
             print_lg("Couldn't find password field.")
-            # print_lg(e)
-        # Find the login submit button and click it
-        driver.find_element(By.XPATH, '//button[@type="submit" and contains(text(), "Sign in")]').click()
+            print_lg(e)
+        # Find the login submit button and click it. Only one of the duplicated "Sign in"
+        # buttons is on screen, so this has to click the displayed one.
+        if not wait_xp_click(driver, sign_in_button_xpath):
+            raise NoSuchElementException("No visible Sign in button on the login page")
     except Exception as e1:
         try:
             profile_button = find_by_class(driver, "profile__details")
             profile_button.click()
         except Exception as e2:
-            # print_lg(e1, e2)
+            print_lg(e1, e2)
             print_lg("Couldn't Login!")
 
     try:
-        # Wait until successful redirect, indicating successful login
-        wait.until(EC.url_to_be("https://www.linkedin.com/feed/")) # wait.until(EC.presence_of_element_located((By.XPATH, '//button[normalize-space(.)="Start a post"]')))
+        # Wait until we land on the feed. That URL now carries query params, so match a prefix.
+        wait.until(EC.url_contains("linkedin.com/feed"))
         return print_lg("Login successful!")
     except Exception as e:
         print_lg("Seems like login attempt failed! Possibly due to wrong credentials or already logged in! Try logging in manually!")
-        # print_lg(e)
+        print_lg(e)
         manual_login_retry(is_logged_in_LN, 2)
 #>
 
@@ -190,13 +257,18 @@ def set_search_location() -> None:
             try_xp(driver, ".//label[@class='jobs-search-box__input-icon jobs-search-box__keywords-label']")
             actions.send_keys(Keys.TAB, Keys.TAB).perform()
             actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).perform()
-            actions.send_keys(search_location.strip()).perform()
+            human_type(actions, search_location.strip())
             sleep(2)
             actions.send_keys(Keys.ENTER).perform()
             try_xp(driver, ".//button[@aria-label='Cancel']")
         except Exception as e:
             try_xp(driver, ".//button[@aria-label='Cancel']")
             print_lg("Failed to update search location, continuing with default location!", e)
+
+
+def recommended_filter_wait(gap: int) -> int:
+    '''Pause between filter sections; only skipped when the user asked for no click gap at all.'''
+    return 0 if gap < 1 else 1
 
 
 def apply_filters() -> None:
@@ -206,9 +278,10 @@ def apply_filters() -> None:
     set_search_location()
 
     try:
-        recommended_wait = 1 if click_gap < 1 else 0
+        recommended_wait = recommended_filter_wait(click_gap)
 
-        wait.until(EC.presence_of_element_located((By.XPATH, '//button[normalize-space()="All filters"]'))).click()
+        # element_to_be_clickable, not presence: the filters button renders before it's usable.
+        wait.until(EC.element_to_be_clickable((By.XPATH, '//button[normalize-space()="All filters"]'))).click()
         buffer(recommended_wait)
 
         wait_span_click(driver, sort_by)
@@ -244,8 +317,9 @@ def apply_filters() -> None:
         multi_sel_noWait(driver, commitments)
         if benefits or commitments: buffer(recommended_wait)
 
-        show_results_button: WebElement = driver.find_element(By.XPATH, '//button[contains(translate(@aria-label, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "apply current filters to show")]')
+        show_results_button: WebElement = wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(translate(@aria-label, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "apply current filters to show")]')))
         show_results_button.click()
+        buffer(3)   # let the results reload settle before anything reads the list
 
         global pause_after_filters
         if pause_after_filters and "Turn off Pause after search" == pyautogui.confirm("These are your configured search results and filter. It is safe to change them while this dialog is open, any changes later could result in errors and skipping this search run.", "Please check your results", ["Turn off Pause after search", "Look's good, Continue"]):
@@ -265,7 +339,8 @@ def get_page_info() -> tuple[WebElement | None, int | None]:
     try:
         pagination_element = try_find_by_classes(driver, ["jobs-search-pagination__pages", "artdeco-pagination", "artdeco-pagination__pages"])
         scroll_to_view(driver, pagination_element)
-        current_page = int(pagination_element.find_element(By.XPATH, "//button[contains(@class, 'active')]").text)
+        # ".//" keeps this inside the pagination element; a leading "//" searches the whole document.
+        current_page = int(pagination_element.find_element(By.XPATH, ".//button[contains(@class, 'active')]").text)
     except Exception as e:
         print_lg("Failed to find Pagination element, hence couldn't scroll till end!")
         pagination_element = None
@@ -287,19 +362,25 @@ def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_j
     * skip: A boolean flag to skip this job
     '''
     skip = False
-    job_details_button = job.find_element(By.TAG_NAME, 'a')  # job.find_element(By.CLASS_NAME, "job-card-list__title")  # Problem in India
+    # Every class on a job card that carried data is now a rotating random string, so anchor
+    # on the artdeco lockup structure instead. The title link is no longer the card's first
+    # <a> in every layout either, so address it through the lockup title too.
+    job_details_button = job.find_element(By.XPATH, ".//div[contains(@class,'artdeco-entity-lockup__title')]//a")
     scroll_to_view(driver, job_details_button, True)
     job_id = job.get_dom_attribute('data-occludable-job-id')
-    title = job_details_button.text
-    title = title[:title.find("\n")]
-    # company = job.find_element(By.CLASS_NAME, "job-card-container__primary-description").text
-    # work_location = job.find_element(By.CLASS_NAME, "job-card-container__metadata-item").text
-    other_details = job.find_element(By.CLASS_NAME, 'artdeco-entity-lockup__subtitle').text
-    index = other_details.find(' · ')
-    company = other_details[:index]
-    work_location = other_details[index+3:]
-    work_style = work_location[work_location.rfind('(')+1:work_location.rfind(')')]
-    work_location = work_location[:work_location.rfind('(')].strip()
+    # aria-label is the whole title; .text of the link also drags in the verified-badge node,
+    # and slicing at the first "\n" silently ate the last character when there wasn't one.
+    title = job_details_button.get_dom_attribute('aria-label') or job_details_button.text
+    title = title.split("\n")[0].removesuffix(" with verification").strip()
+    # The subtitle used to read "Company · Location (Style)". It is now the company alone,
+    # and the location moved into its own metadata list.
+    company = job.find_element(By.XPATH, ".//div[contains(@class,'artdeco-entity-lockup__subtitle')]").text.strip()
+    location_ele = try_xp(job, ".//ul[contains(@class,'job-card-container__metadata-wrapper')]//span[@dir='ltr']", False)
+    work_location = location_ele.text.strip() if location_ele else "Unknown"
+    work_style = "Unknown"
+    if '(' in work_location and ')' in work_location:
+        work_style = work_location[work_location.rfind('(')+1:work_location.rfind(')')]
+        work_location = work_location[:work_location.rfind('(')].strip()
     
     # Skip if previously rejected due to blacklist or already applied
     if company in blacklisted_companies:
@@ -324,6 +405,127 @@ def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_j
     return (job_id,title,company,work_location,work_style,skip)
 
 
+def find_bad_word(text: str, words: list[str]) -> str | None:
+    '''
+    Returns the first entry of `words` that appears in `text` as a whole word, else None.
+    A plain substring scan made "java" skip every JavaScript role, so boundaries are
+    applied - but only on the alphanumeric edges of the phrase, so ".NET" still matches
+    ".NET" and "ASP.NET" while not matching ".NETWORK".
+    '''
+    for word in words:
+        word = str(word).strip()
+        if not word: continue
+        left = r'(?<!\w)' if word[0].isalnum() or word[0] == '_' else ''
+        right = r'(?!\w)' if word[-1].isalnum() or word[-1] == '_' else ''
+        if re.search(left + re.escape(word) + right, text, re.IGNORECASE):
+            return word
+    return None
+
+
+def label_has(label: str, *words: str) -> bool:
+    '''
+    Whole-word test for a question label, reusing `find_bad_word`'s boundary rules.
+    A plain `'state' in label` matched "...authorized to work in the United States?" and
+    answered a work-authorization question with the user's state of residence.
+    Word-boundary matching on "state" deliberately does NOT match "States".
+    '''
+    return find_bad_word(label, list(words)) is not None
+
+
+# Work-authorization wording overlaps the location questions ("United States" contains
+# "state") and the two families collide in every branch below, so it is classified first.
+visa_terms = ['sponsor', 'sponsors', 'sponsorship', 'visa', 'visas', 'work permit', 'h-1b', 'h1b']
+# "Do you already have permission to work here?" - a Yes/No question. Lumping it in with
+# citizenship answered it with the descriptive citizenship status, which is not a valid
+# option in a Yes/No dropdown, so the fallback mapped it to "No" and told employers the
+# applicant was not authorized to work.
+authorization_terms = ['employment eligibility', 'legally authorized', 'legally authorised',
+                       'authorized to work', 'authorised to work', 'work authorization',
+                       'work authorisation', 'right to work']
+citizenship_terms = ['citizen', 'citizens', 'citizenship']
+
+# Answer -> dropdown option mapping (see the NoSuchElementException fallback in
+# `answer_questions`). Matched with `find_bad_word`, i.e. whole words: 'no' as a substring
+# lives inside "**No**n-citizen ...", "not", "none" and "know".
+decline_terms = ['decline', 'prefer not', 'not wish', "don't wish", 'not want', 'rather not']
+negation_terms = ['no', 'not', 'never', "don't", "doesn't", "won't", "can't", 'cannot',
+                  'disagree', 'decline']
+
+# Checkbox labels that carry legal weight: attestations, certifications, consents,
+# agreements, acknowledgements, authorisations. None of these is ever auto-ticked - and
+# neither is a checkbox that matches nothing, because a box we cannot classify is unsafe
+# too. So this list changes no decision; it names *why* a box was left for the user.
+clearance_terms = ['polygraph', 'clearance', 'secret', 'top secret', 'ts/sci', 'sci']
+attestation_terms = ['certify', 'certifies', 'certification', 'attest', 'attestation',
+                     'consent', 'consents', 'agree', 'agreement', 'terms', 'conditions',
+                     'policy', 'acknowledge', 'acknowledgement', 'acknowledgment',
+                     'authorize', 'authorise', 'authorization', 'authorisation',
+                     'background check', 'drug test', 'drug screen', 'drug screening',
+                     'accurate', 'accuracy', 'true and complete', 'eligible', 'eligibility',
+                     'citizen', 'citizenship', 'clearance', 'i understand', 'i confirm']
+
+# `years_of_experience` is a TOTAL, so it only answers a question that asks for the total.
+total_experience_terms = ['years of experience', 'years experience', 'work experience',
+                          'working experience', 'professional experience', 'total experience',
+                          'overall experience', 'industry experience', 'years of work']
+# ...and not when that question is narrowed to one skill: "years of Kubernetes experience",
+# "years of experience IN Kubernetes", "experience WITH Python", "how many years USING AWS".
+skill_qualifier_terms = ['in', 'with', 'using', 'on']
+
+def work_authorization_answer(label: str) -> str | None:
+    '''
+    The configured answer for a visa / authorization / citizenship question, else `None`.
+    Three distinct questions, and a work-visa holder answers them differently:
+      "will you require sponsorship / a new or transferred visa" -> `require_visa`      Yes
+      "are you legally authorized to work here"                  -> `legally_authorized` Yes
+      "what is your citizenship status"                          -> `us_citizenship`     a status
+    Order matters. Sponsorship first: "sponsor a new U.S. work visa or work authorization"
+    is a sponsorship question, not an authorization one. Authorization before citizenship:
+    "are you a citizen or otherwise legally authorized to work" is a Yes/No question.
+    '''
+    if find_bad_word(label, visa_terms): return require_visa
+    if find_bad_word(label, authorization_terms): return legally_authorized
+    if find_bad_word(label, citizenship_terms): return us_citizenship
+    return None
+
+
+def match_answer_to_option(answer: str | None, option_texts: list[str]) -> int | None:
+    '''
+    Index of the option that honestly carries `answer`, else `None`. One mapper, called by
+    both the `<select>` and the radio branch of `answer_questions`, so a fix lands in both.
+
+    Whole words only, in both directions. `'no' in lower_answer` fired on "**No**n-citizen
+    allowed to work..." and answered "are you legally authorized to work" with "No";
+    `low_phrase in low_option` then let the option "No" match nearly any text. Same bug
+    class as `'state'` in "United States" and `'java'` in "JavaScript": same fix,
+    `find_bad_word`. `None` means no honest match - the caller must leave the control
+    alone, never fall back to the first option.
+    '''
+    if not answer: return None
+    want_negative = None            # None = the answer has no Yes/No polarity
+    if find_bad_word(answer, decline_terms):
+        candidate_phrases = ["Decline", "not wish", "don't wish", "Prefer not", "not want"]
+    elif find_bad_word(answer, ['yes']):
+        candidate_phrases = ["Yes", "Agree", "I do", "I have"]
+        want_negative = False
+    elif find_bad_word(answer, ['no']):
+        candidate_phrases = ["No", "Disagree", "I don't", "I do not"]
+        want_negative = True
+    else:
+        candidate_phrases = [answer, answer.lower(), answer.upper(),
+                             ''.join(ch for ch in answer if ch.isalnum())]
+    for phrase in candidate_phrases:
+        for i, option in enumerate(option_texts):
+            if not (find_bad_word(option, [phrase]) or find_bad_word(phrase, [option])):
+                continue
+            # A Yes must never land on a negated option and vice versa:
+            # "I do" is a whole-word prefix of "I do not wish to answer".
+            if want_negative is not None and want_negative != (find_bad_word(option, negation_terms) is not None):
+                continue
+            return i
+    return None
+
+
 # Function to check for Blacklisted words in About Company
 def check_blacklist(rejected_jobs: set, job_id: str, company: str, blacklisted_companies: set) -> tuple[set, set, WebElement] | ValueError:
     jobs_top_card = try_find_by_classes(driver, ["job-details-jobs-unified-top-card__primary-description-container","job-details-jobs-unified-top-card__primary-description","jobs-unified-top-card__primary-description","jobs-details__main-content"])
@@ -338,11 +540,11 @@ def check_blacklist(rejected_jobs: set, job_id: str, company: str, blacklisted_c
             skip_checking = True
             break
     if not skip_checking:
-        for word in about_company_bad_words: 
-            if word.lower() in about_company: 
-                rejected_jobs.add(job_id)
-                blacklisted_companies.add(company)
-                raise ValueError(f'\n"{about_company_org}"\n\nContains "{word}".')
+        word = find_bad_word(about_company_org, about_company_bad_words)
+        if word:
+            rejected_jobs.add(job_id)
+            blacklisted_companies.add(company)
+            raise ValueError(f'\n"{about_company_org}"\n\nContains "{word}".')
     buffer(click_gap)
     scroll_to_view(driver, jobs_top_card)
     return rejected_jobs, blacklisted_companies, jobs_top_card
@@ -389,13 +591,15 @@ def get_job_description(
         found_masters = 0
         jobDescription = find_by_class(driver, "jobs-box__html-content").text
         jobDescriptionLow = jobDescription.lower()
-        for word in bad_words:
-            if word.lower() in jobDescriptionLow:
-                skipMessage = f'\n{jobDescription}\n\nContains bad word "{word}". Skipping this job!\n'
-                skipReason = "Found a Bad Word in About Job"
-                skip = True
-                break
-        if not skip and security_clearance == False and ('polygraph' in jobDescriptionLow or 'clearance' in jobDescriptionLow or 'secret' in jobDescriptionLow):
+        bad_word = find_bad_word(jobDescription, bad_words)
+        if bad_word:
+            skipMessage = f'\n{jobDescription}\n\nContains bad word "{bad_word}". Skipping this job!\n'
+            skipReason = "Found a Bad Word in About Job"
+            skip = True
+        # Whole words: substring 'clearance' matched "clearance sale" and 'secret' matched
+        # "secretary", skipping jobs that had nothing to do with a clearance. Same bug class
+        # find_bad_word() was written for.
+        if not skip and security_clearance == False and find_bad_word(jobDescriptionLow, clearance_terms):
             skipMessage = f'\n{jobDescription}\n\nFound "Clearance" or "Polygraph". Skipping this job!\n'
             skipReason = "Asking for Security clearance"
             skip = True
@@ -409,11 +613,16 @@ def get_job_description(
                 skipReason = "Required experience is high"
                 skip = True
     except Exception as e:
-        if jobDescription == "Unknown":    print_lg("Unable to extract job description!")
+        if jobDescription == "Unknown":
+            # We never read the description, so the bad words, security clearance and
+            # experience filters never ran. Skip instead of applying to an unread job.
+            print_lg("Unable to extract job description!", e)
+            skipReason = "Unable to read the job description"
+            skipMessage = f'\nCouldn\'t read the job description, so none of the skip filters could run. Skipping this job!\n{e}\n'
+            skip = True
         else:
             experience_required = "Error in extraction"
-            print_lg("Unable to extract years of experience required!")
-            # print_lg(e)
+            print_lg("Unable to extract years of experience required!", e)
     return jobDescription, experience_required, skip, skipReason, skipMessage
         
 
@@ -426,22 +635,29 @@ def upload_resume(modal: WebElement, resume: str) -> tuple[bool, str]:
     except: return False, "Previous resume"
 
 # Function to answer common questions for Easy Apply
-def answer_common_questions(label: str, answer: str) -> str:
-    if 'sponsorship' in label or 'visa' in label: answer = require_visa
-    return answer
+def answer_common_questions(label: str, answer: str | None) -> str | None:
+    auth_answer = work_authorization_answer(label)
+    return auth_answer if auth_answer is not None else answer
 
 
 # Function to answer the questions for Easy Apply
 def answer_questions(modal: WebElement, questions_list: set, work_location: str, job_description: str | None = None ) -> set:
     # Get all questions from the page
      
+    # The container class churns (it is `fb-dash-form-element` today, paired with a random
+    # class). `data-test-form-element` is the attribute that has survived every restyle.
     all_questions = modal.find_elements(By.XPATH, ".//div[@data-test-form-element]")
-    # all_questions = modal.find_elements(By.CLASS_NAME, "jobs-easy-apply-form-element")
+    # Per-pass, not cumulative: the caller compares consecutive passes to spot a stall.
+    unanswered_questions.clear()
     # all_list_questions = modal.find_elements(By.XPATH, ".//div[@data-test-text-entity-list-form-component]")
     # all_single_line_questions = modal.find_elements(By.XPATH, ".//div[@data-test-single-line-text-form-component]")
     # all_questions = all_questions + all_list_questions + all_single_line_questions
 
     for Question in all_questions:
+        # Only the typeahead text inputs need the follow-up ARROW_DOWN + ENTER. It used to be
+        # set inside the text branch alone and read from the textarea branch, so any form with
+        # a textarea and no earlier text input died with UnboundLocalError.
+        do_actions = False
         # Check if it's a select Question
         select = try_xp(Question, ".//select", False)
         if select:
@@ -450,7 +666,10 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 label = Question.find_element(By.TAG_NAME, "label")
                 label_org = label.find_element(By.TAG_NAME, "span").text
             except: pass
-            answer = 'Yes'
+            # No default answer. `answer = 'Yes'` here meant an unclassified dropdown -
+            # "Do you have an active security clearance?" - was answered Yes and submitted,
+            # the same defect already removed from the radio branch below.
+            answer = None
             label = label_org.lower()
             select = Select(select)
             selected_option = select.first_selected_option.text
@@ -462,56 +681,49 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
             prev_answer = selected_option
             if overwrite_previous_answers or selected_option == "Select an option":
                 # Pick a sensible answer for the dropdown from the question label.
-                if 'email' in label or 'phone' in label:
+                # Whole words only, and work authorization first: "Are you currently legally
+                # authorized to work in the United States?" contains "state" and used to be
+                # answered with the state of residence.
+                auth_answer = work_authorization_answer(label)
+                if auth_answer is not None:
+                    answer = auth_answer
+                elif label_has(label, 'email', 'phone'):
                     answer = prev_answer
-                elif 'gender' in label or 'sex' in label:
+                elif label_has(label, 'gender', 'sex', 'sexual orientation'):
                     answer = gender
-                elif 'disability' in label:
+                elif label_has(label, 'disability'):
                     answer = disability_status
-                elif 'proficiency' in label:
+                elif label_has(label, 'proficiency'):
                     answer = 'Professional'
-                elif any(term in label for term in ['location', 'city', 'state', 'country']):
-                    if 'country' in label:
+                elif label_has(label, 'location', 'city', 'state', 'country'):
+                    if label_has(label, 'country'):
                         answer = country
-                    elif 'state' in label:
+                    elif label_has(label, 'state'):
                         answer = state
-                    elif 'city' in label:
+                    elif label_has(label, 'city'):
                         answer = current_city if current_city else work_location
                     else:
                         answer = work_location
                 else:
                     answer = answer_common_questions(label, answer)
                 try:
+                    if answer is None: raise NoSuchElementException(label_org)
                     select.select_by_visible_text(answer)
                 except NoSuchElementException:
                     # The exact text isn't an option; map our answer onto the nearest option.
-                    lower_answer = answer.lower()
-                    if answer == 'Decline':
-                        candidate_phrases = ["Decline", "not wish", "don't wish", "Prefer not", "not want"]
-                    elif 'yes' in lower_answer:
-                        candidate_phrases = ["Yes", "Agree", "I do", "I have"]
-                    elif 'no' in lower_answer:
-                        candidate_phrases = ["No", "Disagree", "I don't", "I do not"]
+                    matched = match_answer_to_option(answer, optionsText)
+                    if matched is not None:
+                        select.select_by_visible_text(optionsText[matched])
+                        answer = optionsText[matched]
                     else:
-                        candidate_phrases = [answer, lower_answer, answer.upper(),
-                                             ''.join(ch for ch in answer if ch.isalnum())]
-                    matched = False
-                    for phrase in candidate_phrases:
-                        low_phrase = phrase.lower()
-                        for option in optionsText:
-                            low_option = option.lower()
-                            if low_phrase in low_option or low_option in low_phrase:
-                                select.select_by_visible_text(option)
-                                answer = option
-                                matched = True
-                                break
-                        if matched:
-                            break
-                    if not matched:
-                        print_lg(f'No option matched "{answer}" for "{label_org}", picking one at random.')
-                        select.select_by_index(randint(1, len(select.options) - 1))
-                        answer = select.first_selected_option.text
+                        # Never guess: a random pick gets submitted as a real answer. Leave the
+                        # dropdown alone so LinkedIn blocks Next and the failed-question path
+                        # (pause_at_failed_question, else a failed application) takes over.
+                        print_lg(f'No option matched "{answer or "a configured answer"}" for "{label_org}". Leaving it unanswered instead of guessing.')
+                        answer = prev_answer
                         randomly_answered_questions.add((f'{label_org} [ {options} ]', "select"))
+                        unanswered_questions.add(f'{label_org} [ {options} ]')
+            else: answer = prev_answer
             questions_list.add((f'{label_org} [ {options} ]', answer, "select", prev_answer))
             continue
         
@@ -523,51 +735,49 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
             try: label = find_by_class(label, "visually-hidden", 2.0)
             except: pass
             label_org = label.text if label else "Unknown"
-            answer = 'Yes'
+            # No default answer. `answer = 'Yes'` here meant an unclassified label - "Do you
+            # have an active security clearance?", "Are you a US citizen?" - was submitted as
+            # a Yes on a real application.
+            answer = None
             label = label_org.lower()
 
             label_org += ' [ '
             options = radio.find_elements(By.TAG_NAME, 'input')
             options_labels = []
+            option_texts = []       # visible label text only: the "<value>" suffix is a urn
             
             for option in options:
                 id = option.get_attribute("id")
                 option_label = try_xp(radio, f'.//label[@for="{id}"]', False)
+                option_texts.append(option_label.text if option_label else "")
                 options_labels.append( f'"{option_label.text if option_label else "Unknown"}"<{option.get_attribute("value")}>' ) # Saving option as "label <value>"
                 if option.is_selected(): prev_answer = options_labels[-1]
                 label_org += f' {options_labels[-1]},'
 
             if overwrite_previous_answers or prev_answer is None:
-                if 'citizenship' in label or 'employment eligibility' in label: answer = us_citizenship
-                elif 'veteran' in label or 'protected' in label: answer = veteran_status
-                elif 'disability' in label or 'handicapped' in label: 
+                auth_answer = work_authorization_answer(label)
+                if auth_answer is not None: answer = auth_answer
+                elif label_has(label, 'veteran', 'protected'): answer = veteran_status
+                elif label_has(label, 'disability', 'handicapped'): 
                     answer = disability_status
                 else: answer = answer_common_questions(label,answer)
-                foundOption = try_xp(radio, f".//label[normalize-space()='{answer}']", False)
+                foundOption = try_xp(radio, f".//label[normalize-space()='{answer}']", False) if answer else False
                 if foundOption: 
                     actions.move_to_element(foundOption).click().perform()
-                else:    
-                    possible_answer_phrases = ["Decline", "not wish", "don't wish", "Prefer not", "not want"] if answer == 'Decline' else [answer]
-                    ele = options[0]
-                    answer = options_labels[0]
-                    for phrase in possible_answer_phrases:
-                        for i, option_label in enumerate(options_labels):
-                            if phrase in option_label:
-                                foundOption = options[i]
-                                ele = foundOption
-                                answer = f'Decline ({option_label})' if len(possible_answer_phrases) > 1 else option_label
-                                break
-                        if foundOption: break
-                    # if answer == 'Decline':
-                    #     answer = options_labels[0]
-                    #     for phrase in ["Prefer not", "not want", "not wish"]:
-                    #         foundOption = try_xp(radio, f".//label[normalize-space()='{phrase}']", False)
-                    #         if foundOption:
-                    #             answer = f'Decline ({phrase})'
-                    #             ele = foundOption
-                    #             break
-                    actions.move_to_element(ele).click().perform()
-                    if not foundOption: randomly_answered_questions.add((f'{label_org} ]',"radio"))
+                else:
+                    matched = match_answer_to_option(answer, option_texts)
+                    if matched is None:
+                        # Never guess: `options[0]` clicked whatever LinkedIn rendered first
+                        # and submitted it as a real answer - the radio twin of the
+                        # `select_by_index(randint(...))` that was removed from the dropdown.
+                        # Leave the group untouched so the stall guard skips the job.
+                        print_lg(f'No option matched "{answer}" for "{label_org} ]". Leaving it unanswered instead of guessing.')
+                        answer = prev_answer
+                        randomly_answered_questions.add((f'{label_org} ]',"radio"))
+                        unanswered_questions.add(f'{label_org} ]')
+                    else:
+                        actions.move_to_element(options[matched]).click().perform()
+                        answer = options_labels[matched]
             else: answer = prev_answer
             questions_list.add((label_org+" ]", answer, "radio", prev_answer))
             continue
@@ -575,7 +785,6 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
         # Check if it's a text question
         text = try_xp(Question, ".//input[@type='text']", False)
         if text: 
-            do_actions = False
             label = try_xp(Question, ".//label[@for]", False)
             try: label = label.find_element(By.CLASS_NAME,'visually-hidden')
             except: pass
@@ -585,49 +794,62 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
 
             prev_answer = text.get_attribute("value")
             if not prev_answer or overwrite_previous_answers:
-                if 'experience' in label or 'years' in label: answer = years_of_experience
-                elif 'phone' in label or 'mobile' in label: answer = phone_number
-                elif 'street' in label: answer = street
-                elif 'city' in label or 'location' in label or 'address' in label:
+                auth_answer = work_authorization_answer(label)
+                if auth_answer is not None: answer = auth_answer
+                elif label_has(label, 'experience', 'years'):
+                    # Only the total. "How many years of Kubernetes experience do you have?"
+                    # and "...experience with Python?" ask about ONE skill, and the user's
+                    # total is a false answer to those - leave them for config/questions.py.
+                    if find_bad_word(label, total_experience_terms) and not find_bad_word(label, skill_qualifier_terms):
+                        answer = years_of_experience
+                elif label_has(label, 'phone', 'mobile'): answer = phone_number
+                elif label_has(label, 'street'): answer = street
+                elif label_has(label, 'email'):
+                    # "Email address" contains the whole word "address", so without this guard it
+                    # falls through below and types the user's CITY into the email box. There is no
+                    # email value in config/personals.py, so leave it for LinkedIn's own prefill
+                    # rather than guessing. ponytail: add `email` to personals.py to answer it.
+                    print_lg(f'No configured answer for the email question "{label_org}". Leaving LinkedIn\'s own value in place.')
+                elif label_has(label, 'city', 'location', 'address'):
                     answer = current_city if current_city else work_location
                     do_actions = True
-                elif 'signature' in label: answer = full_name # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name     # What if question is 'name of the city or university you attend, name of referral etc?'
-                elif 'name' in label:
-                    if 'full' in label: answer = full_name
-                    elif 'first' in label and 'last' not in label: answer = first_name
-                    elif 'middle' in label and 'last' not in label: answer = middle_name
-                    elif 'last' in label and 'first' not in label: answer = last_name
-                    elif 'employer' in label: answer = recent_employer
+                elif label_has(label, 'signature'): answer = full_name # 'signature' in label or 'legal name' in label or 'your name' in label or 'full name' in label: answer = full_name     # What if question is 'name of the city or university you attend, name of referral etc?'
+                elif label_has(label, 'name', 'surname'):
+                    if label_has(label, 'full'): answer = full_name
+                    elif label_has(label, 'first') and not label_has(label, 'last'): answer = first_name
+                    elif label_has(label, 'middle') and not label_has(label, 'last'): answer = middle_name
+                    elif label_has(label, 'last', 'surname') and not label_has(label, 'first'): answer = last_name
+                    elif label_has(label, 'employer'): answer = recent_employer
                     else: answer = full_name
-                elif 'notice' in label:
-                    if 'month' in label:
+                elif label_has(label, 'notice'):
+                    if label_has(label, 'month', 'months', 'monthly'):
                         answer = notice_period_months
-                    elif 'week' in label:
+                    elif label_has(label, 'week', 'weeks', 'weekly'):
                         answer = notice_period_weeks
                     else: answer = notice_period
-                elif 'salary' in label or 'compensation' in label or 'ctc' in label or 'pay' in label: 
-                    if 'current' in label or 'present' in label:
-                        if 'month' in label:
+                elif label_has(label, 'salary', 'compensation', 'ctc', 'pay'): 
+                    if label_has(label, 'current', 'present'):
+                        if label_has(label, 'month', 'months', 'monthly'):
                             answer = current_ctc_monthly
-                        elif 'lakh' in label:
+                        elif label_has(label, 'lakh', 'lakhs'):
                             answer = current_ctc_lakhs
                         else:
                             answer = current_ctc
                     else:
-                        if 'month' in label:
+                        if label_has(label, 'month', 'months', 'monthly'):
                             answer = desired_salary_monthly
-                        elif 'lakh' in label:
+                        elif label_has(label, 'lakh', 'lakhs'):
                             answer = desired_salary_lakhs
                         else:
                             answer = desired_salary
-                elif 'linkedin' in label: answer = linkedIn
-                elif 'website' in label or 'blog' in label or 'portfolio' in label or 'link' in label: answer = website
-                elif 'scale of 1-10' in label: answer = confidence_level
-                elif 'headline' in label: answer = linkedin_headline
-                elif ('hear' in label or 'come across' in label) and 'this' in label and ('job' in label or 'position' in label): answer = "https://github.com/GodsScion/Auto_job_applier_linkedIn"
-                elif 'state' in label or 'province' in label: answer = state
-                elif 'zip' in label or 'postal' in label or 'code' in label: answer = zipcode
-                elif 'country' in label: answer = country
+                elif label_has(label, 'linkedin'): answer = linkedIn
+                elif label_has(label, 'website', 'blog', 'portfolio', 'link', 'links'): answer = website
+                elif label_has(label, 'scale of 1-10'): answer = confidence_level
+                elif label_has(label, 'headline'): answer = linkedin_headline
+                elif label_has(label, 'hear', 'heard', 'come across') and label_has(label, 'this') and label_has(label, 'job', 'position'): answer = "https://github.com/GodsScion/Auto_job_applier_linkedIn"
+                elif label_has(label, 'state', 'province'): answer = state
+                elif label_has(label, 'zip', 'zipcode', 'postal', 'postcode', 'code'): answer = zipcode
+                elif label_has(label, 'country'): answer = country
                 else: answer = answer_common_questions(label,answer)
                 if answer == "":
                     ai_answer = ""
@@ -640,10 +862,16 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         answer = ai_answer.strip()
                         print_lg(f'AI answered "{label_org}": "{answer}"')
                     else:
+                        # Leave it empty. It used to fall back to `years_of_experience`, so
+                        # "How many years of Kubernetes?", "What is your expected salary?"
+                        # and "How many people did you manage?" were all submitted as the
+                        # user's total years of experience - wrong data on a real
+                        # application. Report it and let the stall guard skip the job.
+                        print_lg(f'No answer for the text question "{label_org}". Leaving it empty - add it to config/questions.py.')
                         randomly_answered_questions.add((label_org, "text"))
-                        answer = years_of_experience
+                        unanswered_questions.add(label_org)
                 text.clear()
-                text.send_keys(answer)
+                human_type(text, answer)
                 if do_actions:
                     sleep(2)
                     actions.send_keys(Keys.ARROW_DOWN)
@@ -660,8 +888,8 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
             answer = ""
             prev_answer = text_area.get_attribute("value")
             if not prev_answer or overwrite_previous_answers:
-                if 'summary' in label: answer = linkedin_summary
-                elif 'cover' in label: answer = cover_letter
+                if label_has(label, 'summary'): answer = linkedin_summary
+                elif label_has(label, 'cover'): answer = cover_letter
                 if answer == "":
                     ai_answer = ""
                     if use_AI and aiClient:
@@ -674,18 +902,19 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         print_lg(f'AI answered "{label_org}": "{answer}"')
                     else:
                         randomly_answered_questions.add((label_org, "textarea"))
+                        unanswered_questions.add(label_org)
             text_area.clear()
-            text_area.send_keys(answer)
-            if do_actions:
-                    sleep(2)
-                    actions.send_keys(Keys.ARROW_DOWN)
-                    actions.send_keys(Keys.ENTER).perform()
+            human_type(text_area, answer)
             questions_list.add((label, text_area.get_attribute("value"), "textarea", prev_answer))
             continue
 
         # Check if it's a checkbox question
         checkbox = try_xp(Question, ".//input[@type='checkbox']", False)
         if checkbox:
+            # The "Follow <company>" box is the one benign checkbox on this form, and
+            # `follow_company()` already drives it from `follow_companies`. Ticking it here
+            # too would fight that setting, so leave it to its one owner.
+            if checkbox.get_attribute("id") == "follow-company-checkbox": continue
             label = try_xp(Question, ".//span[@class='visually-hidden']", False)
             label_org = label.text if label else "Unknown"
             label = label_org.lower()
@@ -694,18 +923,24 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
             prev_answer = checkbox.is_selected()
             checked = prev_answer
             if not prev_answer:
-                try:
-                    actions.move_to_element(checkbox).click().perform()
-                    checked = True
-                except Exception as e: 
-                    print_lg("Checkbox click failed!", e)
-                    pass
+                # Never tick a box just because it is there. Every unticked checkbox used to
+                # be clicked, which silently agreed to whatever it said: "I certify I am a
+                # U.S. citizen", "I consent to a background check", "I agree to the terms".
+                # An attestation has no honest default and the rest cannot be classified, so
+                # both are left alone and reported, exactly like the radio branch.
+                term = find_bad_word(f'{label_org} {answer}', attestation_terms)
+                blocked = f'{label_org} ([ ] {answer})'
+                print_lg('Not ticking "{}": it {}. Tick it yourself, it is not something to guess.'.format(
+                    blocked, f'is an attestation or consent ("{term}")' if term else 'cannot be classified'))
+                randomly_answered_questions.add((blocked, "checkbox"))
+                unanswered_questions.add(blocked)
             questions_list.add((f'{label} ([X] {answer})', checked, "checkbox", prev_answer))
             continue
 
 
-    # Select todays date
-    try_xp(driver, "//button[contains(@aria-label, 'This is today')]")
+    # Select todays date. Scoped to the modal: on `driver` this clicked any date picker
+    # anywhere on the page. It does mean to click, so click stays True here.
+    try_xp(modal, ".//button[contains(@aria-label, 'This is today')]")
 
     # Collect important skills
     # if 'do you have' in label and 'experience' in label and ' in ' in label -> Get word (skill) after ' in ' from label
@@ -716,19 +951,29 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
 
 
 
+# The apply button, Easy Apply or external. `id` is stable and semantic; the class is the
+# fallback for older renders. Never the design-system size token (artdeco-button--<n>).
+apply_button_xpath = ".//button[@id='jobs-apply-button-id' or contains(@class,'jobs-apply-button')]"
+
 def external_apply(pagination_element: WebElement, job_id: str, job_link: str, resume: str, date_listed, application_link: str, screenshot_name: str) -> tuple[bool, str, int]:
     '''
     Function to open new tab and save external job application links
     '''
-    global tabs_count, dailyEasyApplyLimitReached
+    global tabs_count, dailyEasyApplyLimitReached, skip_count
     if easy_apply_only:
         try:
             if "exceeded the daily application limit" in driver.find_element(By.CLASS_NAME, "artdeco-inline-feedback__message").text: dailyEasyApplyLimitReached = True
         except: pass
-        print_lg("Easy apply failed I guess!")
-        if pagination_element != None: return True, application_link, tabs_count
+        print_lg("Not an Easy Apply job (easy_apply_only is on), skipping it.")
+        if pagination_element != None:
+            # Count it. This used to return before touching any counter, so a run where
+            # Easy Apply detection was broken summarised as 0/0/0/0 - "it found no jobs".
+            skip_count += 1
+            return True, application_link, tabs_count
     try:
-        wait.until(EC.element_to_be_clickable((By.XPATH, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3')]"))).click() # './/button[contains(span, "Apply") and not(span[contains(@class, "disabled")])]'
+        # The design-system button SIZE class this used to also require (artdeco-button--<n>)
+        # has nothing to do with applying and churns with every restyle, so it's gone.
+        wait.until(EC.element_to_be_clickable((By.XPATH, apply_button_xpath))).click()
         wait_span_click(driver, "Continue", 1, True, False)
         windows = driver.window_handles
         tabs_count = len(windows)
@@ -746,6 +991,28 @@ def external_apply(pagination_element: WebElement, job_id: str, job_link: str, r
         failed_count += 1
         return True, application_link, tabs_count
 
+
+
+# Easy Apply modal buttons. All of these are `type="button"`, so type is no help, and all of
+# them must be searched INSIDE the dialog: document-wide, "Next" also matches the search
+# results pagination control (aria-label "View next page").
+next_button_xpath = './/button[@aria-label="Continue to next step" or contains(normalize-space(.), "Next")]'
+review_button_xpath = './/button[@aria-label="Review your application" or normalize-space(.)="Review"]'
+submit_button_xpath = './/button[@aria-label="Submit application" or normalize-space(.)="Submit application"]'
+
+# Easy Apply detection strategies, tried in order, most stable signal first. The button also
+# still says "Easy Apply" in its aria-label - the widely repeated claim that LinkedIn dropped
+# the word is false - but its design-system classes churn, so no single locator carries this.
+# Whatever matches is clicked and then confirmed by the Easy Apply modal actually opening; a
+# new browser tab instead means the job was external.
+easy_apply_locators = [
+    ("apply button id", ".//button[@id='jobs-apply-button-id']"),
+    # ponytail: not seen in the captured DOM, kept as a cheap extra shot before the classes.
+    ("in-app apply URL flag", ".//a[contains(@href, 'openSDUIApplyFlow=true')]"),
+    ("aria-label", ".//button[contains(@class,'jobs-apply-button') and contains(@aria-label, 'Easy Apply')]"),
+    ("button label", ".//button[contains(@class,'jobs-apply-button')][.//span[contains(normalize-space(.), 'Easy Apply')]]"),
+    ("apply button", apply_button_xpath),
+]
 
 
 def follow_company(modal: WebDriver = driver) -> None:
@@ -827,10 +1094,43 @@ def submitted_jobs(job_id: str, title: str, company: str, work_location: str, wo
 
 
 
+# The "Save this application?" confirmation that the modal's Dismiss button raises.
+# `data-control-name` is the language-independent anchor; the text is the fallback.
+discard_button_xpath = ".//button[@data-control-name='discard_application_confirm_btn' or contains(normalize-space(.), 'Discard')]"
+
+def easy_apply_modal_is_open() -> bool:
+    '''True while an Easy Apply modal is still on screen and swallowing every click.'''
+    try: return any(m.is_displayed() for m in driver.find_elements(By.CLASS_NAME, "jobs-easy-apply-modal"))
+    except Exception: return False
+
 # Function to discard the job application
 def discard_job() -> None:
-    actions.send_keys(Keys.ESCAPE).perform()
-    wait_span_click(driver, 'Discard', 2)
+    '''
+    Close the Easy Apply modal and discard the draft.
+
+    ESCAPE alone does not reliably raise the confirmation, and a modal left open makes
+    every later click fail with "Other element would receive the click" - one failed
+    discard used to kill the whole run. So: click the real Dismiss button, wait out the
+    dialog animation (2s was too short), click Discard, and verify the modal is gone.
+    ESCAPE stays as the fallback.
+    '''
+    for dismiss in (lambda: try_xp(driver, ".//button[@data-test-modal-close-btn]"),
+                    lambda: actions.send_keys(Keys.ESCAPE).perform()):
+        try: dismiss()
+        except Exception as e: print_lg("Couldn't dismiss the application modal.", e)
+        wait_xp_click(driver, discard_button_xpath, 5)
+        if not easy_apply_modal_is_open(): return
+    print_lg("Warning: the Easy Apply modal is still open after trying to discard it.")
+
+
+def questions_are_stalled(previous_blocked: set | None) -> bool:
+    '''
+    Called after a pass of `answer_questions`: True when that pass answered nothing new and
+    required questions are still unanswered, so LinkedIn will never enable Next and the
+    loop can only spin until the attempt ceiling. Not guessing is correct, but it needs an
+    exit.
+    '''
+    return bool(unanswered_questions) and unanswered_questions == previous_blocked
 
 
 
@@ -863,10 +1163,15 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
                 # Find all job listings in current page
                 buffer(3)
-                job_listings = driver.find_elements(By.XPATH, "//li[@data-occludable-job-id]")  
-
-            
-                for job in job_listings:
+                job_index = 0
+                while True:
+                    # LinkedIn virtualises this list: off-screen <li>s aren't in the DOM yet and
+                    # rendered ones go stale as we scroll, so a single snapshot only ever gets
+                    # one screenful. Re-query each time instead of holding that snapshot.
+                    job_listings = driver.find_elements(By.XPATH, "//li[@data-occludable-job-id]")
+                    if job_index >= len(job_listings): break
+                    job = job_listings[job_index]
+                    job_index += 1
                     if keep_screen_awake: pyautogui.press('shiftright')
                     if current_count >= switch_number: break
                     print_lg("\n-@-\n")
@@ -966,57 +1271,49 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                             skills = "Error extracting skills"
 
                     uploaded = False
-                    # Detect whether this is an Easy Apply job, in three escalating checks.
-                    is_easy_apply = try_xp(driver, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3') and contains(@aria-label, 'Easy')]")
-                    # Check 2: an apply link carrying LinkedIn's in-app apply URL flag.
-                    if not is_easy_apply:
+                    # Is this an Easy Apply job? Try each locator in `easy_apply_locators` in
+                    # turn and confirm by the modal opening; a new browser tab means external.
+                    is_easy_apply = False
+                    for how, xpath in easy_apply_locators:
+                        apply_button = try_xp(driver, xpath, False)  # detect only, never click
+                        if not apply_button: continue
                         try:
-                            in_app_apply = driver.find_element(By.XPATH, ".//a[contains(@href, 'openSDUIApplyFlow=true')]")
-                            if in_app_apply:
-                                in_app_apply.click()
-                                is_easy_apply = True
-                                print_lg("Easy Apply detected from the in-app apply URL flag.")
-                        except:
-                            pass
-                    # Check 3: click a generic apply button; an Easy Apply modal means yes,
-                    # while a brand-new browser tab means it's an external application instead.
-                    if not is_easy_apply:
-                        try:
-                            apply_button = driver.find_element(By.XPATH, ".//button[contains(@class,'jobs-apply-button')]")
-                            if apply_button:
-                                tabs_open = len(driver.window_handles)
-                                apply_button.click()
-                                buffer(click_gap)
-                                if len(driver.window_handles) > tabs_open:
-                                    # A new tab opened -> external apply. Close it and return to LinkedIn.
-                                    driver.switch_to.window(driver.window_handles[-1])
-                                    if close_tabs and driver.current_window_handle != linkedIn_tab:
-                                        driver.close()
-                                    driver.switch_to.window(linkedIn_tab)
-                                    print_lg("A new tab opened - external application, skipping.")
-                                else:
-                                    try:
-                                        find_by_class(driver, "jobs-easy-apply-modal")
-                                        is_easy_apply = True
-                                        print_lg("Easy Apply detected from the modal that opened.")
-                                    except:
-                                        # No modal appeared; dismiss whatever popped up.
-                                        try: actions.send_keys(Keys.ESCAPE).perform()
-                                        except: pass
-                        except:
-                            pass
+                            tabs_open = len(driver.window_handles)
+                            apply_button.click()
+                            buffer(click_gap)
+                            if len(driver.window_handles) > tabs_open:
+                                # A new tab opened -> external apply. Close it and return to LinkedIn.
+                                driver.switch_to.window(driver.window_handles[-1])
+                                if close_tabs and driver.current_window_handle != linkedIn_tab:
+                                    driver.close()
+                                driver.switch_to.window(linkedIn_tab)
+                                print_lg(f"A new tab opened ({how}) - external application.")
+                                break
+                            find_by_class(driver, "jobs-easy-apply-modal", 3)
+                            is_easy_apply = True
+                            print_lg(f"Easy Apply detected ({how}).")
+                            break
+                        except Exception as e:
+                            print_lg(f"Easy Apply check '{how}' didn't pan out.", e)
+                            # Dismiss whatever popped up and let the next strategy try.
+                            try: actions.send_keys(Keys.ESCAPE).perform()
+                            except: pass
                     if is_easy_apply:
                         try: 
+                            # Bound before the try: the finally below scopes its clicks to the
+                            # modal, and an unbound name in there would replace the real failure.
+                            modal = driver
                             try:
                                 errored = ""
                                 modal = find_by_class(driver, "jobs-easy-apply-modal")
-                                wait_span_click(modal, "Next", 1)
+                                wait_xp_click(modal, next_button_xpath, 1)
                                 # if description != "Unknown":
                                 #     resume = create_custom_resume(description)
                                 resume = "Previous resume"
                                 next_button = True
                                 questions_list = set()
                                 next_counter = 0
+                                blocked_questions = None
                                 while next_button:
                                     next_counter += 1
                                     if next_counter >= 15: 
@@ -1030,38 +1327,77 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(modal, questions_list, work_location, job_description=description)
+                                    # `pause_at_failed_question` users want the manual prompt the
+                                    # counter above gives them, so only bail out when it is off.
+                                    if not pause_at_failed_question and questions_are_stalled(blocked_questions):
+                                        errored = "stuck"
+                                        raise UnansweredQuestions(
+                                            'Skipping "{}" - no answer in config/questions.py for:\n  {}'.format(
+                                                title, "\n  ".join(sorted(unanswered_questions))))
+                                    blocked_questions = set(unanswered_questions)
                                     if useNewResume and not uploaded: uploaded, resume = upload_resume(modal, default_resume_path)
-                                    try: next_button = modal.find_element(By.XPATH, './/span[normalize-space(.)="Review"]') 
-                                    except NoSuchElementException:  next_button = modal.find_element(By.XPATH, './/button[contains(span, "Next")]')
+                                    # Scoped to the dialog on purpose: a document-wide search
+                                    # for "Next" matches the search results PAGINATION control
+                                    # (aria-label "View next page") and paged away mid-application.
+                                    try: next_button = modal.find_element(By.XPATH, review_button_xpath)
+                                    except NoSuchElementException:  next_button = modal.find_element(By.XPATH, next_button_xpath)
                                     try: next_button.click()
                                     except ElementClickInterceptedException: break    # Happens when it tries to click Next button in About Company photos section
                                     buffer(click_gap)
 
                             except NoSuchElementException: errored = "nose"
                             finally:
+                                # Nothing in here may raise: an exception raised in a finally
+                                # REPLACES the pending one, which is why every failure used to be
+                                # logged as "Failed to click Submit application" with no cause.
+                                # Record the reason and raise it after the try instead.
+                                discard_reason = None
                                 if questions_list and errored != "stuck": 
                                     print_lg("Answered the following questions...", questions_list)
                                     print("\n\n" + "\n".join(str(question) for question in questions_list) + "\n\n")
-                                wait_span_click(driver, "Review", 1, scrollTop=True)
+                                wait_xp_click(modal, review_button_xpath, 1, scrollTop=True)
                                 cur_pause_before_submit = pause_before_submit
-                                if errored != "stuck" and cur_pause_before_submit:
+                                if errored == "stuck":
+                                    discard_reason = "Required questions left unanswered."
+                                elif stop_before_submit:
+                                    print_lg('"stop_before_submit" is on: reached the Review step with everything filled in. Discarding this application instead of submitting it.')
+                                    raise StoppedBeforeSubmit("Reached Review with everything filled in, then discarded because stop_before_submit is on.")
+                                elif errored != "stuck" and cur_pause_before_submit:
                                     decision = pyautogui.confirm('1. Please verify your information.\n2. If you edited something, please return to this final screen.\n3. DO NOT CLICK "Submit Application".\n\n\n\n\nYou can turn off "Pause before submit" setting in config.py\nTo TEMPORARILY disable pausing, click "Disable Pause"', "Confirm your information",["Disable Pause", "Discard Application", "Submit Application"])
-                                    if decision == "Discard Application": raise Exception("Job application discarded by user!")
-                                    pause_before_submit = False if "Disable Pause" == decision else True
+                                    if decision == "Discard Application": discard_reason = "Job application discarded by user!"
+                                    else: pause_before_submit = False if "Disable Pause" == decision else True
                                     # try_xp(modal, ".//span[normalize-space(.)='Review']")
-                                follow_company(modal)
-                                if wait_span_click(driver, "Submit application", 2, scrollTop=True): 
-                                    date_applied = datetime.now()
-                                    if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
-                                elif errored != "stuck" and cur_pause_before_submit and "Yes" in pyautogui.confirm("You submitted the application, didn't you 😒?", "Failed to find Submit Application!", ["Yes", "No"]):
-                                    date_applied = datetime.now()
-                                    wait_span_click(driver, "Done", 2)
-                                else:
-                                    print_lg("Since, Submit Application failed, discarding the job application...")
-                                    # if screenshot_name == "Not Available":  screenshot_name = screenshot(driver, job_id, "Failed to click Submit application")
-                                    # else:   screenshot_name = [screenshot_name, screenshot(driver, job_id, "Failed to click Submit application")]
-                                    if errored == "nose": raise Exception("Failed to click Submit application 😑")
+                                if not discard_reason:
+                                    follow_company(modal)
+                                    if wait_xp_click(modal, submit_button_xpath, 2, scrollTop=True): 
+                                        date_applied = datetime.now()
+                                        if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
+                                    elif errored != "stuck" and cur_pause_before_submit and "Yes" in pyautogui.confirm("You submitted the application, didn't you 😒?", "Failed to find Submit Application!", ["Yes", "No"]):
+                                        date_applied = datetime.now()
+                                        wait_span_click(driver, "Done", 2)
+                                    else:
+                                        print_lg("Since, Submit Application failed, discarding the job application...")
+                                        # if screenshot_name == "Not Available":  screenshot_name = screenshot(driver, job_id, "Failed to click Submit application")
+                                        # else:   screenshot_name = [screenshot_name, screenshot(driver, job_id, "Failed to click Submit application")]
+                                        if errored == "nose": discard_reason = "Failed to click Submit application 😑"
+                            # Outside the finally, so this only runs when no real exception is
+                            # already on its way up - it can't destroy the genuine cause any more.
+                            if discard_reason: raise Exception(discard_reason)
 
+                        except StoppedBeforeSubmit as e:
+                            # Not a failure: the dry run did what it was asked. Counting it as
+                            # failed made a perfectly good stop_before_submit run read as 0/0/all-failed.
+                            print_lg(str(e))
+                            skip_count += 1
+                            discard_job()
+                            continue
+
+                        except UnansweredQuestions as e:
+                            print_lg(str(e))
+                            print_lg("Add those answers to config/questions.py and re-run to apply to this job.")
+                            skip_count += 1
+                            discard_job()
+                            continue
 
                         except Exception as e:
                             print_lg("Failed to Easy apply!")
@@ -1095,7 +1431,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     print_lg("Couldn't find pagination element, probably at the end page of results!")
                     break
                 try:
-                    pagination_element.find_element(By.XPATH, f"//button[@aria-label='Page {current_page+1}']").click()
+                    pagination_element.find_element(By.XPATH, f".//button[@aria-label='Page {current_page+1}']").click()
                     print_lg(f"\n>-> Now on Page {current_page+1} \n")
                 except NoSuchElementException:
                     print_lg(f"\n>-> Didn't find Page {current_page+1}. Probably at the end page of results!\n")
@@ -1122,7 +1458,9 @@ def run(total_runs: int) -> int:
     print_lg(f"Currently looking for jobs posted within '{date_posted}' and sorting them by '{sort_by}'")
     apply_to_jobs(search_terms)
     print_lg("########################################################################################################################\n")
-    if not dailyEasyApplyLimitReached:
+    # Only wait between cycles when there is actually going to be another cycle. This used
+    # to run at the end of every single run, which reads as a 10 minute hang.
+    if run_non_stop and not dailyEasyApplyLimitReached:
         print_lg("Sleeping for 10 min...")
         sleep(300)
         print_lg("Few more min... Gonna start with in next 5 min...")

@@ -34,6 +34,7 @@ import importlib
 
 import config_schema
 from config import _overrides
+from modules import updater
 
 app = Flask(__name__)
 CORS(app)
@@ -218,10 +219,46 @@ def _terminate(proc) -> None:
             pass
 
 
+# The update bar is appended to the rendered page instead of being written into
+# control_panel.html, so that template stays a pure offline document.
+# ponytail: string append at </body>; move it into the template if it ever needs
+# to be more than a one-line banner.
+_UPDATE_BAR = '''
+<div id="updateBar" style="display:none;position:sticky;bottom:0;z-index:10;background:#fffbeb;
+     border-top:1px solid #dce1e8;padding:10px 16px;font:14px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1f2733">
+  <span id="updateText"></span>
+  <button id="updateBtn" style="margin-left:8px;padding:4px 12px;border:0;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer">Update now</button>
+</div>
+<script>
+(function () {
+    var bar = document.getElementById('updateBar');
+    var text = document.getElementById('updateText');
+    var btn = document.getElementById('updateBtn');
+    // Fired after the page is already interactive, so a slow or dead network
+    // delays nothing. A failed check simply leaves the bar hidden.
+    fetch('/api/update-check').then(function (r) { return r.json(); }).then(function (d) {
+        if (!d.update_available) return;
+        text.textContent = 'Update available: ' + d.current + ' -> ' + d.latest;
+        bar.style.display = 'block';
+    }).catch(function () {});
+    btn.addEventListener('click', function () {
+        btn.disabled = true;
+        text.textContent = 'Updating, please wait...';
+        fetch('/api/update', {method: 'POST'}).then(function (r) { return r.json(); }).then(function (d) {
+            text.textContent = d.ok ? 'Updated. Close this window and start the app again.'
+                                    : 'Update failed. ' + d.message;
+            btn.style.display = 'none';
+        }).catch(function (err) { text.textContent = 'Update failed. ' + err; btn.disabled = false; });
+    });
+})();
+</script>
+'''
+
+
 @app.route('/')
 def home():
-    """Serve the control panel single-page app."""
-    return render_template('control_panel.html')
+    """Serve the control panel single-page app, with the update bar appended."""
+    return render_template('control_panel.html').replace('</body>', _UPDATE_BAR + '</body>', 1)
 
 
 @app.route('/history')
@@ -438,6 +475,57 @@ def api_logs():
         return jsonify({"content": content, "next_offset": offset + len(data)})
     except OSError as err:
         return jsonify({"content": "", "next_offset": offset, "error": str(err)})
+
+
+# ===========================================================================
+# Update check (see modules/updater.py)
+# ===========================================================================
+def _freeze_config() -> None:
+    '''
+    Copy the settings the tool is using RIGHT NOW into user_config.json, before
+    an update rewrites the config/*.py files.
+
+    For control-panel users this is a no-op: their values are already in the
+    JSON. For someone who configured the old way by hand-editing config/*.py it
+    is what stops the update reverting them to the shipped defaults, because
+    config/_overrides.py re-applies the JSON over whatever `git pull` writes.
+
+    ponytail: this pins every schema key to today's value, so a later change to
+    a shipped default stops reaching that user. Acceptable - a hand-edited file
+    was already pinned. Freeze only the keys that differ from HEAD if it bites.
+    '''
+    current = _overrides.load_user_config()
+    for section, values in _effective_config().items():
+        if not isinstance(current.get(section), dict):
+            current[section] = {}
+        for key, value in values.items():
+            current[section].setdefault(key, value)
+    with open(USER_CONFIG_PATH, "w", encoding="utf-8") as file:
+        json.dump(current, file, indent=2, ensure_ascii=False)
+
+
+@app.route('/api/update-check', methods=['GET'])
+def api_update_check():
+    '''
+    The local version vs the published one. Reports "no update" rather than an
+    error when the check fails, so being offline is invisible to the user. The
+    UI calls this after the page is interactive, so it never delays startup.
+    '''
+    latest = updater.latest_version()
+    current = updater.current_version()
+    return jsonify({"current": current, "latest": latest,
+                    "update_available": updater.is_newer(latest, current)})
+
+
+@app.route('/api/update', methods=['POST'])
+def api_update():
+    '''Saves the live settings, then fast-forwards this clone to the newest commit.'''
+    try:
+        _freeze_config()
+    except OSError as err:
+        return jsonify({"ok": False,
+                        "message": "Could not save your settings first: %s" % err}), 500
+    return jsonify(updater.self_update())
 
 
 def _resolve_port(preferred: int = 5000) -> int:

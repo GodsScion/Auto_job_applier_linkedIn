@@ -51,13 +51,24 @@ def make_directories(paths: list[str]) -> None:
 
 
 def get_default_temp_profile() -> str:
+    '''
+    Absolute path of the throwaway Chrome profile folder, created if it doesn't exist.
+    Returns a **bare path** - callers add the `--user-data-dir=` flag themselves.
+    '''
     # Thanks to https://github.com/vinodbavage31 for suggestion!
     home = pathlib.Path.home()
     if sys.platform.startswith('win'):
-        return "--user-data-dir=C:\\temp\\auto-job-apply-profile"
+        path = pathlib.Path("C:\\temp\\auto-job-apply-profile")
     elif sys.platform.startswith('linux'):
-        return str(home / ".auto-job-apply-profile")
-    return str(home / "Library" / "Application Support" / "Google" / "Chrome" / "auto-job-apply-profile")
+        path = home / ".auto-job-apply-profile"
+    else:
+        path = home / "Library" / "Application Support" / "Google" / "Chrome" / "auto-job-apply-profile"
+    try:
+        # A missing parent is the other cause of "Chrome cannot read and write to its data directory".
+        path.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        print(f'Could not create the Chrome profile directory "{path}":', e)
+    return str(path)
 
 
 def find_default_profile_directory() -> str | None:
@@ -157,7 +168,28 @@ def buffer(speed: int=0) -> None:
         return sleep(randint(10,18)*0.1)
     else:
         return sleep(randint(18,round(speed)*10)*0.1)
-    
+
+
+def human_type(target, text: str) -> None:
+    '''
+    Types `text` one character at a time, with a human-ish gap between key strokes,
+    instead of pasting the whole string in a single `send_keys` call.
+    * `target` can be a Selenium `WebElement` or an `ActionChains` (anything with `.perform`).
+    * Does nothing if `text` is empty or `None`.
+    * Roughly 1 key in 40 gets a longer "thinking" pause.
+    Don't use it for file paths sent to `<input type="file">` or for `Keys.*` chords.
+    '''
+    if not text:
+        return
+    # ActionChains only queues keys, it needs a perform() to actually send them. Its
+    # perform() empties the queue, so sending per character doesn't repeat earlier ones.
+    perform = getattr(target, "perform", None)
+    for char in text:
+        target.send_keys(char)
+        if perform: perform()
+        sleep(randint(4,18)*0.01)       # ~40-180ms, roughly 60-150 WPM with jitter
+        if randint(1,40) == 1: buffer(1)
+
 
 def manual_login_retry(is_logged_in: callable, limit: int = 2) -> None:
     '''

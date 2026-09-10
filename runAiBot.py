@@ -46,6 +46,9 @@ from modules.open_chrome import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
+# Unconditional, unlike `connections` below: the local layer is stdlib + config only, and
+# the answer file it reads has to work with AI switched off.
+from modules.ai import cache, local
 
 if use_AI:
     from modules.ai.connections import create_ai_client, extract_skills, answer_question, close_ai_client
@@ -689,6 +692,54 @@ def answer_common_questions(label: str, answer: str | None) -> str | None:
     return answer
 
 
+# ----------------------------------------------------------------------------------- #
+# The AI answer layer, and the answer file it shares with the user.
+#
+# TIER 0 is the config ladder inside `answer_questions` below. Nothing here is consulted
+# until that ladder has come up empty, which is the whole cost model: a question
+# config/questions.py already answers must never cost a model call.
+# ----------------------------------------------------------------------------------- #
+
+# Built ONCE per run, never per question: it is the static prefix of every prompt, so
+# rebuilding it would cost LM Studio's prompt-prefix cache more than it could ever save.
+FACTS = local.profile_block(local.default_facts())
+
+
+def _ask_model(*args):
+    '''
+    The local model, or nothing at all when `use_AI` is off.
+
+    Gating the MODEL and not the answer file is the point: a value the user typed into
+    the answer file himself is his own configuration, not a guess, so it is honoured
+    either way. With AI off the layer is a lookup table and never opens a socket.
+    '''
+    return local._chat(*args) if use_AI else None
+
+
+def ai_option(question: str, option_texts: list[str]) -> int | None:
+    '''
+    Index of the option to pick, or None to leave the control untouched.
+
+    Remembered answer or model proposal, both go through `match_answer_to_option`. So a
+    hand-typed answer that matches no real option is dropped exactly like an invented
+    one - the answer file is an input to validate, not a store to trust.
+    '''
+    return local.answer_select(question, option_texts, match_answer_to_option, FACTS, _ask_model)
+
+
+def remember_unanswered(question: str, kind: str, options: list[str] | None = None) -> None:
+    '''
+    Put a question nothing could answer into the answer file.
+
+    Without this an unanswerable question blocked the job, and blocked the same job again
+    on every future run, forever - the summary at the end of a run scrolled past and was
+    gone. Answer it once in the file and it is answered from then on.
+    '''
+    if cache.record(question, kind, options):
+        print_lg(f'Recorded "{question}" in {cache.PATH} - fill in its "answer" there and '
+                 'the bot will use it on the next run.')
+
+
 # Function to answer the questions for Easy Apply
 def answer_questions(modal: WebElement, questions_list: set, work_location: str, job_description: str | None = None ) -> set:
     # Get all questions from the page
@@ -768,6 +819,8 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 except NoSuchElementException:
                     # The exact text isn't an option; map our answer onto the nearest option.
                     matched = match_answer_to_option(answer, optionsText)
+                    # Only now, with tier 0 empty-handed, the answer file and then the model.
+                    if matched is None: matched = ai_option(label_org, optionsText)
                     if matched is not None:
                         select.select_by_visible_text(optionsText[matched])
                         answer = optionsText[matched]
@@ -779,6 +832,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         answer = prev_answer
                         randomly_answered_questions.add((f'{label_org} [ {options} ]', "select"))
                         unanswered_questions.add(f'{label_org} [ {options} ]')
+                        remember_unanswered(label_org, "select", optionsText)
             else: answer = prev_answer
             questions_list.add((f'{label_org} [ {options} ]', answer, "select", prev_answer))
             continue
@@ -796,6 +850,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
             # a Yes on a real application.
             answer = None
             label = label_org.lower()
+            question_org = label_org        # before the option list is appended below
 
             label_org += ' [ '
             options = radio.find_elements(By.TAG_NAME, 'input')
@@ -822,6 +877,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     actions.move_to_element(foundOption).click().perform()
                 else:
                     matched = match_answer_to_option(answer, option_texts)
+                    if matched is None: matched = ai_option(question_org, option_texts)
                     if matched is None:
                         # Never guess: `options[0]` clicked whatever LinkedIn rendered first
                         # and submitted it as a real answer - the radio twin of the
@@ -831,6 +887,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         answer = prev_answer
                         randomly_answered_questions.add((f'{label_org} ]',"radio"))
                         unanswered_questions.add(f'{label_org} ]')
+                        remember_unanswered(question_org, "radio", option_texts)
                     else:
                         actions.move_to_element(options[matched]).click().perform()
                         answer = options_labels[matched]
@@ -916,8 +973,10 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 elif label_has(label, 'country'): answer = country
                 else: answer = answer_common_questions(label,answer)
                 if answer == "":
-                    ai_answer = ""
-                    if use_AI and aiClient:
+                    # Answer file, then the local model, then the cloud client: cheapest,
+                    # most private and most likely to be the user's own answer first.
+                    ai_answer = local.answer_text(label_org, FACTS, _ask_model)
+                    if not ai_answer and use_AI and aiClient:
                         try:
                             ai_answer = answer_question(aiClient, label_org, question_type="text", job_description=job_description, user_information_all=user_information_all)
                         except Exception as e:
@@ -934,6 +993,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         print_lg(f'No answer for the text question "{label_org}". Leaving it empty - add it to config/questions.py.')
                         randomly_answered_questions.add((label_org, "text"))
                         unanswered_questions.add(label_org)
+                        remember_unanswered(label_org, "text")
                 # Only touch the control when we actually determined an answer. On the
                 # never-guess path above `answer` is still "", and clear()+human_type("")
                 # wipes whatever was there - LinkedIn's own prefill of the email, phone or
@@ -961,8 +1021,8 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 if label_has(label, 'summary'): answer = linkedin_summary
                 elif label_has(label, 'cover'): answer = cover_letter
                 if answer == "":
-                    ai_answer = ""
-                    if use_AI and aiClient:
+                    ai_answer = local.answer_text(label_org, FACTS, _ask_model)
+                    if not ai_answer and use_AI and aiClient:
                         try:
                             ai_answer = answer_question(aiClient, label_org, question_type="textarea", job_description=job_description, user_information_all=user_information_all)
                         except Exception as e:
@@ -973,6 +1033,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     else:
                         randomly_answered_questions.add((label_org, "textarea"))
                         unanswered_questions.add(label_org)
+                        remember_unanswered(label_org, "textarea")
                 # Both of these sat at indent 12, OUTSIDE the gate above. So a textarea the
                 # user had already filled in was emptied even with overwrite_previous_answers
                 # off, and an unrecognised question - which reports itself and answers "" -
@@ -1009,6 +1070,10 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     blocked, f'is an attestation or consent ("{term}")' if term else 'cannot be classified'))
                 randomly_answered_questions.add((blocked, "checkbox"))
                 unanswered_questions.add(blocked)
+                # ponytail: recorded so the user can SEE which box blocked the job, but not
+                # read back - ticking a legal attestation out of a JSON file needs its own
+                # decision, not a truthiness check. Add the read-back if he asks for it.
+                remember_unanswered(blocked, "checkbox")
             questions_list.add((f'{label} ([X] {answer})', checked, "checkbox", prev_answer))
             continue
 

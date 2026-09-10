@@ -11,8 +11,10 @@ job into free work. Plain JSON at the project root, stdlib only.
 
 The file is meant to be HAND-EDITED, which is why keys carry the readable
 question and not just a digest, and why a "no truthful answer" result is stored
-as `null` rather than dropped - the null entries are the worklist of questions
-worth answering yourself in config/questions.py.
+as `null` rather than dropped. Those null entries are the worklist: `record()`
+writes one for every question the bot could not answer, with its control type
+and options, and typing an answer in beside it answers that question on the next
+run with no model call. It is where the user teaches the bot.
 
 It holds the user's own answers, so it is gitignored and written 0600.
 '''
@@ -62,7 +64,10 @@ def _load() -> dict:
 
 def get(question: str, options=None):
     '''Stored answer, or `MISS`. A stored `None` is a real result: asked, no truthful answer.'''
-    return _load().get(key(question, options), MISS)
+    entry = _load().get(key(question, options), MISS)
+    # A question `record()`ed for the user carries its type and options alongside the
+    # answer, so the file shows him WHAT he is answering. Everything else is a bare value.
+    return entry.get("answer") if isinstance(entry, dict) else entry
 
 
 def put(question: str, answer, options=None) -> None:
@@ -77,3 +82,18 @@ def put(question: str, answer, options=None) -> None:
         os.replace(tmp, PATH)
     except Exception:
         pass                                # a cache we cannot write is a slow bot, not a broken one
+
+
+def record(question: str, kind: str, options=None) -> bool:
+    '''
+    Add a question nothing could answer to the file as a worklist entry, and say whether
+    it was new. Type and options ride along because a bare question is not enough to
+    answer one by hand - "Yes" is the wrong shape for a "0-1 / 2-5 / 5+" dropdown.
+
+    An entry that already carries an answer is left alone: the user's own edit is never
+    overwritten by a later run that got blocked on the same question.
+    '''
+    if get(question, options) not in (MISS, None):
+        return False
+    put(question, {"answer": None, "type": kind, "options": list(options or [])}, options)
+    return True

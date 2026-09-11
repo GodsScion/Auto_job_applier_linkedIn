@@ -84,3 +84,80 @@ def test_probe_never_raises_and_bounds_its_own_wait(monkeypatch):
 def test_probe_finds_the_first_server_that_answers(monkeypatch):
     _urlopen(monkeypatch, lambda url, timeout=None: _FakeResponse())
     assert local.local_server_running() == local.LOCAL_SERVERS[0]
+
+
+# ------------------------------- the two gates ------------------------------
+@pytest.fixture
+def bot(monkeypatch):
+    import runAiBot
+    monkeypatch.setattr(runAiBot, "use_AI", False)
+    monkeypatch.setattr(runAiBot, "llm_api_key", "not-needed")
+    monkeypatch.setattr(runAiBot, "show_ai_suggestion", True)
+    monkeypatch.setattr(runAiBot, "interactive_session", True)
+    shown = []
+    monkeypatch.setattr(runAiBot.pyautogui, "alert", lambda *a, **k: shown.append(a))
+    return runAiBot, shown
+
+
+def test_suggestion_is_shown_at_startup(bot, monkeypatch):
+    runAiBot, shown = bot
+    _urlopen(monkeypatch, _refused)
+    runAiBot.suggest_ai()
+    assert len(shown) == 1 and "https://lmstudio.ai" in shown[0][0]
+
+
+def test_setting_suppresses_it_entirely(bot, monkeypatch):
+    runAiBot, shown = bot
+    monkeypatch.setattr(runAiBot, "show_ai_suggestion", False)
+    _urlopen(monkeypatch, _must_not_run)             # off means the probe never runs
+    runAiBot.suggest_ai()
+    assert shown == []
+
+
+def test_it_cannot_fire_in_a_non_interactive_run(bot, monkeypatch):
+    '''A headless run and the control panel's Popen must not stop on a modal dialog.'''
+    runAiBot, shown = bot
+    monkeypatch.setattr(runAiBot, "interactive_session", False)
+    _urlopen(monkeypatch, _must_not_run)             # nor pay a second of sockets for it
+    runAiBot.suggest_ai()
+    assert shown == []
+
+
+def test_a_piped_run_cannot_reach_a_modal_at_all():
+    '''
+    The backstop behind the gate above, proved the only way that means anything: a
+    real child process with stdout on a pipe - which is exactly how app.py Popens the
+    bot. `interactive_session` must come out False there, and `pyautogui.alert` must
+    already be the no-op print, so a dialog cannot block a run nobody can click.
+    The subprocess timeout is the assertion: a modal would never return.
+    '''
+    import subprocess
+    import sys
+    probe = ("import runAiBot, pyautogui;"
+             "print(runAiBot.interactive_session, pyautogui.alert('t', 'x', 'ok'))")
+    out = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True,
+                         timeout=120, cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    assert out.returncode == 0, out.stderr
+    assert out.stdout.strip().endswith("False None")
+
+
+# ------------------------------- the control panel --------------------------
+def _panel_config(monkeypatch, use_ai=False, key="not-needed", show=True):
+    '''Pin the effective config, so the test does not read the developer's own.'''
+    import app
+    monkeypatch.setattr(app, "_effective_config",
+                        lambda: {"secrets": {"use_AI": use_ai, "llm_api_key": key},
+                                 "settings": {"show_ai_suggestion": show}})
+
+
+def test_panel_endpoint_reports_the_state(client, monkeypatch):
+    _panel_config(monkeypatch)
+    _urlopen(monkeypatch, lambda url, timeout=None: _FakeResponse())
+    body = client.get("/api/ai-suggestion").get_json()
+    assert body["state"] == "ready" and "LM Studio" in body["message"]
+
+
+def test_panel_endpoint_is_silent_when_the_setting_is_off(client, monkeypatch):
+    _panel_config(monkeypatch, show=False)
+    _urlopen(monkeypatch, _must_not_run)
+    assert client.get("/api/ai-suggestion").get_json() == {}

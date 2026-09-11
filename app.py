@@ -35,6 +35,7 @@ from types import ModuleType
 import config_schema
 from config import _overrides
 from modules import updater
+from modules.ai import local
 
 app = Flask(__name__)
 
@@ -428,6 +429,24 @@ def api_save_config():
         return jsonify({"error": f"Could not save settings: {err}"}), 500
 
     return jsonify(_redacted(current))
+
+
+@app.route('/api/ai-suggestion', methods=['GET'])
+def api_ai_suggestion():
+    '''
+    `{state, message}` for the panel's "you could be using AI" banner, or `{}` when
+    there is nothing to say or the user turned the tip off.
+
+    Reads the EFFECTIVE config rather than config.settings: _load_defaults() reloaded
+    those modules with overrides disabled, so their globals are the pristine defaults
+    and would ignore the user's own saved value.
+    '''
+    config = _effective_config()
+    if not config["settings"].get("show_ai_suggestion", True):
+        return jsonify({})
+    found = local.ai_suggestion(bool(config["secrets"].get("use_AI")),
+                                str(config["secrets"].get("llm_api_key") or ""))
+    return jsonify({"state": found[0], "message": found[1]} if found else {})
 
 
 @app.route('/api/run', methods=['POST'])

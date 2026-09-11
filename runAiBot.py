@@ -37,7 +37,7 @@ from selenium.common.exceptions import NoSuchElementException, ElementClickInter
 from config.personals import *
 from config.questions import *
 from config.search import *
-from config.secrets import use_AI, username, password, ai_provider
+from config.secrets import use_AI, username, password, ai_provider, llm_api_key
 from config.settings import *
 
 from modules.open_chrome import *
@@ -1623,8 +1623,28 @@ def run(total_runs: int) -> int:
 
 linkedIn_tab = False
 
+
+def suggest_ai() -> None:
+    '''
+    One dialog at startup about what AI would answer and how to get it for free.
+
+    Both gates matter. `interactive_session` is already False for a headless run and
+    for the control panel's Popen, where `pyautogui.alert` is a no-op print - checking
+    it HERE means such a run also skips the probe, so it costs nothing rather than a
+    second of sockets for a dialog nobody will see. `show_ai_suggestion` is the
+    permanent off switch, and it is checked before the probe for the same reason.
+    '''
+    if not (show_ai_suggestion and interactive_session):
+        return
+    found = local.ai_suggestion(use_AI, llm_api_key)
+    if found:
+        pyautogui.alert(found[1], "AI is on, but nothing is answering" if found[0] == "broken"
+                        else "You could be using AI", "Okay")
+
+
 def main() -> None:
     pyautogui.alert("Please consider sponsoring this project at:\n\nhttps://github.com/sponsors/GodsScion\n\n", "Support the project", "Okay")
+    suggest_ai()
     total_runs = 1
     try:
         global linkedIn_tab, tabs_count, useNewResume, aiClient, options, driver, actions, wait

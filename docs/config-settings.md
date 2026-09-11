@@ -40,6 +40,7 @@ Behaviour of the tool itself, rather than what it says in an application. Mostly
 | `keep_screen_awake` | `True` | Keep the screen active and stop the machine sleeping. Temporarily deactivates while a dialog box is up (pause before submit, help needed on a question). The alternative is to set your OS sleep settings to Never |
 | `auto_manage_driver` | `True` | Download and match the right Chrome driver automatically. If `False`, install a matching ChromeDriver yourself — see [install step 5](install.md#manual-install) |
 | `showAiErrorAlerts` | `False` | Alert on errors from the AI API connection |
+| `show_ai_suggestion` | `True` | Show a one-time tip at startup when you are not using AI, explaining what it answers for you and how to run a model locally for free. Set to `False` to never see it again |
 
 ## Dry runs: `stop_before_submit`
 

@@ -246,3 +246,67 @@ def score_fit(job_description: str, facts: str, ask=_chat):
     if not isinstance(score, int) or isinstance(score, bool) or not 0 <= score <= 100:
         return None
     return score, str(result.get("r") or "").strip()
+
+
+# --------------------------------------------------------------------------- #
+# Startup nudge.  Most users never switch AI on because they assume it costs
+# money, and a local model does not. Shown once per run and by the control panel.
+# --------------------------------------------------------------------------- #
+# Both speak the OpenAI-compatible /v1 API, so one probe shape covers the pair.
+LOCAL_SERVERS = (("LM Studio", "http://127.0.0.1:1234/v1"),
+                 ("Ollama", "http://127.0.0.1:11434/v1"))
+
+_READY = ('{name} is already running on this computer, but "Use AI" is switched off, so '
+          'the tool is not using it.\n\n'
+          'Turn "Use AI" on (use_AI = True in config/secrets.py) and set "Local AI server '
+          'URL" to {url}. It then answers the application questions your config does not '
+          'cover, and it costs nothing - the model runs on your own machine.')
+
+_OFF = ('AI is switched off, so the tool can only answer the application questions your '
+        'config already covers. Anything else is left blank and reported.\n\n'
+        'If the worry is cost, it does not have to cost anything. Install LM Studio '
+        '(https://lmstudio.ai) or Ollama (https://ollama.com), download a small model - a '
+        '4B-class one is plenty and runs on a normal laptop - and turn "Use AI" on.')
+
+_BROKEN = ('"Use AI" is on, but no local model server answered and no API key is set, so '
+           'every question your config does not cover will be left unanswered.\n\n'
+           'Start LM Studio (https://lmstudio.ai) or Ollama (https://ollama.com) and point '
+           '"Local AI server URL" at it, or paste a real key into "AI API key".')
+
+
+def local_server_running(timeout: float = 0.5):
+    '''
+    `(name, base url)` of the first local model server that answers, or None.
+
+    Runs on the startup path, so it NEVER raises and never costs more than
+    `timeout` per port: a port nothing is listening on refuses immediately, and
+    the timeout caps a firewalled or black-holed one. Two ports, ~1s worst case.
+    '''
+    for name, url in LOCAL_SERVERS:
+        try:
+            urllib.request.urlopen(url + "/models", timeout=timeout).close()
+            return name, url
+        except Exception:
+            pass                    # not there, not ours, or too slow to be worth waiting on
+    return None
+
+
+def ai_suggestion(use_ai: bool, api_key: str = "", probe=local_server_running):
+    '''
+    `(state, message)` for the "you could be using AI" nudge, or None when there is
+    nothing worth saying. `probe` is injected so tests never open a socket.
+
+      "ready"   a local server is up and `use_AI` is simply off - one flip away.
+      "off"     nothing configured at all, and it could be free.
+      "broken"  `use_AI` is on but nothing answers, so answers silently fall through.
+
+    A configured API key with `use_AI` off says nothing: that user already knows what
+    AI costs and turned it off on purpose. The pitch here is only that it can be free.
+    '''
+    server = probe()
+    has_key = (api_key or "").strip().lower() not in ("", "not-needed")
+    if use_ai:
+        return None if (server or has_key) else ("broken", _BROKEN)
+    if server:
+        return "ready", _READY.format(name=server[0], url=server[1])
+    return None if has_key else ("off", _OFF)

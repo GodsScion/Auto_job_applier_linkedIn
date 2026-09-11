@@ -242,6 +242,13 @@
     <nav id="tabs" class="wrap"></nav>
 
     <main class="wrap">
+        <div class="note" id="aiBanner" style="display:none">
+            <span id="aiBannerText" style="white-space:pre-line"></span>
+            <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+                <button class="btn" id="aiBannerFix" type="button" style="display:none">Turn "Use AI" on for me</button>
+                <button class="btn secondary" id="aiBannerHide" type="button">Dismiss</button>
+            </div>
+        </div>
         <div id="panels"></div>
     </main>
 
@@ -353,7 +360,7 @@
                 return li;
             }
             if (field.type === 'number') {
-                var nu = el('input', { type: 'number', id: id, step: 'any' });
+                var nu = el('input', { type: 'number', id: id, step: field.step || 'any' });
                 nu.value = asText(value);
                 return nu;
             }
@@ -763,8 +770,43 @@
             loadAll();
         });
 
+        // ---- "you could be using AI" banner ----
+        // Fetched after the page is interactive, exactly like the update bar: the probe
+        // behind it can take a second, and a failed check just leaves the banner hidden.
+        // Dismissal is one localStorage flag on purpose - the permanent off switch is
+        // already a real setting, "Show ai suggestion" on the Run settings tab.
+        function showAiSuggestion() {
+            try { if (localStorage.getItem('aiSuggestionDismissed')) return; } catch (e) {}
+            fetch('/api/ai-suggestion').then(function (r) { return r.json(); }).then(function (d) {
+                if (!d.message) return;
+                document.getElementById('aiBannerText').textContent = d.message;
+                document.getElementById('aiBanner').style.display = 'block';
+                if (d.state !== 'ready') return;
+                // The one state where the panel can just do it: the server is already
+                // there, so flip the checkbox and put the user in front of it. Saving
+                // stays their click - this never writes config behind their back.
+                var fix = document.getElementById('aiBannerFix');
+                fix.style.display = '';
+                fix.addEventListener('click', function () {
+                    var cb = document.getElementById('f__secrets__use_AI');
+                    if (!cb) return;
+                    showTab('Account');
+                    cb.checked = true;
+                    applyAiState();
+                    cb.scrollIntoView({ block: 'center' });
+                    document.getElementById('saveMsg').textContent = '"Use AI" is now on. Click Save to keep it.';
+                });
+            }).catch(function () {});
+        }
+
+        document.getElementById('aiBannerHide').addEventListener('click', function () {
+            document.getElementById('aiBanner').style.display = 'none';
+            try { localStorage.setItem('aiSuggestionDismissed', '1'); } catch (e) {}
+        });
+
         loadAll();
         pollLoop();
+        showAiSuggestion();
     </script>
 </body>
 </html>

@@ -6,8 +6,9 @@ to change it, and they work together:
 - **The control panel** (`python app.py`, or the `start.*` launcher) — a local web page
   with the common settings laid out in tabs: **Account, Profile, Search, Filters, Run
   settings**. What you save there is written to `user_config.json` at the project root.
-- **Editing `config/*.py` directly** — the classic route, and the only route for the
-  handful of settings the control panel does not expose.
+- **Editing `config/*.py` directly** — the classic route, and still the fullest one: the
+  panel builds its own fields by reading these files, so the comments in them are the
+  same help text it shows you.
 
 `user_config.json` is applied *over* the defaults in `config/*.py`, and only for names that
 already exist there — so the panel can never introduce a setting the code does not know
@@ -43,12 +44,14 @@ shows your Applied Jobs history.
 
 ## Not everything is in the control panel
 
-These are set by editing the `.py` file, and have no control-panel field:
+One setting is set by editing the `.py` file and has no control-panel field:
 
-| Setting | File | Page |
+| Setting | File | Why |
 |---|---|---|
-| `stop_before_submit` | `config/settings.py` | [Settings](config-settings.md#dry-runs-stop_before_submit) |
-| `legally_authorized` | `config/questions.py` | [Questions](config-questions.md#work-authorization) |
+| `llm_temperature` | `config/secrets.py` | Its default is `None`, meaning "leave it to the model". No form control says "unset", and the panel would have to invent a number |
+
+Everything else in `config/*.py` has a field. The panel derives them from these files, so
+adding a setting to a `.py` file is all it takes for one to appear.
 
 ---
 

@@ -40,6 +40,20 @@ def log_records():
     logger.setLevel(previous_level)
 
 
+@pytest.fixture(autouse=True)
+def isolated_answer_file(tmp_path, monkeypatch):
+    '''
+    The answer file is read by the question branches now, so a developer who has actually
+    run the bot has real answers sitting at the project root. Without this every test that
+    drives `answer_questions` would be graded against his cache instead of the code, and
+    would write null entries into it. Every test gets an empty one.
+    '''
+    from modules.ai import cache, local
+    monkeypatch.setattr(cache, "PATH", str(tmp_path / "answers.json"))
+    monkeypatch.setattr(cache, "_data", None)
+    monkeypatch.setattr(local, "_down", False)      # the short-circuit is per-run, not per-suite
+
+
 @pytest.fixture
 def client():
     '''Flask test client for the local control panel (app.py).'''

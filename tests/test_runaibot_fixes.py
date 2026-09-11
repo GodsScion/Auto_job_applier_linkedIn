@@ -9,8 +9,6 @@ License: MIT  (https://opensource.org/license/mit)
 '''
 
 import os
-import sys
-import types
 
 import pytest
 from selenium.common.exceptions import NoSuchElementException
@@ -18,10 +16,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 @pytest.fixture(scope="module")
 def bot():
-    '''Import runAiBot with a stubbed browser session, so importing it never opens Chrome.'''
-    fake_chrome = types.ModuleType("modules.open_chrome")
-    fake_chrome.options = fake_chrome.driver = fake_chrome.actions = fake_chrome.wait = None
-    sys.modules["modules.open_chrome"] = fake_chrome
+    '''runAiBot. Importing it opens no browser: the launch lives in open_chrome.start_browser().'''
     import runAiBot
     return runAiBot
 
@@ -64,7 +59,7 @@ class FakeElement:
 def test_textarea_question_without_an_earlier_text_input(bot, monkeypatch):
     '''A cover-letter textarea used to read do_actions, which only the text branch set.'''
     typed = []
-    monkeypatch.setattr(bot, "human_type", lambda target, text: typed.append((target, text)), raising=False)
+    monkeypatch.setattr(bot, "human_type", lambda target, text: typed.append((target, text)))
     monkeypatch.setattr(bot, "print_lg", lambda *a, **k: None)
 
     textarea = FakeElement()
@@ -83,7 +78,7 @@ def test_textarea_question_without_an_earlier_text_input(bot, monkeypatch):
 
 def test_text_question_is_typed_through_human_type(bot, monkeypatch):
     typed = []
-    monkeypatch.setattr(bot, "human_type", lambda target, text: typed.append((target, text)), raising=False)
+    monkeypatch.setattr(bot, "human_type", lambda target, text: typed.append((target, text)))
     monkeypatch.setattr(bot, "print_lg", lambda *a, **k: None)
 
     text_input = FakeElement()

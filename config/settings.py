@@ -10,8 +10,6 @@ License:    MIT License
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 Support me: https://github.com/sponsors/GodsScion
-
-version:    26.01.20.5.08
 '''
 
 
@@ -19,7 +17,7 @@ version:    26.01.20.5.08
 
 # >>>>>>>>>>> LinkedIn Settings <<<<<<<<<<<
 
-# Keep the External Application tabs open?
+# Close the tabs opened for applications that continue on the employer's own site?
 close_tabs = False                  # True or False, Note: True or False are case-sensitive
 '''
 Note: RECOMMENDED TO LEAVE IT AS `True`, if you set it `False`, be sure to CLOSE ALL TABS BEFORE CLOSING THE BROWSER!!!
@@ -40,8 +38,11 @@ run_non_stop = False                # True or False, Note: True or False are cas
 '''
 Note: Will be treated as False if `run_in_background = True`
 '''
+# While running non-stop, alternate the "Sort by" filter between runs.
 alternate_sortby = True             # True or False, Note: True or False are case-sensitive
+# While running non-stop, cycle the "Date posted" filter between runs.
 cycle_date_posted = True            # True or False, Note: True or False are case-sensitive
+# Stop cycling "Date posted" once it reaches "Past 24 hours" instead of starting over.
 stop_date_cycle_at_24hr = True      # True or False, Note: True or False are case-sensitive
 
 
@@ -61,7 +62,9 @@ generated_resume_path = "all resumes/" # (In Development)
 
 # Directory and name of the files where history of applied jobs is saved (Sentence after the last "/" will be considered as the file name).
 file_name = "all excels/all_applied_applications_history.csv"
+# Same, for the applications that failed part way through.
 failed_file_name = "all excels/all_failed_applications_history.csv"
+# Folder the run logs are written to.
 logs_folder_path = "logs/"
 
 # How much detail to write to logs/log.txt and print while the tool runs.
@@ -97,6 +100,10 @@ auto_manage_driver = True          # True or False, Note: True or False are case
 # Do you want to get alerts on errors related to AI API connection?
 showAiErrorAlerts = False            # True or False, Note: True or False are case-sensitive
 
+# Show a one-time tip at startup if you are not using AI, explaining what it answers for
+# you and how to run a model on your own computer for free. Turn this off to never see it.
+show_ai_suggestion = True           # True or False, Note: True or False are case-sensitive
+
 
 
 
@@ -113,7 +120,7 @@ THANK YOU for using my tool 😊! Wishing you the best in your job hunt 🙌🏻
 
 Sharing is caring! If you found this tool helpful, please share it with your peers 🥺. Your support keeps this project alive.
 
-Support my work on <PATREON_LINK>. Together, we can help more job seekers.
+Support my work at https://github.com/sponsors/GodsScion. Together, we can help more job seekers.
 
 As an independent developer, I pour my heart and soul into creating tools like this, driven by the genuine desire to make a positive impact.
 

@@ -10,20 +10,21 @@ License:    MIT License
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 Support me: https://github.com/sponsors/GodsScion
-
-version:    24.12.3.10.30
 '''
 
 
 ###################################################### CONFIGURE YOUR TOOLS HERE ######################################################
 
 
-# Login Credentials for LinkedIn (Optional)
+# The email you sign in to LinkedIn with. Leave BOTH of these at the example values to
+# skip the automatic login and sign in by hand in the window the tool opens. They cannot
+# be left blank - a value shorter than 5 characters is rejected at startup.
 username = "username@example.com"       # Enter your username in the quotes
+# Your LinkedIn password. It never leaves this computer.
 password = "example_password"           # Enter your password in the quotes
 
 
-## Artificial Intelligence (optional)
+# >>>>>>>>>>> Artificial Intelligence (optional) <<<<<<<<<<<
 # Master switch. Turn AI on to let the tool draft answers to application questions
 # and pull the required skills out of job descriptions. It needs either a paid API
 # key or a local model server, so it stays off by default.
@@ -59,6 +60,14 @@ llm_api_url = "https://api.openai.com/v1/"
 llm_temperature = None
 
 
+# Address of a small model running on your own machine (modules/ai/local.py, the fast
+# tiered path for form questions). Separate from the settings above on purpose: those
+# pick your cloud provider. The default is LM Studio's; leave it unless you moved it.
+local_llm_api_url = "http://127.0.0.1:1234/v1"
+# Name of that local model, exactly as the local server lists it.
+local_llm_model = "qwen/qwen3.5-4b"
+
+
 
 
 ############################################################################################################
@@ -67,7 +76,7 @@ THANK YOU for using my tool 😊! Wishing you the best in your job hunt 🙌🏻
 
 Sharing is caring! If you found this tool helpful, please share it with your peers 🥺. Your support keeps this project alive.
 
-Support my work on <PATREON_LINK>. Together, we can help more job seekers.
+Support my work at https://github.com/sponsors/GodsScion. Together, we can help more job seekers.
 
 As an independent developer, I pour my heart and soul into creating tools like this, driven by the genuine desire to make a positive impact.
 

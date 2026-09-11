@@ -10,8 +10,6 @@ License:    MIT License
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 Support me: https://github.com/sponsors/GodsScion
-
-version:    26.01.20.5.08
 '''
 
 
@@ -39,13 +37,16 @@ from selenium.common.exceptions import NoSuchElementException, ElementClickInter
 from config.personals import *
 from config.questions import *
 from config.search import *
-from config.secrets import use_AI, username, password, ai_provider
+from config.secrets import use_AI, username, password, ai_provider, llm_api_key
 from config.settings import *
 
 from modules.open_chrome import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
+# Unconditional, unlike `connections` below: the local layer is stdlib + config only, and
+# the answer file it reads has to work with AI switched off.
+from modules.ai import cache, local
 
 if use_AI:
     from modules.ai.connections import create_ai_client, extract_skills, answer_question, close_ai_client
@@ -133,6 +134,12 @@ stop_before_submit = globals().get("stop_before_submit", False)
 # sponsorship?". Belongs in config/questions.py; read defensively so an older config keeps
 # working instead of dying with a NameError on the first Easy Apply dropdown.
 legally_authorized = globals().get("legally_authorized", "Yes")
+
+# "Are you comfortable commuting to this job's location?" is a Yes/No question that
+# carries the whole word "location", so it needs an answer of its own - the city is a
+# wrong answer, not a missing one. Belongs in config/questions.py; read defensively so an
+# older config keeps working instead of dying with a NameError on the first Easy Apply form.
+comfortable_commuting = globals().get("comfortable_commuting", "Yes")
 
 #>
 
@@ -427,6 +434,21 @@ def label_has(label: str, *words: str) -> bool:
     return find_bad_word(label, list(words)) is not None
 
 
+def asks_yes_no(label: str) -> bool:
+    '''
+    True when the label reads as a Yes/No QUESTION rather than naming a field. Every
+    field-shaped rung in `answer_questions` matches on a single word - 'location',
+    'address', 'name', 'experience' - so "Are you comfortable commuting to this job's
+    location?" claimed the city rung and got the user's CITY typed into a Yes/No box.
+    Both halves are needed: "What city do you live in?" is a question but not a Yes/No
+    one, and "Current location" / "Location (City, State)" open with neither.
+    '''
+    label = label.strip().lower()
+    return label.endswith('?') and label.startswith(
+        ('are ', 'is ', 'do ', 'does ', 'did ', 'can ', 'will ', 'would ', 'have ',
+         'has ', 'should '))
+
+
 # Work-authorization wording overlaps the location questions ("United States" contains
 # "state") and the two families collide in every branch below, so it is classified first.
 visa_terms = ['sponsor', 'sponsors', 'sponsorship', 'visa', 'visas', 'work permit', 'h-1b', 'h1b']
@@ -659,7 +681,76 @@ def upload_resume(modal: WebElement, resume: str) -> tuple[bool, str]:
 # Function to answer common questions for Easy Apply
 def answer_common_questions(label: str, answer: str | None) -> str | None:
     auth_answer = work_authorization_answer(label)
-    return auth_answer if auth_answer is not None else answer
+    if auth_answer is not None: return auth_answer
+    # This is the last rung in all three branches, so one entry answers the commuting
+    # question as a <select>, a radio group and a text input. Only when it really is
+    # asked as Yes/No: "What is your commute time?" is not a question "Yes" answers.
+    if asks_yes_no(label) and label_has(label, 'commute', 'commuting', 'commutable'):
+        return comfortable_commuting
+    return answer
+
+
+# ----------------------------------------------------------------------------------- #
+# The AI answer layer, and the answer file it shares with the user.
+#
+# TIER 0 is the config ladder inside `answer_questions` below. Nothing here is consulted
+# until that ladder has come up empty, which is the whole cost model: a question
+# config/questions.py already answers must never cost a model call.
+# ----------------------------------------------------------------------------------- #
+
+# Built ONCE per run, never per question: it is the static prefix of every prompt, so
+# rebuilding it would cost LM Studio's prompt-prefix cache more than it could ever save.
+FACTS = local.profile_block(local.default_facts())
+
+
+def _ask_model(*args):
+    '''
+    The local model, or nothing at all when `use_AI` is off.
+
+    Gating the MODEL and not the answer file is the point: a value the user typed into
+    the answer file himself is his own configuration, not a guess, so it is honoured
+    either way. With AI off the layer is a lookup table and never opens a socket.
+    '''
+    return local._chat(*args) if use_AI else None
+
+
+def real_options(option_texts: list[str] | None) -> list[str]:
+    '''
+    The options minus LinkedIn's "Select an option" placeholder, which is not an answer.
+
+    One helper because the answer file is keyed on this list: the reader and the recorder
+    have to agree on it exactly, or a question is recorded under one key and looked up
+    under another and the user's answer is never found.
+    '''
+    return [text for text in (option_texts or []) if text != "Select an option"]
+
+
+def ai_option(question: str, option_texts: list[str]) -> int | None:
+    '''
+    Index of the option to pick, or None to leave the control untouched.
+
+    Remembered answer or model proposal, both go through `match_answer_to_option`. So a
+    hand-typed answer that matches no real option is dropped exactly like an invented
+    one - the answer file is an input to validate, not a store to trust.
+    '''
+    # The placeholder is hidden from the model and the choice mapped back onto the real
+    # index: a picked placeholder reads as answered while the form stays blocked.
+    real = real_options(option_texts)
+    picked = local.answer_select(question, real, match_answer_to_option, FACTS, _ask_model)
+    return option_texts.index(real[picked]) if picked is not None else None
+
+
+def remember_unanswered(question: str, kind: str, options: list[str] | None = None) -> None:
+    '''
+    Put a question nothing could answer into the answer file.
+
+    Without this an unanswerable question blocked the job, and blocked the same job again
+    on every future run, forever - the summary at the end of a run scrolled past and was
+    gone. Answer it once in the file and it is answered from then on.
+    '''
+    if cache.record(question, kind, real_options(options)):
+        print_lg(f'Recorded "{question}" in {cache.PATH} - fill in its "answer" there and '
+                 'the bot will use it on the next run.')
 
 
 # Function to answer the questions for Easy Apply
@@ -717,6 +808,13 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     answer = disability_status
                 elif label_has(label, 'proficiency'):
                     answer = 'Professional'
+                elif asks_yes_no(label):
+                    # The rung below matches on one word, so a Yes/No QUESTION that merely
+                    # mentions a field claimed it: "Are you comfortable commuting to this
+                    # job's location?" would be answered with the user's city. As a dropdown
+                    # that only survived because a city cannot match a Yes/No option - put
+                    # the city on the option list and it gets picked and submitted.
+                    answer = answer_common_questions(label, answer)
                 elif label_has(label, 'location', 'city', 'state', 'country'):
                     if label_has(label, 'country'):
                         answer = country
@@ -734,6 +832,8 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 except NoSuchElementException:
                     # The exact text isn't an option; map our answer onto the nearest option.
                     matched = match_answer_to_option(answer, optionsText)
+                    # Only now, with tier 0 empty-handed, the answer file and then the model.
+                    if matched is None: matched = ai_option(label_org, optionsText)
                     if matched is not None:
                         select.select_by_visible_text(optionsText[matched])
                         answer = optionsText[matched]
@@ -745,6 +845,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         answer = prev_answer
                         randomly_answered_questions.add((f'{label_org} [ {options} ]', "select"))
                         unanswered_questions.add(f'{label_org} [ {options} ]')
+                        remember_unanswered(label_org, "select", optionsText)
             else: answer = prev_answer
             questions_list.add((f'{label_org} [ {options} ]', answer, "select", prev_answer))
             continue
@@ -762,6 +863,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
             # a Yes on a real application.
             answer = None
             label = label_org.lower()
+            question_org = label_org        # before the option list is appended below
 
             label_org += ' [ '
             options = radio.find_elements(By.TAG_NAME, 'input')
@@ -788,6 +890,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     actions.move_to_element(foundOption).click().perform()
                 else:
                     matched = match_answer_to_option(answer, option_texts)
+                    if matched is None: matched = ai_option(question_org, option_texts)
                     if matched is None:
                         # Never guess: `options[0]` clicked whatever LinkedIn rendered first
                         # and submitted it as a real answer - the radio twin of the
@@ -797,6 +900,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         answer = prev_answer
                         randomly_answered_questions.add((f'{label_org} ]',"radio"))
                         unanswered_questions.add(f'{label_org} ]')
+                        remember_unanswered(question_org, "radio", option_texts)
                     else:
                         actions.move_to_element(options[matched]).click().perform()
                         answer = options_labels[matched]
@@ -818,6 +922,14 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
             if not prev_answer or overwrite_previous_answers:
                 auth_answer = work_authorization_answer(label)
                 if auth_answer is not None: answer = auth_answer
+                elif asks_yes_no(label):
+                    # Every rung below names a FIELD and matches on a single word, so a
+                    # Yes/No QUESTION that merely mentions one claimed it: "Are you
+                    # comfortable commuting to this job's location?" carries the whole word
+                    # "location" and got the user's CITY typed into a Yes/No box, and "Do
+                    # you have 5 years of experience?" got his total years. The 'email'
+                    # guard below is this same bug, patched one instance at a time.
+                    answer = answer_common_questions(label, answer)
                 elif label_has(label, 'experience', 'years'):
                     # Only the total. "How many years of Kubernetes experience do you have?"
                     # and "...experience with Python?" ask about ONE skill, and the user's
@@ -874,8 +986,10 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 elif label_has(label, 'country'): answer = country
                 else: answer = answer_common_questions(label,answer)
                 if answer == "":
-                    ai_answer = ""
-                    if use_AI and aiClient:
+                    # Answer file, then the local model, then the cloud client: cheapest,
+                    # most private and most likely to be the user's own answer first.
+                    ai_answer = local.answer_text(label_org, FACTS, _ask_model)
+                    if not ai_answer and use_AI and aiClient:
                         try:
                             ai_answer = answer_question(aiClient, label_org, question_type="text", job_description=job_description, user_information_all=user_information_all)
                         except Exception as e:
@@ -892,12 +1006,19 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         print_lg(f'No answer for the text question "{label_org}". Leaving it empty - add it to config/questions.py.')
                         randomly_answered_questions.add((label_org, "text"))
                         unanswered_questions.add(label_org)
-                text.clear()
-                human_type(text, answer)
-                if do_actions:
-                    sleep(2)
-                    actions.send_keys(Keys.ARROW_DOWN)
-                    actions.send_keys(Keys.ENTER).perform()
+                        remember_unanswered(label_org, "text")
+                # Only touch the control when we actually determined an answer. On the
+                # never-guess path above `answer` is still "", and clear()+human_type("")
+                # wipes whatever was there - LinkedIn's own prefill of the email, phone or
+                # city box - and submits it blank. `!= ""` and not truthiness: a notice
+                # period or salary of 0 is a real answer.
+                if answer != "":
+                    text.clear()
+                    human_type(text, answer)
+                    if do_actions:
+                        sleep(2)
+                        actions.send_keys(Keys.ARROW_DOWN)
+                        actions.send_keys(Keys.ENTER).perform()
             questions_list.add((label, text.get_attribute("value"), "text", prev_answer))
             continue
 
@@ -913,8 +1034,8 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                 if label_has(label, 'summary'): answer = linkedin_summary
                 elif label_has(label, 'cover'): answer = cover_letter
                 if answer == "":
-                    ai_answer = ""
-                    if use_AI and aiClient:
+                    ai_answer = local.answer_text(label_org, FACTS, _ask_model)
+                    if not ai_answer and use_AI and aiClient:
                         try:
                             ai_answer = answer_question(aiClient, label_org, question_type="textarea", job_description=job_description, user_information_all=user_information_all)
                         except Exception as e:
@@ -925,8 +1046,14 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     else:
                         randomly_answered_questions.add((label_org, "textarea"))
                         unanswered_questions.add(label_org)
-            text_area.clear()
-            human_type(text_area, answer)
+                        remember_unanswered(label_org, "textarea")
+                # Both of these sat at indent 12, OUTSIDE the gate above. So a textarea the
+                # user had already filled in was emptied even with overwrite_previous_answers
+                # off, and an unrecognised question - which reports itself and answers "" -
+                # was emptied too and submitted blank. Same guard as the text branch.
+                if answer != "":
+                    text_area.clear()
+                    human_type(text_area, answer)
             questions_list.add((label, text_area.get_attribute("value"), "textarea", prev_answer))
             continue
 
@@ -956,6 +1083,10 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     blocked, f'is an attestation or consent ("{term}")' if term else 'cannot be classified'))
                 randomly_answered_questions.add((blocked, "checkbox"))
                 unanswered_questions.add(blocked)
+                # ponytail: recorded so the user can SEE which box blocked the job, but not
+                # read back - ticking a legal attestation out of a JSON file needs its own
+                # decision, not a truthiness check. Add the read-back if he asks for it.
+                remember_unanswered(blocked, "checkbox")
             questions_list.add((f'{label} ([X] {answer})', checked, "checkbox", prev_answer))
             continue
 
@@ -1492,13 +1623,39 @@ def run(total_runs: int) -> int:
 
 linkedIn_tab = False
 
+
+def suggest_ai() -> None:
+    '''
+    One dialog at startup about what AI would answer and how to get it for free.
+
+    Both gates matter. `interactive_session` is already False for a headless run and
+    for the control panel's Popen, where `pyautogui.alert` is a no-op print - checking
+    it HERE means such a run also skips the probe, so it costs nothing rather than a
+    second of sockets for a dialog nobody will see. `show_ai_suggestion` is the
+    permanent off switch, and it is checked before the probe for the same reason.
+    '''
+    if not (show_ai_suggestion and interactive_session):
+        return
+    found = local.ai_suggestion(use_AI, llm_api_key)
+    if found:
+        pyautogui.alert(found[1], "AI is on, but nothing is answering" if found[0] == "broken"
+                        else "You could be using AI", "Okay")
+
+
 def main() -> None:
     pyautogui.alert("Please consider sponsoring this project at:\n\nhttps://github.com/sponsors/GodsScion\n\n", "Support the project", "Okay")
+    suggest_ai()
     total_runs = 1
     try:
-        global linkedIn_tab, tabs_count, useNewResume, aiClient
+        global linkedIn_tab, tabs_count, useNewResume, aiClient, options, driver, actions, wait
         alert_title = "Error Occurred. Closing Browser!"
         validate_config()
+
+        # Open the browser only AFTER the config validates. `modules.open_chrome` used to
+        # do this at import, so a typo in config cost you a Chrome window and a driver
+        # download before anything checked it. The star import copied None into this
+        # module's names, so they have to be rebound here.
+        options, driver, actions, wait = start_browser()
         
         if not os.path.exists(default_resume_path):
             pyautogui.alert(text='Your default resume "{}" is missing! Please update it\'s folder path "default_resume_path" in config.py\n\nOR\n\nAdd a resume with exact name and path (check for spelling mistakes including cases).\n\n\nFor now the bot will continue using your previous upload from LinkedIn!'.format(default_resume_path), title="Missing Resume", button="OK")

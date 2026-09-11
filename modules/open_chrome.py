@@ -10,8 +10,6 @@ License:    MIT License
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 Support me: https://github.com/sponsors/GodsScion
-
-version:    26.01.20.5.08
 '''
 
 from modules.helpers import get_default_temp_profile, make_directories
@@ -100,20 +98,30 @@ def createChromeSession(isRetry: bool = False):
     actions = ActionChains(driver)
     return options, driver, actions, wait
 
-try:
-    options, driver, actions, wait = None, None, None, None
-    options, driver, actions, wait = createChromeSession()
-except SessionNotCreatedException as e:
-    # Recoverable: the guest-profile retry below usually succeeds, so this is not an ERROR.
-    logger.warning("Failed to create Chrome Session, retrying with guest profile", exc_info=e)
-    options, driver, actions, wait = createChromeSession(True)
-except Exception as e:
-    msg = 'Seems like Google Chrome is out dated. Update browser and try again! \n\n\nIf issue persists, try Safe Mode. Set, safe_mode = True in config.py \n\nPlease check GitHub discussions/support for solutions https://github.com/GodsScion/Auto_job_applier_linkedIn \n                                   OR \nReach out in discord ( https://discord.gg/fFp7uUzWCY )'
-    if isinstance(e,TimeoutError): msg = "Couldn't download Chrome-driver. Set auto_manage_driver = False in config!"
-    logger.error(msg)
-    critical_error_log("In Opening Chrome", e)
-    from pyautogui import alert
-    alert(msg, "Error in opening chrome")
-    try: driver.quit()
-    except NameError: exit()
-    
+# Populated by start_browser(), never at import. Importing this module used to open a
+# real browser as a side effect, so `import runAiBot` launched Chrome before main() could
+# run validate_config() - a bad config cost you a browser window and a driver download.
+options, driver, actions, wait = None, None, None, None
+
+
+def start_browser() -> tuple:
+    '''Open the Chrome session and publish it as this module's options/driver/actions/wait.'''
+    global options, driver, actions, wait
+    try:
+        options, driver, actions, wait = createChromeSession()
+    except SessionNotCreatedException as e:
+        # Recoverable: the guest-profile retry below usually succeeds, so this is not an ERROR.
+        logger.warning("Failed to create Chrome Session, retrying with guest profile", exc_info=e)
+        options, driver, actions, wait = createChromeSession(True)
+    except Exception as e:
+        msg = 'Seems like Google Chrome is out dated. Update browser and try again! \n\n\nIf issue persists, try Safe Mode. Set, safe_mode = True in config.py \n\nPlease check GitHub discussions/support for solutions https://github.com/GodsScion/Auto_job_applier_linkedIn \n                                   OR \nReach out in discord ( https://discord.gg/fFp7uUzWCY )'
+        if isinstance(e,TimeoutError): msg = "Couldn't download Chrome-driver. Set auto_manage_driver = False in config!"
+        logger.error(msg)
+        critical_error_log("In Opening Chrome", e)
+        from pyautogui import alert
+        alert(msg, "Error in opening chrome")
+        # `driver` is None unless the session got far enough to hand one back; the old
+        # `except NameError` here could never fire and raised AttributeError instead.
+        if driver: driver.quit()
+        exit()
+    return options, driver, actions, wait

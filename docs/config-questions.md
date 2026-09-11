@@ -43,12 +43,27 @@ sponsorship question, not an authorization one.
 > visa answers **`"Yes"` to both**: they are authorized to work today, and they will need a
 > transfer or a new petition later.
 
-`legally_authorized` is only settable by editing `config/questions.py` — it has no field in
-the control panel. It defaults to `"Yes"`.
+`legally_authorized` is in the **Profile** tab, and settable by editing
+`config/questions.py`. It defaults to `"Yes"`.
 
 `require_visa = "Yes"` is also the switch that activates the sponsorship filters in
 [`config/search.py`](config-search.md#visa-sponsorship-filtering). With `require_visa = "No"`
 those settings do nothing at all.
+
+## Commuting
+
+| Setting | The question it answers | Valid values |
+|---|---|---|
+| `comfortable_commuting` | "Are you comfortable commuting to this job's location?" | `"Yes"` or `"No"` |
+
+That question carries the word "location", so before this setting existed the tool
+answered it with `current_city` from [`config/personals.py`](config-personals.md) — the
+city typed into a Yes/No box. A Yes/No question that merely mentions a field
+(location, address, name, phone, experience) is no longer answered with that field's
+value; it is either answered from config or left for you.
+
+`comfortable_commuting` is in the **Profile** tab, and settable by editing
+`config/questions.py`. It defaults to `"Yes"`.
 
 ## Salary and notice period
 

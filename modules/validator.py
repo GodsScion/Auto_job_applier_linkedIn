@@ -10,8 +10,6 @@ License:    MIT License
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
 
 Support me: https://github.com/sponsors/GodsScion
-
-version:    26.01.20.5.08
 '''
 
 
@@ -68,7 +66,7 @@ def validate_personals() -> None | ValueError | TypeError:
     check_string(zipcode, "zipcode")
     check_string(country, "country")
     
-    check_string(ethnicity, "ethnicity", ["Decline", "Hispanic/Latino", "American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "Other"],  min_length=0)
+    check_string(ethnicity, "ethnicity", ["", "Decline", "Hispanic/Latino", "American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "Other"],  min_length=0)
     check_string(gender, "gender", ["Male", "Female", "Other", "Decline", ""])
     check_string(disability_status, "disability_status", ["Yes", "No", "Decline"])
     check_string(veteran_status, "veteran_status", ["Yes", "No", "Decline"])
@@ -118,7 +116,7 @@ def validate_search() -> None | ValueError | TypeError:
 
     check_string(sort_by, "sort_by", ["", "Most recent", "Most relevant"])
     check_string(date_posted, "date_posted", ["", "Any time", "Past month", "Past week", "Past 24 hours"])
-    check_string(salary, "salary")
+    check_string(salary, "salary", ["", "$40,000+", "$60,000+", "$80,000+", "$100,000+", "$120,000+", "$140,000+", "$160,000+", "$180,000+", "$200,000+"])
 
     check_boolean(easy_apply_only, "easy_apply_only")
 

@@ -17,4 +17,3 @@ langgraph==1.2.10                # graph orchestration for the question-answer p
 
 # Local applied-jobs history web UI (app.py)
 flask
-flask-cors

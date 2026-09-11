@@ -40,6 +40,7 @@ Behaviour of the tool itself, rather than what it says in an application. Mostly
 | `keep_screen_awake` | `True` | Keep the screen active and stop the machine sleeping. Temporarily deactivates while a dialog box is up (pause before submit, help needed on a question). The alternative is to set your OS sleep settings to Never |
 | `auto_manage_driver` | `True` | Download and match the right Chrome driver automatically. If `False`, install a matching ChromeDriver yourself — see [install step 5](install.md#manual-install) |
 | `showAiErrorAlerts` | `False` | Alert on errors from the AI API connection |
+| `show_ai_suggestion` | `True` | Show a one-time tip at startup when you are not using AI, explaining what it answers for you and how to run a model locally for free. Set to `False` to never see it again |
 
 ## Dry runs: `stop_before_submit`
 
@@ -58,15 +59,15 @@ Two things worth knowing:
 - It takes priority over `pause_before_submit` — the application is discarded before the
   confirmation dialog would appear.
 
-`stop_before_submit` is only settable by editing `config/settings.py`; it has no field in
-the control panel.
+`stop_before_submit` is in the **Run settings** tab, and settable by editing
+`config/settings.py`.
 
 ## In development
 
 | Setting | Status |
 |---|---|
 | `generated_resume_path` | Folder for generated resumes. Part of the **experimental, in-development** resume generator |
-| `connect_hr`, `connect_request_message` | Commented out in the file. Would send connection requests to recruiters with an optional personalised message (LinkedIn allows only 10 personalised invitations a month without Premium) |
+| connect_hr, connect_request_message (commented out, so not settings yet) | Would send connection requests to recruiters with an optional personalised message (LinkedIn allows only 10 personalised invitations a month without Premium) |
 
 ---
 

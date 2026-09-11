@@ -8,8 +8,6 @@ License:    MIT License
             https://opensource.org/license/mit
             
 GitHub:     https://github.com/GodsScion/Auto_job_applier_linkedIn
-
-version:    2024.11.28.16.00
 '''
 
 
@@ -18,9 +16,11 @@ version:    2024.11.28.16.00
 
 # >>>>>>>>>>> Easy Apply Questions & Inputs <<<<<<<<<<<
 
-# Your legal name
+# Your legal first name
 first_name = "Sai"                 # Your first name in quotes Eg: "First", "Sai"
+# Your middle name. Leave it empty as "" if you don't have one.
 middle_name = "Vignesh"            # Your name in quotes Eg: "Middle", "Vignesh", ""
+# Your legal last name
 last_name = "Golla"                # Your last name in quotes Eg: "Last", "Golla"
 
 # Phone number (required), make sure it's valid.
@@ -34,20 +34,24 @@ Note: If left empty as "", the bot will fill in location of jobs location.
 
 # Address, not so common question but some job applications make it required!
 street = "123 Main Street"
+# Your state, province or region
 state = "STATE"
+# Your ZIP or postal code
 zipcode = "12345"
+# The country you live in
 country = "Will Let You Know When Established"
 
-## US Equal Opportunity questions
+# >>>>>>>>>>> US Equal Opportunity questions <<<<<<<<<<<
 # What is your ethnicity or race? If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
-ethnicity = "Decline"              # "Decline", "Hispanic/Latino", "American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "Other"
+ethnicity = "Decline"              # "Decline", "Hispanic/Latino", "American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "Other" or ("" to not select)
 
 # How do you identify yourself? If left empty as "", tool will not answer the question. However, note that some companies make compulsory to be answered
 gender = "Decline"                 # "Male", "Female", "Other", "Decline" or ""
 
-# Are you physically disabled or have a history/record of having a disability? If left empty as "", tool will not answer the question. However, note that some companies make it compulsory to be answered
+# Are you physically disabled or have a history/record of having a disability? "Decline" answers "prefer not to say"; there is no blank option for this one.
 disability_status = "Decline"      # "Yes", "No", "Decline"
 
+# Are you a veteran? "Decline" answers "prefer not to say".
 veteran_status = "Decline"         # "Yes", "No", "Decline"
 ##
 
@@ -74,7 +78,7 @@ THANK YOU for using my tool 😊! Wishing you the best in your job hunt 🙌🏻
 
 Sharing is caring! If you found this tool helpful, please share it with your peers 🥺. Your support keeps this project alive.
 
-Support my work on <PATREON_LINK>. Together, we can help more job seekers.
+Support my work at https://github.com/sponsors/GodsScion. Together, we can help more job seekers.
 
 As an independent developer, I pour my heart and soul into creating tools like this, driven by the genuine desire to make a positive impact.
 

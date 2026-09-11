@@ -20,7 +20,6 @@ SECURITY: this app handles LinkedIn credentials, so it binds to 127.0.0.1 only
 '''
 
 from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
 import csv
 from datetime import datetime
 import os
@@ -31,13 +30,14 @@ import signal
 import subprocess
 import threading
 import importlib
+from types import ModuleType
 
 import config_schema
 from config import _overrides
 from modules import updater
+from modules.ai import local
 
 app = Flask(__name__)
-CORS(app)
 
 # Project root is the folder this file lives in.
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -46,6 +46,32 @@ LOG_PATH = os.path.join(ROOT, ".bot_run.log")
 PID_PATH = os.path.join(ROOT, ".bot_run.pid")
 
 PATH = 'all excels/'
+
+# What /api/config sends instead of a stored password or API key. A bare CORS(app) used
+# to put a wildcard Access-Control-Allow-Origin on this route, so any page open in the
+# user's browser could read the LinkedIn password off 127.0.0.1 in cleartext. POST treats
+# this exact string as "unchanged", so saving the form can never blank a secret the user
+# was never shown.
+SECRET_PLACEHOLDER = "********"
+
+
+def _redacted(config: dict) -> dict:
+    '''Blank out every stored secret before a config dict leaves the process. Mutates
+    and returns `config`; the caller owns a freshly built dict in both call sites.'''
+    for field in config_schema.iter_fields():
+        section = config.get(field["config_module"])
+        if field["type"] == "password" and isinstance(section, dict) and section.get(field["key"]):
+            section[field["key"]] = SECRET_PLACEHOLDER
+    return config
+
+
+def _write_user_config(data: dict) -> None:
+    '''Save user_config.json readable by its owner only. It holds the LinkedIn password,
+    the AI key, the legal name, phone, street address and EEO answers, and a fresh
+    json.dump lands 0644 - world-readable on any shared or multi-user machine.'''
+    with open(USER_CONFIG_PATH, "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=2, ensure_ascii=False)
+    os.chmod(USER_CONFIG_PATH, 0o600)
 
 
 # ===========================================================================
@@ -58,6 +84,9 @@ def _load_defaults() -> dict:
     Import each config module with overrides temporarily disabled, so we read
     the untouched Python defaults regardless of whether user_config.json exists
     right now. Returns {config_module: {key: default_value}}.
+
+    Every module global is captured, not just the ones the panel has a field for,
+    so _freeze_config() below can pin a hand-edited setting the panel never shows.
     '''
     original_loader = _overrides.load_user_config
     _overrides.load_user_config = lambda: {}
@@ -77,13 +106,9 @@ def _load_defaults() -> dict:
         # Reload in case they were already imported (with real overrides) earlier.
         for module in modules.values():
             importlib.reload(module)
-        defaults = {}
-        for field in config_schema.iter_fields():
-            module_name = field["config_module"]
-            key = field["key"]
-            module = modules.get(module_name)
-            defaults.setdefault(module_name, {})[key] = getattr(module, key, None)
-        return defaults
+        return {name: {key: value for key, value in vars(module).items()
+                       if not key.startswith("_") and not isinstance(value, ModuleType)}
+                for name, module in modules.items()}
     finally:
         _overrides.load_user_config = original_loader
 
@@ -98,24 +123,22 @@ def _effective_config() -> dict:
     '''
     Return {config_module: {key: value}} of the pristine defaults overlaid with
     the CURRENT contents of user_config.json (re-read from disk on every call).
-    Only keys defined in config_schema are included.
     '''
     effective = copy.deepcopy(DEFAULTS)
     user = _overrides.load_user_config()
-    for field in config_schema.iter_fields():
-        module_name = field["config_module"]
-        key = field["key"]
+    for module_name, values in effective.items():
         section = user.get(module_name)
-        if isinstance(section, dict) and key in section:
-            effective[module_name][key] = section[key]
+        if isinstance(section, dict):
+            values.update({key: value for key, value in section.items() if key in values})
     return effective
 
 
-def _coerce(field_type: str, value):
+def _coerce(field: dict, value):
     '''
     Coerce an incoming JSON value into the type declared for the field in the
     schema. Raises ValueError on invalid numbers so the caller can reject them.
     '''
+    field_type = field["type"]
     if field_type in ("text", "password", "textarea", "select"):
         return "" if value is None else str(value)
 
@@ -129,8 +152,11 @@ def _coerce(field_type: str, value):
             if text == "":
                 raise ValueError("expected a number, got an empty value")
             number = float(text)
-        # Keep whole numbers as ints (the config defaults are ints).
-        if isinstance(number, float) and number.is_integer():
+        # Whole-number settings must stay whole: modules/validator.py raises a
+        # TypeError on 1.5 at startup, which is far too late to tell the user.
+        if field.get("step") == 1:
+            if number != int(number):
+                raise ValueError("expected a whole number, e.g. 30")
             return int(number)
         return number
 
@@ -339,9 +365,9 @@ def api_get_config():
     '''
     Returns the effective config: pristine defaults overlaid with the current
     user_config.json, grouped by config module (secrets, personals, questions,
-    search, settings).
+    search, settings), with every stored secret replaced by SECRET_PLACEHOLDER.
     '''
-    return jsonify(_effective_config())
+    return jsonify(_redacted(_effective_config()))
 
 
 @app.route('/api/config', methods=['POST'])
@@ -370,10 +396,20 @@ def api_save_config():
             if field is None:
                 unknown.append(f"{section}.{key}")
                 continue
+            if field["type"] == "password" and value == SECRET_PLACEHOLDER:
+                continue                    # what GET redacted, sent back untouched
             try:
-                coerced.setdefault(section, {})[key] = _coerce(field["type"], value)
+                clean = _coerce(field, value)
             except ValueError as err:
                 return jsonify({"error": f"Invalid value for '{section}.{key}': {err}"}), 400
+            # modules/validator.py re-checks these when the bot starts. Checking here too
+            # means the panel can never save a value that makes the next run refuse to run.
+            rejected = [item for item in (clean if isinstance(clean, list) else [clean])
+                        if item not in field.get("options", [item])]
+            if rejected:
+                return jsonify({"error": f"Invalid value for '{section}.{key}': "
+                                         f"{rejected[0]!r} is not one of {field['options']}"}), 400
+            coerced.setdefault(section, {})[key] = clean
 
     if unknown:
         return jsonify({"error": "Unknown settings rejected", "unknown": unknown}), 400
@@ -388,12 +424,29 @@ def api_save_config():
         current[section] = target
 
     try:
-        with open(USER_CONFIG_PATH, "w", encoding="utf-8") as file:
-            json.dump(current, file, indent=2, ensure_ascii=False)
+        _write_user_config(current)
     except OSError as err:
         return jsonify({"error": f"Could not save settings: {err}"}), 500
 
-    return jsonify(current)
+    return jsonify(_redacted(current))
+
+
+@app.route('/api/ai-suggestion', methods=['GET'])
+def api_ai_suggestion():
+    '''
+    `{state, message}` for the panel's "you could be using AI" banner, or `{}` when
+    there is nothing to say or the user turned the tip off.
+
+    Reads the EFFECTIVE config rather than config.settings: _load_defaults() reloaded
+    those modules with overrides disabled, so their globals are the pristine defaults
+    and would ignore the user's own saved value.
+    '''
+    config = _effective_config()
+    if not config["settings"].get("show_ai_suggestion", True):
+        return jsonify({})
+    found = local.ai_suggestion(bool(config["secrets"].get("use_AI")),
+                                str(config["secrets"].get("llm_api_key") or ""))
+    return jsonify({"state": found[0], "message": found[1]} if found else {})
 
 
 @app.route('/api/run', methods=['POST'])
@@ -490,9 +543,14 @@ def _freeze_config() -> None:
     is what stops the update reverting them to the shipped defaults, because
     config/_overrides.py re-applies the JSON over whatever `git pull` writes.
 
-    ponytail: this pins every schema key to today's value, so a later change to
-    a shipped default stops reaching that user. Acceptable - a hand-edited file
-    was already pinned. Freeze only the keys that differ from HEAD if it bites.
+    It pins EVERY setting in config/*.py, including the ones the panel has no
+    field for: `git stash` parks the user's edits and self_update() deliberately
+    never pops that stash, so anything not pinned here comes back as the shipped
+    default after an update.
+
+    ponytail: this pins every setting to today's value, so a later change to a
+    shipped default stops reaching that user. Acceptable - a hand-edited file was
+    already pinned. Freeze only the keys that differ from HEAD if it bites.
     '''
     current = _overrides.load_user_config()
     for section, values in _effective_config().items():
@@ -500,8 +558,7 @@ def _freeze_config() -> None:
             current[section] = {}
         for key, value in values.items():
             current[section].setdefault(key, value)
-    with open(USER_CONFIG_PATH, "w", encoding="utf-8") as file:
-        json.dump(current, file, indent=2, ensure_ascii=False)
+    _write_user_config(current)
 
 
 @app.route('/api/update-check', methods=['GET'])

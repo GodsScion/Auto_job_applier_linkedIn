@@ -125,10 +125,11 @@ Once your code is tested, your changes will be merged to the `main` branch in th
         check_string(search_location, "search_location")
     ```
 
-5. If the setting should also appear in the local control panel, add it to
-   `config_schema.py`. Settings left out of the schema are still fully usable by editing the
-   `config/*.py` file, and the [configuration docs](docs/configuration.md) list which ones
-   those are.
+5. Nothing else. `config_schema.py` reads `config/*.py` and builds the control panel's
+   field from your comments: the lines above the assignment become the help text, the
+   trailing comment becomes the legal values (`x = "No"   # "Yes" or "No"` is a dropdown),
+   and the literal picks the control. Add the setting to its `docs/config-*.md` page too —
+   a test fails if the docs and `config/*.py` name different settings.
 
 ## Running the tests
 

@@ -29,7 +29,7 @@ companies make them compulsory.
 
 | Setting | Valid values |
 |---|---|
-| `ethnicity` | `"Decline"`, `"Hispanic/Latino"`, `"American Indian or Alaska Native"`, `"Asian"`, `"Black or African American"`, `"Native Hawaiian or Other Pacific Islander"`, `"White"`, `"Other"` |
+| `ethnicity` | `"Decline"`, `"Hispanic/Latino"`, `"American Indian or Alaska Native"`, `"Asian"`, `"Black or African American"`, `"Native Hawaiian or Other Pacific Islander"`, `"White"`, `"Other"` or `""` |
 | `gender` | `"Male"`, `"Female"`, `"Other"`, `"Decline"` or `""` |
 | `disability_status` | `"Yes"`, `"No"`, `"Decline"` |
 | `veteran_status` | `"Yes"`, `"No"`, `"Decline"` |

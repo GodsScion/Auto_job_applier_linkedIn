@@ -17,6 +17,7 @@ import sys
 import tokenize
 import types
 from html.parser import HTMLParser
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 
@@ -208,6 +209,86 @@ def test_login_source_has_no_dead_id_locators(sources):
         assert 'By.ID, "username"' not in src, name
         assert 'By.ID, "password"' not in src, name
         assert "session_key" not in src, name
+
+
+def test_job_search_url_is_locale_independent(bot, monkeypatch):
+    monkeypatch.setattr(bot, "search_location", "Istanbul, Türkiye")
+    monkeypatch.setattr(bot, "date_posted", "Past week")
+    monkeypatch.setattr(bot, "easy_apply_only", True)
+    monkeypatch.setattr(bot, "experience_level", ["Internship", "Entry level"])
+    monkeypatch.setattr(bot, "job_type", ["Internship", "Full-time"])
+    monkeypatch.setattr(bot, "on_site", ["On-site", "Remote", "Hybrid"])
+    monkeypatch.setattr(bot, "sort_by", "")
+
+    query = parse_qs(urlparse(bot.build_job_search_url("Embedded Engineer")).query)
+
+    assert query == {
+        "keywords": ["Embedded Engineer"],
+        "location": ["Istanbul, Türkiye"],
+        "f_TPR": ["r604800"],
+        "f_AL": ["true"],
+        "f_E": ["1,2"],
+        "f_JT": ["I,F"],
+        "f_WT": ["1,2,3"],
+    }
+
+
+def test_primary_search_filters_do_not_depend_on_english_ui_text(bot):
+    source = inspect.getsource(bot.apply_filters)
+    assert "set_search_location()" not in source
+    assert 'normalize-space()="All filters"' in source  # fallback only
+    assert "search-reusables__all-filters-pill-button" in source
+    assert "search-reusables__secondary-filters-show-results-button" in source
+
+
+def test_company_allowlist_is_checked_locally_and_normalized(bot):
+    assert bot.company_is_targeted("Intel", ["Intel Corporation"])
+    assert bot.company_is_targeted("TÜBİTAK BİLGEM", ["tubitak bilgem"])
+    assert not bot.company_is_targeted("Unrelated Staffing Co.", ["Intel Corporation", "Arm"])
+    assert bot.company_is_targeted("Anything Ltd.", [])
+
+
+def test_company_filter_does_not_depend_on_localized_linkedin_controls(bot):
+    source = inspect.getsource(bot.apply_filters)
+    assert "multi_sel_noWait(driver, companies" not in source
+
+
+def test_login_detection_fails_closed_on_localized_login_page(bot, monkeypatch):
+    fake_driver = types.SimpleNamespace(
+        current_url="https://www.linkedin.com/login/tr",
+        find_elements=lambda *_args: [],
+    )
+    monkeypatch.setattr(bot, "driver", fake_driver)
+    assert bot.is_logged_in_LN() is False
+
+
+def test_login_detection_accepts_authenticated_feed(bot, monkeypatch):
+    fake_driver = types.SimpleNamespace(
+        current_url="https://www.linkedin.com/feed/?trk=guest_homepage-basic_nav-header-signin",
+        find_elements=lambda *_args: [],
+    )
+    monkeypatch.setattr(bot, "driver", fake_driver)
+    assert bot.is_logged_in_LN() is True
+
+
+def test_login_detection_does_not_assume_unknown_page_is_authenticated(bot, monkeypatch):
+    fake_driver = types.SimpleNamespace(
+        current_url="https://www.linkedin.com/jobs/search/",
+        find_elements=lambda *_args: [],
+    )
+    monkeypatch.setattr(bot, "driver", fake_driver)
+    monkeypatch.setattr(bot, "print_lg", lambda *_args, **_kwargs: None)
+    assert bot.is_logged_in_LN() is False
+
+
+def test_login_detection_accepts_member_navigation_on_jobs_page(bot, monkeypatch):
+    member_link = types.SimpleNamespace(is_displayed=lambda: True)
+    fake_driver = types.SimpleNamespace(
+        current_url="https://www.linkedin.com/jobs/search/",
+        find_elements=lambda by, value: [member_link] if by == bot.By.XPATH else [],
+    )
+    monkeypatch.setattr(bot, "driver", fake_driver)
+    assert bot.is_logged_in_LN() is True
 
 
 # =================================================================================

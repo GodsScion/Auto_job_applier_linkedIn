@@ -100,6 +100,10 @@ auto_manage_driver = True          # True or False, Note: True or False are case
 # Do you want to get alerts on errors related to AI API connection?
 showAiErrorAlerts = False            # True or False, Note: True or False are case-sensitive
 
+# Show a one-time tip at startup if you are not using AI, explaining what it answers for
+# you and how to run a model on your own computer for free. Turn this off to never see it.
+show_ai_suggestion = True           # True or False, Note: True or False are case-sensitive
+
 
 
 

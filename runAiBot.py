@@ -21,7 +21,9 @@ import sys
 import csv
 import re
 import time
+import unicodedata
 import pyautogui
+from urllib.parse import urlencode
 
 # Raise the CSV field-size cap so very long job descriptions don't trip the writer.
 csv.field_size_limit(1000000)
@@ -34,7 +36,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, NoSuchWindowException, ElementNotInteractableException, WebDriverException
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, NoSuchWindowException, ElementNotInteractableException, TimeoutException, WebDriverException
 
 from config.personals import *
 from config.questions import *
@@ -149,6 +151,61 @@ login_email_css = "input[type='email']"
 login_password_css = "input[type='password']"
 
 
+DATE_POSTED_QUERY_VALUES = {
+    "Past 24 hours": "r86400",
+    "Past week": "r604800",
+    "Past month": "r2592000",
+}
+EXPERIENCE_LEVEL_QUERY_VALUES = {
+    "Internship": "1",
+    "Entry level": "2",
+    "Associate": "3",
+    "Mid-Senior level": "4",
+    "Director": "5",
+    "Executive": "6",
+}
+JOB_TYPE_QUERY_VALUES = {
+    "Full-time": "F",
+    "Part-time": "P",
+    "Contract": "C",
+    "Temporary": "T",
+    "Volunteer": "V",
+    "Internship": "I",
+    "Other": "O",
+}
+WORKPLACE_QUERY_VALUES = {"On-site": "1", "Remote": "2", "Hybrid": "3"}
+
+
+def _query_codes(values: list[str], mapping: dict[str, str]) -> str:
+    '''Return LinkedIn query codes for configured values, omitting unknown entries.'''
+    return ",".join(mapping[value] for value in values if value in mapping)
+
+
+def build_job_search_url(search_term: str) -> str:
+    '''Build a locale-independent LinkedIn Jobs URL for the primary search filters.'''
+    params = {"keywords": search_term.strip()}
+    if search_location.strip():
+        params["location"] = search_location.strip()
+    if date_posted in DATE_POSTED_QUERY_VALUES:
+        params["f_TPR"] = DATE_POSTED_QUERY_VALUES[date_posted]
+    if easy_apply_only:
+        params["f_AL"] = "true"
+
+    experience_codes = _query_codes(experience_level, EXPERIENCE_LEVEL_QUERY_VALUES)
+    job_type_codes = _query_codes(job_type, JOB_TYPE_QUERY_VALUES)
+    workplace_codes = _query_codes(on_site, WORKPLACE_QUERY_VALUES)
+    if experience_codes:
+        params["f_E"] = experience_codes
+    if job_type_codes:
+        params["f_JT"] = job_type_codes
+    if workplace_codes:
+        params["f_WT"] = workplace_codes
+    if sort_by == "Most recent":
+        params["sortBy"] = "DD"
+
+    return "https://www.linkedin.com/jobs/search/?" + urlencode(params)
+
+
 def fill_visible_input(by: str, value: str, text: str, time: float = 5.0) -> None:
     '''
     Types `text` into the first *displayed* element matching the locator.
@@ -166,14 +223,37 @@ def is_logged_in_LN() -> bool:
     Function to check if user is logged-in in LinkedIn
     * Returns: `True` if user is logged-in or `False` if not
     '''
-    # The feed URL now carries query params (?trk=...), so match a prefix, not the whole URL.
-    if driver.current_url.startswith("https://www.linkedin.com/feed"): return True
-    if try_linkText(driver, "Sign in"): return False
-    # click=False: this is a check, it must not press Sign in as a side effect.
-    if try_xp(driver, sign_in_button_xpath, False):  return False
-    if try_linkText(driver, "Join now"): return False
-    print_lg("Didn't find Sign in link, so assuming user is logged in!")
-    return True
+    current_url = driver.current_url.lower()
+    # Login/checkpoint URLs are language independent. Never infer authentication merely
+    # because an English "Sign in" label is absent on a localized page.
+    if any(path in current_url for path in ("/login", "/uas/login", "/checkpoint/", "/authwall")):
+        return False
+    if current_url.startswith("https://www.linkedin.com/feed"):
+        return True
+
+    # A visible password field is another language-independent sign that this is a login page.
+    try:
+        if pick_first_displayed(driver.find_elements(By.CSS_SELECTOR, login_password_css)):
+            return False
+    except Exception:
+        pass
+
+    # Member-only navigation links are stable across interface languages and provide
+    # positive authentication evidence on pages such as Jobs.
+    try:
+        member_nav_xpath = (
+            '//a[contains(@href,"/mynetwork/") or contains(@href,"/messaging/") '
+            'or contains(@href,"/notifications/")]'
+        )
+        if pick_first_displayed(driver.find_elements(By.XPATH, member_nav_xpath)):
+            return True
+    except Exception:
+        pass
+
+    # Fail closed on an unknown page. The previous optimistic default sent the bot to Jobs
+    # while logged out, where it waited for job cards until a misleading timeout occurred.
+    print_lg(f"LinkedIn login status could not be confirmed at: {driver.current_url}")
+    return False
 
 
 def login_LN() -> None:
@@ -185,11 +265,25 @@ def login_LN() -> None:
     '''
     # Find the username and password fields and fill them with user credentials
     driver.get("https://www.linkedin.com/login")
-    if username == "username@example.com" and password == "example_password":
-        pyautogui.alert("User did not configure username and password in secrets.py, hence can't login automatically! Please login manually!", "Login Manually","Okay")
-        print_lg("User did not configure username and password in secrets.py, hence can't login automatically! Please login manually!")
-        manual_login_retry(is_logged_in_LN, 2)
-        return
+    credentials_missing = (
+        not username.strip() or not password.strip()
+        or username == "username@example.com" or password == "example_password"
+    )
+    if credentials_missing:
+        if run_in_background:
+            raise RuntimeError(
+                "LinkedIn credentials are not configured and background mode cannot wait "
+                "for a manual login. Add credentials or turn off background mode."
+            )
+        print_lg(
+            "LinkedIn credentials are not configured. Please log in manually in the opened "
+            "Chrome window; waiting up to 5 minutes."
+        )
+        try:
+            WebDriverWait(driver, 300).until(lambda _driver: is_logged_in_LN())
+        except TimeoutException as exc:
+            raise RuntimeError("LinkedIn manual login was not completed within 5 minutes.") from exc
+        return print_lg("Manual LinkedIn login confirmed.")
     try:
         wait.until(EC.presence_of_element_located((By.LINK_TEXT, "Forgot password?")))
         try:
@@ -268,31 +362,30 @@ def recommended_filter_wait(gap: int) -> int:
 
 def apply_filters() -> None:
     '''
-    Function to apply job search filters
+    Apply filters that cannot be represented in the search URL.
+
+    Location and the common filters are already encoded by
+    `build_job_search_url`, avoiding selectors tied to LinkedIn's UI language.
     '''
-    set_search_location()
+    ui_only_filters = any((
+        salary, location, industry, job_function, job_titles,
+        benefits, commitments, under_10_applicants, in_your_network,
+        fair_chance_employer,
+    ))
+    if not ui_only_filters:
+        return
 
     try:
         recommended_wait = recommended_filter_wait(click_gap)
 
-        # element_to_be_clickable, not presence: the filters button renders before it's usable.
-        wait.until(EC.element_to_be_clickable((By.XPATH, '//button[normalize-space()="All filters"]'))).click()
+        # Prefer LinkedIn's semantic class: visible text/aria-label are localized.
+        all_filters_xpath = (
+            '//button[contains(@class,"search-reusables__all-filters-pill-button") '
+            'or normalize-space()="All filters"]'
+        )
+        wait.until(EC.element_to_be_clickable((By.XPATH, all_filters_xpath))).click()
         buffer(recommended_wait)
 
-        wait_span_click(driver, sort_by)
-        wait_span_click(driver, date_posted)
-        buffer(recommended_wait)
-
-        multi_sel_noWait(driver, experience_level) 
-        multi_sel_noWait(driver, companies, actions)
-        if experience_level or companies: buffer(recommended_wait)
-
-        multi_sel_noWait(driver, job_type)
-        multi_sel_noWait(driver, on_site)
-        if job_type or on_site: buffer(recommended_wait)
-
-        if easy_apply_only: boolean_button_click(driver, actions, "Easy Apply")
-        
         multi_sel_noWait(driver, location)
         multi_sel_noWait(driver, industry)
         if location or industry: buffer(recommended_wait)
@@ -312,7 +405,13 @@ def apply_filters() -> None:
         multi_sel_noWait(driver, commitments)
         if benefits or commitments: buffer(recommended_wait)
 
-        show_results_button: WebElement = wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(translate(@aria-label, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "apply current filters to show")]')))
+        show_results_xpath = (
+            '//button[contains(@class,"search-reusables__secondary-filters-show-results-button") '
+            'or contains(translate(@aria-label, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), '
+            '"apply current filters to show")]'
+        )
+        show_results_button: WebElement = wait.until(
+            EC.element_to_be_clickable((By.XPATH, show_results_xpath)))
         show_results_button.click()
         buffer(3)   # let the results reload settle before anything reads the list
 
@@ -343,6 +442,25 @@ def get_page_info() -> tuple[WebElement | None, int | None]:
         print_lg(e)
     return pagination_element, current_page
 
+
+
+def _normalise_company_name(value: str) -> str:
+    '''Return a stable company name for allow-list comparisons.'''
+    ascii_value = unicodedata.normalize("NFKD", value.casefold())
+    ascii_value = "".join(char for char in ascii_value if not unicodedata.combining(char))
+    words = re.findall(r"[a-z0-9]+", ascii_value)
+    corporate_suffixes = {"inc", "incorporated", "corp", "corporation", "company", "co", "ltd", "limited", "llc", "plc"}
+    while words and words[-1] in corporate_suffixes:
+        words.pop()
+    return " ".join(words)
+
+
+def company_is_targeted(company: str, target_companies: list[str]) -> bool:
+    '''Empty list means all companies; otherwise require a normalized exact match.'''
+    if not target_companies:
+        return True
+    company_name = _normalise_company_name(company)
+    return any(company_name == _normalise_company_name(target) for target in target_companies)
 
 
 def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_jobs: set) -> tuple[str, str, str, str, str, bool]:
@@ -378,7 +496,10 @@ def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_j
         work_location = work_location[:work_location.rfind('(')].strip()
     
     # Skip if previously rejected due to blacklist or already applied
-    if company in blacklisted_companies:
+    if not company_is_targeted(company, companies):
+        print_lg(f'Skipping "{title} | {company}" job (Not in target companies). Job ID: {job_id}!')
+        skip = True
+    elif company in blacklisted_companies:
         print_lg(f'Skipping "{title} | {company}" job (Blacklisted Company). Job ID: {job_id}!')
         skip = True
     elif job_id in rejected_jobs: 
@@ -1169,7 +1290,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
     if randomize_search_order:  shuffle(search_terms)
     for searchTerm in search_terms:
-        driver.get(f"https://www.linkedin.com/jobs/search/?keywords={searchTerm}")
+        driver.get(build_job_search_url(searchTerm))
         print_lg("\n________________________________________________________________________________________________________________________\n")
         print_lg(f'\n>>>> Now searching for "{searchTerm}" <<<<\n\n')
 
@@ -1179,7 +1300,18 @@ def apply_to_jobs(search_terms: list[str]) -> None:
         try:
             while current_count < switch_number:
                 # Wait until job listings are loaded
-                wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[@data-occludable-job-id]")))
+                try:
+                    wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[@data-occludable-job-id]")))
+                except TimeoutException as exc:
+                    if not is_logged_in_LN():
+                        raise RuntimeError(
+                            "LinkedIn session is not authenticated. Log in in the opened "
+                            "Chrome window before the job search starts."
+                        ) from exc
+                    print_lg(
+                        f'No job listings loaded for "{searchTerm}"; moving to the next search term.'
+                    )
+                    break
 
                 pagination_element, current_page = get_page_info()
 

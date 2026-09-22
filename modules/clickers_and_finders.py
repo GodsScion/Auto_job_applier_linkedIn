@@ -66,9 +66,18 @@ def wait_span_click(driver: WebDriver, text: str, time: float=5.0, click: bool=T
     if text:
         try:
             button = wait_for_displayed(driver, text_xpath("span", text), time)
-            if scroll:  scroll_to_view(driver, button, scrollTop)
+        except Exception:
+            fallback_xpath = './/*[self::button or self::label][contains(translate(normalize-space(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "' + text.trim().toLowerCase() + '")]'
+            try:
+                button = wait_for_displayed(driver, fallback_xpath, time)
+            except Exception as e:
+                logger.warning("Click Failed! Didn't find '%s' (%s)", text, type(e).__name__)
+                return False
+        try:
+            if scroll: scroll_to_view(driver, button, scrollTop)
             if click:
-                button.click()
+                try: button.click()
+                except Exception: driver.execute_script("arguments[0].click();", button)
                 buffer(click_gap)
             return button
         except Exception as e:
@@ -115,24 +124,30 @@ def multi_sel_noWait(driver: WebDriver, texts: list, actions: ActionChains = Non
     for text in texts:
         try:
             button = pick_first_displayed(driver.find_elements(By.XPATH, text_xpath("span", text)))
-            if not button: raise NoSuchElementException(f'No visible span matching "{text}"')
+            if not button:
+                fallback_xpath = './/*[self::button or self::label][contains(translate(normalize-space(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "' + text.strip().toLowerCase() + '")]'
+                button = pick_first_displayed(driver.find_elements(By.XPATH, fallback_xpath))
+            if not button: raise NoSuchElementException(f'No visible filter control matching "{text}"')
             scroll_to_view(driver, button)
-            button.click()
+            try: button.click()
+            except Exception: driver.execute_script("arguments[0].click();", button)
             buffer(click_gap)
         except Exception as e:
             if actions: company_search_click(driver,actions,text)
-            else:   logger.warning("Click Failed! Didn't find '%s' (%s)", text, type(e).__name__)
+            else: logger.warning("Click Failed! Didn't find '%s' (%s)", text, type(e).__name__)
 
 def boolean_button_click(driver: WebDriver, actions: ActionChains, text: str) -> None:
     '''
     Tries to click on the boolean button with the given `text` text.
     '''
     try:
-        list_container = driver.find_element(By.XPATH, text_xpath("h3", text) + '/ancestor::fieldset')
-        # The switch input itself is often visually hidden by design, so don't filter it on displayed.
+        heading_xpath = './/*[self::h3 or self::legend or self::span or self::label][contains(translate(normalize-space(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "' + text.strip().toLowerCase() + '")]/ancestor::fieldset[1]'
+        list_container = pick_first_displayed(driver.find_elements(By.XPATH, heading_xpath))
+        if not list_container: raise NoSuchElementException(f'No filter fieldset for "{text}"')
         button = list_container.find_element(By.XPATH, './/input[@role="switch"]')
         scroll_to_view(driver, button)
-        actions.move_to_element(button).click().perform()
+        try: actions.move_to_element(button).click().perform()
+        except Exception: driver.execute_script("arguments[0].click();", button)
         buffer(click_gap)
     except Exception as e:
         logger.warning("Click Failed! Didn't find '%s' (%s)", text, type(e).__name__)

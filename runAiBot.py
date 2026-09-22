@@ -101,6 +101,13 @@ class UnansweredQuestions(Exception):
     skipped, not failed - there is nothing broken to retry, the user has to add answers.
     '''
 
+
+class JobCardParseError(Exception):
+    '''
+    Raised when a LinkedIn search-result card does not contain the fields required to
+    process it. A single malformed/changed card must not terminate the whole search run.
+    '''
+
 tabs_count = 1
 easy_applied_count = 0
 external_jobs_count = 0
@@ -329,73 +336,196 @@ def apply_filters() -> None:
 
 def get_page_info() -> tuple[WebElement | None, int | None]:
     '''
-    Function to get pagination element and current page number
-    '''
-    try:
-        pagination_element = try_find_by_classes(driver, ["jobs-search-pagination__pages", "artdeco-pagination", "artdeco-pagination__pages"])
-        scroll_to_view(driver, pagination_element)
-        # ".//" keeps this inside the pagination element; a leading "//" searches the whole document.
-        current_page = int(pagination_element.find_element(By.XPATH, ".//button[contains(@class, 'active')]").text)
-    except Exception as e:
-        logger.warning("Failed to find Pagination element, hence couldn't scroll till end!")
-        pagination_element = None
-        current_page = None
-        print_lg(e)
-    return pagination_element, current_page
+    Get LinkedIn pagination and current page.
 
+    LinkedIn has used several pagination wrappers over time. Prefer known wrappers,
+    then fall back to visible page-number buttons. A genuinely single-page result
+    returns (None, None) without being treated as a browser/session failure.
+    '''
+    pagination_selectors = [
+        ".//div[contains(@class,'jobs-search-pagination__pages')]",
+        ".//ul[contains(@class,'artdeco-pagination__pages')]",
+        ".//div[contains(@class,'artdeco-pagination')]",
+        ".//nav[contains(@class,'artdeco-pagination')]",
+    ]
+
+    pagination_element = None
+    for selector in pagination_selectors:
+        try:
+            for candidate in driver.find_elements(By.XPATH, selector):
+                try:
+                    if candidate.is_displayed():
+                        pagination_element = candidate
+                        break
+                except Exception:
+                    continue
+            if pagination_element:
+                break
+        except Exception:
+            continue
+
+    if not pagination_element:
+        try:
+            page_buttons = driver.find_elements(By.XPATH, "//button[starts-with(@aria-label,'Page ')]")
+            visible = [button for button in page_buttons if button.is_displayed()]
+            if visible:
+                pagination_element = visible[0].find_element(
+                    By.XPATH, "./ancestor::*[self::nav or self::div or self::ul][1]"
+                )
+        except Exception:
+            pagination_element = None
+
+    if not pagination_element:
+        return None, None
+
+    try:
+        scroll_to_view(driver, pagination_element)
+        active = pagination_element.find_elements(By.XPATH, ".//button[contains(@class,'active')]")
+        if active:
+            return pagination_element, int(active[0].text.strip())
+
+        current = pagination_element.find_elements(
+            By.XPATH, ".//button[@aria-current='page'] | .//*[@aria-current='page']"
+        )
+        return pagination_element, (int(current[0].text.strip()) if current else 1)
+    except Exception as e:
+        logger.warning("Pagination was found but current page could not be determined: %s", e)
+        return pagination_element, 1
 
 
 def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_jobs: set) -> tuple[str, str, str, str, str, bool]:
     '''
-    # Function to get job main details.
-    Returns a tuple of (job_id, title, company, work_location, work_style, skip)
-    * job_id: Job ID
-    * title: Job title
-    * company: Company name
-    * work_location: Work location of this job
-    * work_style: Work style of this job (Remote, On-site, Hybrid)
-    * skip: A boolean flag to skip this job
+    Get the main details from a LinkedIn search-result card.
+
+    LinkedIn changes the result-card DOM frequently and different result layouts can
+    coexist on the same page. Try several selectors and raise JobCardParseError for
+    a card that cannot be parsed, so the caller can skip only that card.
     '''
     skip = False
-    # Every class on a job card that carried data is now a rotating random string, so anchor
-    # on the artdeco lockup structure instead. The title link is no longer the card's first
-    # <a> in every layout either, so address it through the lockup title too.
-    job_details_button = job.find_element(By.XPATH, ".//div[contains(@class,'artdeco-entity-lockup__title')]//a")
+
+    title_selectors = [
+        ".//div[contains(@class,'artdeco-entity-lockup__title')]//a",
+        ".//a[contains(@class,'job-card-container__link')]",
+        ".//a[contains(@class,'job-card-list__title')]",
+        ".//a[contains(@href,'/jobs/view/')]",
+    ]
+
+    job_details_button = None
+    for selector in title_selectors:
+        try:
+            for candidate in job.find_elements(By.XPATH, selector):
+                try:
+                    if candidate.is_displayed():
+                        job_details_button = candidate
+                        break
+                except Exception:
+                    continue
+            if job_details_button:
+                break
+        except Exception:
+            continue
+
+    if not job_details_button:
+        job_id_hint = job.get_dom_attribute("data-occludable-job-id") or "unknown"
+        raise JobCardParseError(
+            f"Could not find a job title link in LinkedIn job card (Job ID: {job_id_hint})"
+        )
+
     scroll_to_view(driver, job_details_button, True)
+
     job_id = job.get_dom_attribute('data-occludable-job-id')
-    # aria-label is the whole title; .text of the link also drags in the verified-badge node,
-    # and slicing at the first "\n" silently ate the last character when there wasn't one.
-    title = job_details_button.get_dom_attribute('aria-label') or job_details_button.text
+    if not job_id:
+        href = job_details_button.get_dom_attribute('href') or ""
+        match = re.search(r"/jobs/view/(\d+)", href)
+        job_id = match.group(1) if match else None
+    if not job_id:
+        raise JobCardParseError("LinkedIn job card has no job ID")
+
+    title = (
+        job_details_button.get_dom_attribute('aria-label')
+        or job_details_button.text
+        or job_details_button.get_dom_attribute('title')
+        or ""
+    )
     title = title.split("\n")[0].removesuffix(" with verification").strip()
-    # The subtitle used to read "Company · Location (Style)". It is now the company alone,
-    # and the location moved into its own metadata list.
-    company = job.find_element(By.XPATH, ".//div[contains(@class,'artdeco-entity-lockup__subtitle')]").text.strip()
-    location_ele = try_xp(job, ".//ul[contains(@class,'job-card-container__metadata-wrapper')]//span[@dir='ltr']", False)
+    if not title:
+        raise JobCardParseError(f"LinkedIn job card has no job title (Job ID: {job_id})")
+
+    company = ""
+    company_selectors = [
+        ".//div[contains(@class,'artdeco-entity-lockup__subtitle')]",
+        ".//a[contains(@class,'job-card-container__company-name')]",
+        ".//a[contains(@href,'/company/')]",
+    ]
+    for selector in company_selectors:
+        try:
+            for candidate in job.find_elements(By.XPATH, selector):
+                text = (candidate.text or "").strip()
+                if text:
+                    company = text
+                    break
+            if company:
+                break
+        except Exception:
+            continue
+
+    if not company:
+        raise JobCardParseError(f"LinkedIn job card has no company name (Job ID: {job_id})")
+
+    location_ele = try_xp(
+        job,
+        ".//ul[contains(@class,'job-card-container__metadata-wrapper')]//span[@dir='ltr']",
+        False
+    )
+    if not location_ele:
+        try:
+            metadata = job.find_elements(
+                By.XPATH,
+                ".//*[contains(@class,'job-card-container__metadata-item')]"
+            )
+            location_ele = next(
+                (element for element in metadata if (element.text or "").strip()),
+                None
+            )
+        except Exception:
+            location_ele = None
+
     work_location = location_ele.text.strip() if location_ele else "Unknown"
     work_style = "Unknown"
     if '(' in work_location and ')' in work_location:
         work_style = work_location[work_location.rfind('(')+1:work_location.rfind(')')]
         work_location = work_location[:work_location.rfind('(')].strip()
-    
-    # Skip if previously rejected due to blacklist or already applied
+
     if company in blacklisted_companies:
         print_lg(f'Skipping "{title} | {company}" job (Blacklisted Company). Job ID: {job_id}!')
         skip = True
-    elif job_id in rejected_jobs: 
+    elif job_id in rejected_jobs:
         print_lg(f'Skipping previously rejected "{title} | {company}" job. Job ID: {job_id}!')
         skip = True
+
     try:
         if job.find_element(By.CLASS_NAME, "job-card-container__footer-job-state").text == "Applied":
             skip = True
             print_lg(f'Already applied to "{title} | {company}" job. Job ID: {job_id}!')
-    except: pass
-    try: 
-        if not skip: job_details_button.click()
-    except Exception as e:
-        logger.warning('Failed to click "%s | %s" job on details button. Job ID: %s!', title, company, job_id)
-        # print_lg(e)
+    except NoSuchElementException:
+        pass
+
+    try:
+        if not skip:
+            job_details_button.click()
+    except Exception:
+        logger.warning(
+            'Failed to click "%s | %s" job on details button. Job ID: %s!',
+            title, company, job_id
+        )
         discard_job()
-        job_details_button.click() # To pass the error outside
+        try:
+            job_details_button.click()
+        except Exception as e:
+            raise JobCardParseError(
+                f'Could not open job details for "{title} | {company}" (Job ID: {job_id})'
+            ) from e
+
     buffer(click_gap)
     return (job_id,title,company,work_location,work_style,skip)
 
@@ -1198,7 +1328,18 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     if current_count >= switch_number: break
                     print_lg("\n-@-\n")
 
-                    job_id,title,company,work_location,work_style,skip = get_job_main_details(job, blacklisted_companies, rejected_jobs)
+                    try:
+                        job_id,title,company,work_location,work_style,skip = get_job_main_details(
+                            job, blacklisted_companies, rejected_jobs
+                        )
+                    except JobCardParseError as e:
+                        skip_count += 1
+                        logger.warning("Skipping unparseable LinkedIn job card: %s", e)
+                        continue
+                    except NoSuchElementException as e:
+                        skip_count += 1
+                        logger.warning("Skipping LinkedIn job card after DOM lookup failed: %s", e)
+                        continue
                     
                     if skip: continue
                     # Redundant fail safe check for applied jobs!

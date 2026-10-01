@@ -37,7 +37,7 @@ set "VENV_PY=.venv\Scripts\python.exe"
 
 REM 2) Create a private Python environment the first time.
 if not exist "%VENV_PY%" (
-    echo Setting up for the first time (this can take a minute)...
+    echo Setting up for the first time - this can take a minute...
     %PYLAUNCH% -m venv .venv
     if errorlevel 1 (
         echo Could not create the Python environment.
@@ -48,7 +48,7 @@ if not exist "%VENV_PY%" (
 
 REM 3) Install the required packages once (quietly).
 if not exist ".venv\.deps_installed" (
-    echo Installing required packages (one time only)...
+    echo Installing required packages - one time only...
     "%VENV_PY%" -m pip install --quiet --upgrade pip
     "%VENV_PY%" -m pip install --quiet -r requirements.txt
     if errorlevel 1 (
@@ -59,8 +59,7 @@ if not exist ".venv\.deps_installed" (
     echo done> ".venv\.deps_installed"
 )
 
-REM 4) Start the control panel. It chooses a free port, prints the address, and
-REM    opens your browser to it.
+REM 4) Start the control panel.
 set "PANEL_OPEN_BROWSER=1"
 
 echo.

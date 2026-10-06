@@ -208,6 +208,7 @@ def validate_settings() -> None | ValueError | TypeError:
 
     check_boolean(run_in_background, "run_in_background")
     check_boolean(disable_extensions, "disable_extensions")
+    check_boolean(draft_save, "draft_save")
     check_boolean(safe_mode, "safe_mode")
     check_boolean(smooth_scroll, "smooth_scroll")
     check_boolean(keep_screen_awake, "keep_screen_awake")

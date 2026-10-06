@@ -17,6 +17,8 @@ version:    24.12.29.12.30
 
 import os
 import json
+import shutil
+import subprocess
 
 from time import sleep
 from random import randint
@@ -24,7 +26,12 @@ from datetime import datetime, timedelta
 from pyautogui import alert
 from pprint import pprint
 
-from config.settings import logs_folder_path
+try:
+    import pyttsx3
+except Exception:  # pragma: no cover - optional runtime dependency
+    pyttsx3 = None
+
+from config.settings import logs_folder_path, enable_voice_notifications
 
 
 
@@ -71,10 +78,59 @@ def find_default_profile_directory() -> str | None:
 
 
 #< Logging related
+def notify(message: str) -> None:
+    '''
+    Speak a message through an offline local TTS engine when available.
+    Falls back to system CLI TTS tools (espeak/flite) and finally prints the text.
+    '''
+    if not enable_voice_notifications:
+        return
+    if message is None:
+        return
+
+    text = " ".join(str(message).strip().split())
+    if not text:
+        return
+
+    try:
+        if pyttsx3 is not None:
+            engine = pyttsx3.init()
+            try:
+                engine.setProperty("rate", 170)
+                voices = engine.getProperty("voices")
+                if voices:
+                    engine.setProperty("voice", voices[0].id)
+                engine.say(text)
+                engine.runAndWait()
+                return
+            finally:
+                try:
+                    engine.stop()
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    for command in [
+        ["espeak", "-ven+f3", "-s170", text],
+        ["flite", "-voice", "slt", text],
+    ]:
+        try:
+            executable = shutil.which(command[0])
+            if executable:
+                subprocess.run([executable, *command[1:]], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                return
+        except Exception:
+            continue
+
+    print(f"Notification: {text}")
+
+
 def critical_error_log(possible_reason: str, stack_trace: Exception) -> None:
     '''
     Function to log and print critical errors along with datetime stamp
     '''
+    notify(f"Critical error: {possible_reason}")
     print_lg(possible_reason, stack_trace, datetime.now(), from_critical=True)
 
 

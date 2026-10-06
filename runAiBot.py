@@ -1009,6 +1009,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                             next_counter = 1
                                             continue
                                         if questions_list: print_lg("Stuck for one or some of the following questions...", questions_list)
+                                        notify(f"Bot is stuck on a job application while answering questions for job {job_id}. Needs manual review.")
                                         screenshot_name = screenshot(driver, job_id, "Failed at questions")
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
@@ -1183,12 +1184,18 @@ def main() -> None:
                 break
         
 
+    except (KeyboardInterrupt, SystemExit):
+        notify("Bot was interrupted and is shutting down.")
+        print_lg("Bot was interrupted by the user or the process was halted.")
     except (NoSuchWindowException, WebDriverException) as e:
+        notify("Bot shut down because the browser window closed or the Selenium session became invalid.")
         print_lg("Browser window closed or session is invalid. Exiting.", e)
     except Exception as e:
+        notify(f"Bot shut down due to an unexpected error: {e}")
         critical_error_log("In Applier Main", e)
         pyautogui.alert(e,alert_title)
     finally:
+        notify("Bot has finished running and is shutting down. Please check the log file for details.")
         print_lg("\n\nTotal runs:                     {}".format(total_runs))
         print_lg("Jobs Easy Applied:              {}".format(easy_applied_count))
         print_lg("External job links collected:   {}".format(external_jobs_count))

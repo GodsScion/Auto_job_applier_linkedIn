@@ -40,6 +40,6 @@ def test_live_ollama_extracts_profile_from_docx(client, monkeypatch):
     assert response.status_code == 200, response.get_json()
     result = response.get_json()
     values = {(field["module"], field["key"]): field["value"] for field in result["fields"]}
-    assert values[("personals", "first_name")].lower() == "ada"
+    assert values[("personals", "first_name")].lower() == "ada", result
     assert values[("personals", "last_name")].lower() == "lovelace"
     assert str(values[("questions", "years_of_experience")]).strip().lower() in {"5", "five"}

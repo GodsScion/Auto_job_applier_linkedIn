@@ -140,6 +140,31 @@ def test_create_ai_client_returns_none_when_ai_disabled(monkeypatch):
     assert C.create_ai_client() is None
 
 
+def test_create_ai_client_uses_local_ollama_openai_compatible_endpoint(monkeypatch):
+    import config.secrets as cfg
+    calls = {}
+
+    def fake_init_chat_model(model_name, **kwargs):
+        calls["model_name"] = model_name
+        calls.update(kwargs)
+        return _StubModel("ready")
+
+    monkeypatch.setattr(cfg, "use_AI", True)
+    monkeypatch.setattr(cfg, "ai_provider", "openai")
+    monkeypatch.setattr(cfg, "llm_model", "gemma4:e4b")
+    monkeypatch.setattr(cfg, "llm_api_key", "ollama")
+    monkeypatch.setattr(cfg, "llm_api_url", "http://localhost:11434/v1/")
+    monkeypatch.setattr(C, "init_chat_model", fake_init_chat_model)
+
+    client = C.create_ai_client()
+
+    assert client is not None
+    assert calls["model_name"] == "gemma4:e4b"
+    assert calls["model_provider"] == "openai"
+    assert calls["base_url"] == "http://localhost:11434/v1/"
+    assert calls["api_key"] == "ollama"
+
+
 def test_close_ai_client_is_a_noop():
     # Must never raise, even with a client or None.
     assert C.close_ai_client(None) is None

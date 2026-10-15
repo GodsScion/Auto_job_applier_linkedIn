@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Application Workflow</title>
+    <style>
+        :root { --bg:#f4f6f9; --card:#fff; --ink:#1f2733; --muted:#687385; --line:#dce1e8; --brand:#2563eb; --danger:#b42318; --ok:#167647; }
+        * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+        header, main { max-width:1000px; margin:auto; } header { background:var(--card); border-bottom:1px solid var(--line); padding:20px 24px; } main { padding:22px 16px 48px; }
+        h1 { font-size:21px; margin:0 0 4px; } h2 { font-size:17px; margin:0 0 10px; } p { margin:6px 0 12px; } .muted { color:var(--muted); }
+        .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; } .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px; margin:14px 0; }
+        label { display:block; font-weight:600; font-size:14px; margin:9px 0 4px; } input,textarea,select { width:100%; border:1px solid var(--line); border-radius:7px; padding:9px 10px; font:inherit; background:#fff; color:var(--ink); } textarea { min-height:75px; }
+        button,.link { border:0; border-radius:7px; padding:9px 13px; font:inherit; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; } button.primary { background:var(--brand); color:#fff; } button.secondary,.link { background:#e8edf5; color:var(--ink); } button.danger { background:#fee4e2; color:var(--danger); }
+        .actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:12px; } .notice { padding:11px 13px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; margin:10px 0; }
+        #status { font-size:13px; } #status.error { color:var(--danger); } #status.ok { color:var(--ok); }
+        .entry { display:grid; grid-template-columns:1fr 170px auto; align-items:center; gap:10px; border-top:1px solid var(--line); padding:12px 0; } .entry strong { display:block; } .entry small { display:block; color:var(--muted); overflow-wrap:anywhere; }
+        @media(max-width:700px) { .grid { grid-template-columns:1fr; } .entry { grid-template-columns:1fr; } header { padding:17px 16px; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Application workflow</h1>
+        <p class="muted">Choose a preparation mode, ask for help when needed, and keep a temporary session tracker. You review and submit applications yourself.</p>
+    </header>
+    <main>
+        <div class="grid">
+            <section class="card">
+                <h2>Browserless mode</h2>
+                <p>Parse a profile document or strict JSON, then prepare application drafts in this local panel. No job site is opened.</p>
+                <div class="actions"><a class="link" href="/import-profile">Import profile details</a><a class="link" href="/draft-application">Draft application materials</a></div>
+            </section>
+            <section class="card">
+                <h2>Browser-assisted mode</h2>
+                <p>Playwright opens the job page and hands control to you. The helper does not inspect fields, fill forms, bypass controls, or submit.</p>
+                <label for="assistUrl">Job page URL</label>
+                <input id="assistUrl" type="url" placeholder="https://www.linkedin.com/jobs/view/...">
+                <div class="actions"><button id="openJob" class="primary" type="button">Open in Playwright</button><span id="status" role="status" aria-live="polite"></span></div>
+                <p class="muted">Requires optional Playwright plus Chromium. Start `./playwright_local.sh assist URL` if you prefer the terminal.</p>
+            </section>
+        </div>
+
+        <section class="card">
+            <h2>Human-in-the-loop notes</h2>
+            <p class="muted">If a question is unclear, mark the item “Needs your input” and add the missing fact here. AI drafts can use profile facts you provide; this list records your decision/status for this session.</p>
+            <form id="trackerForm">
+                <div class="grid">
+                    <div><label for="jobTitle">Job title</label><input id="jobTitle" required maxlength="250"></div>
+                    <div><label for="company">Company</label><input id="company" maxlength="250"></div>
+                    <div><label for="jobUrl">Job URL</label><input id="jobUrl" type="url" maxlength="2048"></div>
+                    <div><label for="trackerStatus">Status</label><select id="trackerStatus"><option value="draft">Draft</option><option value="needs_user_input">Needs your input</option><option value="ready_to_apply">Ready for your review</option><option value="applied">Applied (I submitted manually)</option><option value="closed">Closed</option></select></div>
+                </div>
+                <label for="notes">Notes or answer to remember</label><textarea id="notes" maxlength="5000" placeholder="Question to resolve, your verified answer, or next step"></textarea>
+                <div class="actions"><button class="primary" type="submit">Add to session tracker</button><span id="trackerStatusText" role="status" aria-live="polite"></span></div>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Applications this session</h2>
+            <p class="notice">This tracker is held in memory and clears when the local panel process stops. “Applied” means you confirmed that you submitted it yourself.</p>
+            <div id="applicationList" class="muted">No session entries yet.</div>
+        </section>
+        <a class="link" href="/">Back to control panel</a>
+    </main>
+    <script>
+        (function () {
+            'use strict';
+            var status = document.getElementById('status');
+            var trackerText = document.getElementById('trackerStatusText');
+            var list = document.getElementById('applicationList');
+            var statuses = [
+                ['draft', 'Draft'], ['needs_user_input', 'Needs your input'],
+                ['ready_to_apply', 'Ready for your review'], ['applied', 'Applied manually'], ['closed', 'Closed']
+            ];
+            function setMessage(el, text, kind) { el.textContent = text; el.className = kind || ''; }
+            async function loadEntries() {
+                var response = await fetch('/api/session-applications');
+                var entries = await response.json();
+                list.replaceChildren();
+                if (!entries.length) { list.textContent = 'No session entries yet.'; return; }
+                entries.forEach(function (entry) {
+                    var row = document.createElement('div'); row.className = 'entry';
+                    var detail = document.createElement('div');
+                    var title = document.createElement('strong'); title.textContent = entry.job_title + (entry.company ? ' · ' + entry.company : ''); detail.appendChild(title);
+                    if (entry.job_url) { var link = document.createElement('a'); link.href = entry.job_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = entry.job_url; detail.appendChild(link); }
+                    if (entry.notes) { var note = document.createElement('small'); note.textContent = entry.notes; detail.appendChild(note); }
+                    var select = document.createElement('select');
+                    statuses.forEach(function (item) { var option = document.createElement('option'); option.value = item[0]; option.textContent = item[1]; select.appendChild(option); });
+                    select.value = entry.status;
+                    select.addEventListener('change', async function () {
+                        var body = { job_title: entry.job_title, company: entry.company, job_url: entry.job_url, notes: entry.notes, status: select.value };
+                        var response = await fetch('/api/session-applications/' + entry.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                        if (!response.ok) { setMessage(trackerText, 'Could not update status.', 'error'); return; }
+                        setMessage(trackerText, 'Session status updated.', 'ok');
+                    });
+                    var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'danger'; remove.textContent = 'Remove';
+                    remove.addEventListener('click', async function () { await fetch('/api/session-applications/' + entry.id, { method: 'DELETE' }); loadEntries(); });
+                    row.append(detail, select, remove); list.appendChild(row);
+                });
+            }
+            document.getElementById('openJob').addEventListener('click', async function () {
+                var url = document.getElementById('assistUrl').value.trim();
+                if (!url) { setMessage(status, 'Enter a job page URL first.', 'error'); return; }
+                setMessage(status, 'Opening Playwright…');
+                try {
+                    var response = await fetch('/api/browser-assist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: url }) });
+                    var data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Could not start browser assistance.');
+                    setMessage(status, data.message, 'ok');
+                } catch (error) { setMessage(status, error.message, 'error'); }
+            });
+            document.getElementById('trackerForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                var body = {
+                    job_title: document.getElementById('jobTitle').value.trim(),
+                    company: document.getElementById('company').value.trim(),
+                    job_url: document.getElementById('jobUrl').value.trim(),
+                    status: document.getElementById('trackerStatus').value,
+                    notes: document.getElementById('notes').value.trim()
+                };
+                var response = await fetch('/api/session-applications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                var data = await response.json();
+                if (!response.ok) { setMessage(trackerText, data.error || 'Could not add entry.', 'error'); return; }
+                this.reset(); setMessage(trackerText, 'Added to this session.', 'ok'); loadEntries();
+            });
+            loadEntries().catch(function () { list.textContent = 'Could not load the session tracker.'; });
+        }());
+    </script>
+</body>
+</html>

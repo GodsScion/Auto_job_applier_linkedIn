@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Draft an Application</title>
+    <style>
+        :root { --bg:#f4f6f9; --card:#fff; --ink:#1f2733; --muted:#687385; --line:#dce1e8; --brand:#2563eb; --danger:#b42318; --ok:#167647; }
+        * { box-sizing:border-box; }
+        body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+        header { background:var(--card); border-bottom:1px solid var(--line); padding:20px 24px; }
+        header, main { max-width:980px; margin:auto; }
+        main { padding:22px 16px 48px; }
+        h1 { font-size:21px; margin:0 0 4px; }
+        h2 { font-size:17px; margin:0 0 12px; }
+        p { margin:6px 0 12px; }
+        .muted { color:var(--muted); }
+        .notice { padding:13px 15px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:9px; margin-bottom:18px; }
+        .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px; margin:14px 0; }
+        .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+        label { display:block; font-weight:600; font-size:14px; margin:8px 0 5px; }
+        input, textarea { width:100%; border:1px solid var(--line); border-radius:7px; padding:10px 11px; font:inherit; color:var(--ink); background:#fff; }
+        textarea { min-height:130px; resize:vertical; }
+        #job_description, #candidate_profile { min-height:200px; }
+        input:focus, textarea:focus { outline:2px solid #bfdbfe; border-color:var(--brand); }
+        .consent { display:flex; align-items:flex-start; gap:10px; margin:14px 0; font-size:13px; }
+        .consent input { width:18px; margin-top:3px; }
+        button, .link-button { display:inline-block; border:0; border-radius:7px; padding:10px 15px; font:inherit; font-weight:600; font-size:14px; cursor:pointer; text-decoration:none; }
+        button.primary { background:var(--brand); color:white; }
+        button.secondary, .link-button { background:#eef1f6; color:var(--ink); }
+        button:disabled { opacity:.55; cursor:wait; }
+        .actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+        #status { min-height:24px; color:var(--muted); }
+        #status.error { color:var(--danger); }
+        #status.ok { color:var(--ok); }
+        #results[hidden] { display:none; }
+        @media(max-width:640px) { .grid { grid-template-columns:1fr; } header { padding:16px; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Draft an Application</h1>
+        <p class="muted">Prepare materials locally for review, then apply yourself.</p>
+    </header>
+    <main>
+        <div class="notice">This page does not visit job sites, fill in online forms, or submit applications. It drafts from text you provide. Review every detail before using it.</div>
+
+        <form id="draftForm">
+            <section class="card">
+                <h2>Role details</h2>
+                <div class="grid">
+                    <div><label for="job_title">Job title *</label><input id="job_title" name="job_title" required maxlength="200"></div>
+                    <div><label for="company">Company</label><input id="company" name="company" maxlength="200"></div>
+                    <div><label for="location">Location</label><input id="location" name="location" placeholder="e.g. Sydney or Hyderabad" maxlength="200"></div>
+                    <div><label for="job_url">Job link (for your own reference)</label><input id="job_url" name="job_url" type="url" placeholder="https://" maxlength="2000"></div>
+                </div>
+                <label for="job_description">Paste the job description *</label>
+                <textarea id="job_description" name="job_description" required maxlength="30000" placeholder="Paste the role description here. This page will not fetch the link above."></textarea>
+            </section>
+
+            <section class="card">
+                <h2>Your profile for this application</h2>
+                <p class="muted">Paste résumé facts or relevant experience you want used. The project’s sample profile is not used.</p>
+                <label for="candidate_profile">Your résumé facts, skills, and relevant experience *</label>
+                <textarea id="candidate_profile" name="candidate_profile" required maxlength="20000" placeholder="Include only accurate details you are comfortable sharing with the configured AI provider."></textarea>
+                <label for="questions">Application questions (optional, one per line)</label>
+                <textarea id="questions" name="questions" maxlength="10000" placeholder="Why are you interested in this role?&#10;Describe your experience with ..."></textarea>
+                <label class="consent" for="provider_consent">
+                    <input id="provider_consent" name="provider_consent" type="checkbox" required>
+                    <span>I understand that clicking Draft sends the job description, profile text, and questions to the AI provider configured in Account. A cloud provider may process this data outside this computer.</span>
+                </label>
+                <div class="actions">
+                    <button class="primary" id="draftBtn" type="submit">Draft for review</button>
+                    <a class="link-button" href="/">Back to control panel</a>
+                    <span id="status" role="status" aria-live="polite"></span>
+                </div>
+            </section>
+        </form>
+
+        <section class="card" id="results" hidden>
+            <h2>Review and edit your draft</h2>
+            <p class="muted">Check every statement for accuracy. Nothing is submitted or saved to an account.</p>
+            <label for="cover_letter">Cover letter</label>
+            <textarea id="cover_letter"></textarea>
+            <div id="answerFields"></div>
+            <label for="verify_notes">Facts to verify or fill in</label>
+            <textarea id="verify_notes"></textarea>
+            <div class="actions">
+                <button class="secondary" id="downloadBtn" type="button">Download reviewed draft</button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        (function () {
+            'use strict';
+            var form = document.getElementById('draftForm');
+            var button = document.getElementById('draftBtn');
+            var status = document.getElementById('status');
+            var results = document.getElementById('results');
+            var answerFields = document.getElementById('answerFields');
+
+            function setStatus(message, kind) {
+                status.textContent = message;
+                status.className = kind || '';
+            }
+
+            form.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                if (!form.reportValidity()) return;
+                button.disabled = true;
+                setStatus('Drafting…');
+                var payload = Object.fromEntries(new FormData(form).entries());
+                payload.provider_consent = document.getElementById('provider_consent').checked;
+                try {
+                    var response = await fetch('/api/draft-application', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    var data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Draft generation failed.');
+                    document.getElementById('cover_letter').value = data.cover_letter || '';
+                    document.getElementById('verify_notes').value = (data.points_to_verify || []).map(function (item) { return '• ' + item; }).join('\n');
+                    answerFields.replaceChildren();
+                    (data.answers || []).forEach(function (item, index) {
+                        var label = document.createElement('label');
+                        label.htmlFor = 'answer_' + index;
+                        label.textContent = item.question || ('Application answer ' + (index + 1));
+                        var textarea = document.createElement('textarea');
+                        textarea.id = 'answer_' + index;
+                        textarea.className = 'draft-answer';
+                        textarea.value = item.draft_answer || '';
+                        answerFields.append(label, textarea);
+                    });
+                    results.hidden = false;
+                    setStatus('Draft ready. Review and edit it before use.', 'ok');
+                    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } catch (error) {
+                    setStatus(error.message, 'error');
+                } finally {
+                    button.disabled = false;
+                }
+            });
+
+            document.getElementById('downloadBtn').addEventListener('click', function () {
+                var answers = Array.from(document.querySelectorAll('.draft-answer')).map(function (field) {
+                    var label = document.querySelector('label[for="' + field.id + '"]');
+                    return '## ' + (label ? label.textContent : 'Application answer') + '\n\n' + field.value;
+                });
+                var content = '# Application draft\n\n' +
+                    '**Role:** ' + document.getElementById('job_title').value + '\n' +
+                    '**Company:** ' + document.getElementById('company').value + '\n' +
+                    '**Location:** ' + document.getElementById('location').value + '\n' +
+                    '**Job link:** ' + document.getElementById('job_url').value + '\n\n' +
+                    '## Cover letter\n\n' + document.getElementById('cover_letter').value + '\n\n' +
+                    answers.join('\n\n') + '\n\n## Facts to verify\n\n' + document.getElementById('verify_notes').value + '\n';
+                var blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+                var url = URL.createObjectURL(blob);
+                var link = document.createElement('a');
+                link.href = url;
+                link.download = 'application-draft.md';
+                link.click();
+                URL.revokeObjectURL(url);
+            });
+        })();
+    </script>
+</body>
+</html>

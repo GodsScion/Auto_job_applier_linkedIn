@@ -21,6 +21,58 @@ Click the image above to watch the demo, or use this link: https://youtu.be/gMbB
 
 ## 🚀 Quick start
 
+For a terminal-based local setup on macOS or Linux, run `./run_local.sh`. It creates a
+project-local Python environment, installs the dependencies, and starts the local control
+panel. If Python 3.10+ is missing and Homebrew is available, it installs Python 3.12 with
+Homebrew. Without Homebrew, it prints the Python download instructions.
+
+The local control panel also has a **Draft an Application** page. Paste a job description
+and your own profile facts to prepare an editable cover letter and screening answers. The
+draft is generated only after you confirm that the text may be sent to the configured AI
+provider. Review and download it, then submit the application yourself on the job site.
+
+**Import profile details** accepts text-based PDF, modern Word (`.docx`), or strict JSON.
+Document text is parsed by the configured AI only after consent; JSON is validated locally.
+Extracted fields appear in an editable review screen and are saved to `user_config.json`
+only after you click **Save reviewed details**. Scanned PDFs need OCR first.
+
+The **Application workflow** page offers browserless preparation and a Playwright-assisted
+browser that opens a job page for you to use manually. The app does not inspect or fill the
+job page or submit applications. Its session tracker keeps notes and statuses in memory and
+clears when the panel stops.
+
+### Local Ollama with Gemma
+
+Install and start [Ollama](https://ollama.com/download), then pull a Gemma model, for example:
+
+```sh
+ollama pull gemma4:e4b
+```
+
+In the control panel's **Account** tab, enable AI and set **AI provider** to `openai`,
+**AI model** to the exact pulled tag (such as `gemma4:e4b`), and **AI API URL** to
+`http://localhost:11434/v1/`. Ollama ignores the API key; enter `ollama` or `not-needed`.
+Then use **Draft an Application**. The API endpoint is a local Ollama server in this setup;
+if you point the URL at a remote server, your pasted text goes to that server instead.
+The model suggestions also include `qwen3.5:4b`; pull it with `ollama pull qwen3.5:4b`.
+
+### Playwright record and replay for the local draft page
+
+Optional browser recording is available for documenting/replaying interactions with this
+project's local draft page. Install Playwright in the project environment and its Chromium
+browser once:
+
+```sh
+.venv/bin/pip install playwright
+.venv/bin/python -m playwright install chromium
+```
+
+With the local panel running, start a recording with `./playwright_local.sh record http://127.0.0.1:PORT/draft-application`
+and replay the saved local-page script with `./playwright_local.sh play`. To open a job
+page for manual browser interaction, use `./playwright_local.sh assist https://job-page-url`.
+The assistant does not read or fill the page or submit the application. Review any saved
+recording before replay.
+
 New here, or not comfortable editing code? Use the built-in control panel. You set
 everything up in your web browser and run the tool with a button — no editing Python files,
 no terminal commands.

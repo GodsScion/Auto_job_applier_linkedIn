@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Import Profile Details</title>
+    <style>
+        :root { --bg:#f4f6f9; --card:#fff; --ink:#1f2733; --muted:#687385; --line:#dce1e8; --brand:#2563eb; --danger:#b42318; --ok:#167647; }
+        * { box-sizing:border-box; }
+        body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+        header, main { max-width:980px; margin:auto; }
+        header { background:var(--card); border-bottom:1px solid var(--line); padding:20px 24px; }
+        main { padding:22px 16px 48px; }
+        h1 { font-size:21px; margin:0 0 4px; } h2 { font-size:17px; margin:0 0 12px; }
+        p { margin:6px 0 12px; } .muted { color:var(--muted); }
+        .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px; margin:14px 0; }
+        label { display:block; font-weight:600; font-size:14px; margin:10px 0 5px; }
+        input, textarea { width:100%; border:1px solid var(--line); border-radius:7px; padding:10px 11px; font:inherit; color:var(--ink); background:#fff; }
+        textarea { min-height:95px; resize:vertical; }
+        .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+        .consent { display:flex; align-items:flex-start; gap:10px; margin:14px 0; font-size:13px; font-weight:400; }
+        .consent input { width:18px; margin-top:3px; }
+        .actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:15px; }
+        button, .link { border:0; border-radius:7px; padding:10px 15px; font:inherit; font-weight:600; cursor:pointer; text-decoration:none; }
+        button.primary { background:var(--brand); color:white; } button.secondary { background:#e8edf5; color:var(--ink); }
+        button:disabled { opacity:.55; cursor:wait; } #status { font-size:13px; } #status.error { color:var(--danger); } #status.ok { color:var(--ok); }
+        pre { background:#f8fafc; border:1px solid var(--line); border-radius:8px; padding:12px; overflow:auto; font-size:12px; }
+        @media(max-width:640px) { .grid { grid-template-columns:1fr; } header { padding:17px 16px; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Import profile details</h1>
+        <p class="muted">Parse a text PDF, .docx Word document, or strict JSON file. Review the extracted fields before saving them to this computer.</p>
+    </header>
+    <main>
+        <section class="card">
+            <h2>Choose a source</h2>
+            <form id="importForm">
+                <label for="profileFile">PDF, DOCX, or JSON file</label>
+                <input id="profileFile" name="file" type="file" accept=".pdf,.docx,.json,application/pdf,application/json,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
+                <p id="sourceHelp" class="muted">PDF/Word text is extracted on this computer, then sent to the AI provider selected in Account for structured parsing. Scanned PDFs need OCR first.</p>
+                <label id="consentRow" class="consent" for="providerConsent">
+                    <input id="providerConsent" name="provider_consent" type="checkbox" value="true">
+                    <span>I agree to send extracted document text to the configured AI provider. If Account points to a remote service, the text leaves this computer. For local processing, configure Ollama at <code>http://localhost:11434/v1/</code>.</span>
+                </label>
+                <div class="actions">
+                    <button class="primary" id="parseBtn" type="submit">Parse for review</button>
+                    <a class="link" href="/">Back to control panel</a>
+                    <span id="status" role="status" aria-live="polite"></span>
+                </div>
+            </form>
+        </section>
+
+        <section class="card" id="jsonGuide">
+            <h2>Strict JSON format</h2>
+            <p class="muted">Use exactly these two top-level objects. Keys must match the Profile settings; values must be strings, numbers, or null as appropriate. Unknown keys are rejected.</p>
+            <pre>{
+  "personals": { "first_name": "Ada", "last_name": "Lovelace", "phone_number": "+61..." },
+  "questions": { "years_of_experience": "5", "desired_salary": 120000, "website": "https://example.com" }
+}</pre>
+        </section>
+
+        <section class="card" id="review" hidden>
+            <h2>Review extracted details</h2>
+            <p class="muted">Only fields found in the file are shown. Edit values before saving; fields not found are left unchanged. Nothing is saved until you choose Save reviewed details.</p>
+            <div id="fields" class="grid"></div>
+            <div class="actions">
+                <button class="primary" id="saveBtn" type="button">Save reviewed details</button>
+                <button class="secondary" id="discardBtn" type="button">Discard preview</button>
+                <span id="saveStatus" role="status" aria-live="polite"></span>
+            </div>
+        </section>
+    </main>
+    <script>
+        (function () {
+            'use strict';
+            var form = document.getElementById('importForm');
+            var fileInput = document.getElementById('profileFile');
+            var consent = document.getElementById('providerConsent');
+            var consentRow = document.getElementById('consentRow');
+            var sourceHelp = document.getElementById('sourceHelp');
+            var jsonGuide = document.getElementById('jsonGuide');
+            var status = document.getElementById('status');
+            var review = document.getElementById('review');
+            var fields = document.getElementById('fields');
+            var saveStatus = document.getElementById('saveStatus');
+            var parsedFields = [];
+
+            function message(node, text, kind) { node.textContent = text; node.className = kind || ''; }
+            function refreshSourceHelp() {
+                var isJson = fileInput.files.length && fileInput.files[0].name.toLowerCase().endsWith('.json');
+                consentRow.hidden = !!isJson;
+                jsonGuide.hidden = !!fileInput.files.length && !isJson;
+                sourceHelp.textContent = isJson
+                    ? 'Strict JSON is validated locally; it is not sent to an AI provider.'
+                    : 'PDF/Word text is extracted on this computer, then sent to the AI provider selected in Account for structured parsing. Scanned PDFs need OCR first.';
+            }
+            fileInput.addEventListener('change', refreshSourceHelp);
+
+            form.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                if (!fileInput.files.length) return;
+                var isJson = fileInput.files[0].name.toLowerCase().endsWith('.json');
+                if (!isJson && !consent.checked) {
+                    message(status, 'Check the consent box before sending document text to the AI provider.', 'error');
+                    return;
+                }
+                var button = document.getElementById('parseBtn');
+                button.disabled = true;
+                message(status, 'Parsing…');
+                var data = new FormData();
+                data.append('file', fileInput.files[0]);
+                data.append('provider_consent', consent.checked ? 'true' : 'false');
+                try {
+                    var response = await fetch('/api/import-profile', { method: 'POST', body: data });
+                    var result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Could not parse the file.');
+                    parsedFields = result.fields.filter(function (field) { return field.value !== '' && field.value !== null; });
+                    fields.replaceChildren();
+                    parsedFields.forEach(function (field, index) {
+                        var wrapper = document.createElement('div');
+                        var label = document.createElement('label');
+                        var control = field.type === 'textarea' ? document.createElement('textarea') : document.createElement('input');
+                        control.id = 'profile_' + index;
+                        if (control.tagName === 'INPUT') control.type = field.type === 'number' ? 'number' : 'text';
+                        control.value = field.value;
+                        label.htmlFor = control.id;
+                        label.textContent = field.label;
+                        wrapper.append(label, control);
+                        fields.appendChild(wrapper);
+                    });
+                    review.hidden = false;
+                    message(status, 'Parsed ' + parsedFields.length + ' field(s). Review them below.', 'ok');
+                    message(saveStatus, '');
+                    review.scrollIntoView({ behavior: 'smooth' });
+                } catch (error) {
+                    message(status, error.message, 'error');
+                } finally { button.disabled = false; }
+            });
+
+            document.getElementById('saveBtn').addEventListener('click', async function () {
+                var payload = { personals: {}, questions: {} };
+                parsedFields.forEach(function (field, index) {
+                    var value = document.getElementById('profile_' + index).value.trim();
+                    if (!value) return;
+                    if (field.type === 'number') value = Number(value);
+                    payload[field.module][field.key] = value;
+                });
+                var button = document.getElementById('saveBtn');
+                button.disabled = true;
+                message(saveStatus, 'Saving…');
+                try {
+                    var response = await fetch('/api/config', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                    });
+                    var result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Could not save the profile.');
+                    message(saveStatus, 'Reviewed details saved locally to user_config.json.', 'ok');
+                } catch (error) { message(saveStatus, error.message, 'error'); }
+                finally { button.disabled = false; }
+            });
+            document.getElementById('discardBtn').addEventListener('click', function () {
+                parsedFields = []; fields.replaceChildren(); review.hidden = true; message(saveStatus, '');
+            });
+        }());
+    </script>
+</body>
+</html>

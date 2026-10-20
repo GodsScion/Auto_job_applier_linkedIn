@@ -59,6 +59,10 @@ generated_resume_path = "all resumes/" # (In Development)
 
 # >>>>>>>>>>> Global Settings <<<<<<<<<<<
 
+# Auto-fill and assume answers to all form components (text, dropdown, radio, checkbox, experience=1)
+# to guarantee submission without stalling or discarding.
+assume_answers_to_submit = True     # True or False, Note: True or False are case-sensitive
+
 # Directory and name of the files where history of applied jobs is saved (Sentence after the last "/" will be considered as the file name).
 file_name = "all excels/all_applied_applications_history.csv"
 failed_file_name = "all excels/all_failed_applications_history.csv"

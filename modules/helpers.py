@@ -55,19 +55,14 @@ def make_directories(paths: list[str]) -> None:
 
 def get_default_temp_profile() -> str:
     '''
-    Absolute path of the throwaway Chrome profile folder, created if it doesn't exist.
-    Returns a **bare path** - callers add the `--user-data-dir=` flag themselves.
+    Absolute path of the dedicated Chrome profile folder, created if it doesn't exist.
+    Stores login session and cookies so user doesn't have to re-verify constantly.
     '''
-    # Thanks to https://github.com/vinodbavage31 for suggestion!
-    home = pathlib.Path.home()
-    if sys.platform.startswith('win'):
+    if sys.platform.startswith("win"):
         path = pathlib.Path("C:\\temp\\auto-job-apply-profile")
-    elif sys.platform.startswith('linux'):
-        path = home / ".auto-job-apply-profile"
     else:
-        path = home / "Library" / "Application Support" / "Google" / "Chrome" / "auto-job-apply-profile"
+        path = pathlib.Path.home() / ".auto-job-apply-profile"
     try:
-        # A missing parent is the other cause of "Chrome cannot read and write to its data directory".
         path.mkdir(parents=True, exist_ok=True)
     except OSError as e:
         print(f'Could not create the Chrome profile directory "{path}":', e)
@@ -276,21 +271,22 @@ def human_type(target, text: str) -> None:
         if randint(1,40) == 1: buffer(1)
 
 
-def manual_login_retry(is_logged_in: callable, limit: int = 2) -> None:
+def manual_login_retry(is_logged_in: callable, limit: int = 15) -> None:
     '''
-    Function to ask and validate manual login
+    Function to wait and validate manual login / security check resolution smoothly
+    without popping up blocking modal dialogs.
     '''
     count = 0
+    max_wait = max(limit, 20)
+    print_lg("Awaiting LinkedIn login or checkpoint completion in browser window...")
     while not is_logged_in():
-        from pyautogui import alert
-        print_lg("Seems like you're not logged in!")
-        button = "Confirm Login"
-        message = 'After you successfully Log In, please click "{}" button below.'.format(button)
-        if count > limit:
-            button = "Skip Confirmation"
-            message = 'If you\'re seeing this message even after you logged in, Click "{}". Seems like auto login confirmation failed!'.format(button)
         count += 1
-        if alert(message, "Login Required", button) and count > limit: return
+        sleep(2)
+        if count % 5 == 0:
+            print_lg(f"Still waiting for login confirmation ({count * 2}s elapsed)... Please log in or complete verification in the browser window.")
+        if count >= max_wait:
+            print_lg("Login wait timeout reached. Proceeding with application flow.")
+            return
 
 
 

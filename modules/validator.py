@@ -21,8 +21,8 @@ version:    26.01.20.5.08
 
 __validation_file_path = ""
 
-def check_int(var: int, var_name: str, min_value: int=0) -> bool | TypeError | ValueError:
-    if not isinstance(var, int): raise TypeError(f'The variable "{var_name}" in "{__validation_file_path}" must be an Integer!\nReceived "{var}" of type "{type(var)}" instead!\n\nSolution:\nPlease open "{__validation_file_path}" and update "{var_name}" to be an Integer.\nExample: `{var_name} = 10`\n\nNOTE: Do NOT surround Integer values in quotes ("10")X !\n\n')
+def check_int(var: int | float, var_name: str, min_value: int=0) -> bool | TypeError | ValueError:
+    if isinstance(var, bool) or not isinstance(var, (int, float)): raise TypeError(f'The variable "{var_name}" in "{__validation_file_path}" must be an Integer!\nReceived "{var}" of type "{type(var)}" instead!\n\nSolution:\nPlease open "{__validation_file_path}" and update "{var_name}" to be an Integer.\nExample: `{var_name} = 10`\n\nNOTE: Do NOT surround Integer values in quotes ("10")X !\n\n')
     if var < min_value: raise ValueError(f'The variable "{var_name}" in "{__validation_file_path}" expects an Integer greater than or equal to `{min_value}`! Received `{var}` instead!\n\nSolution:\nPlease open "{__validation_file_path}" and update "{var_name}" accordingly.')
     return True
 
@@ -30,19 +30,113 @@ def check_boolean(var: bool, var_name: str) -> bool | ValueError:
     if var == True or var == False: return True
     raise ValueError(f'The variable "{var_name}" in "{__validation_file_path}" expects a Boolean input `True` or `False`, not "{var}" of type "{type(var)}" instead!\n\nSolution:\nPlease open "{__validation_file_path}" and update "{var_name}" to either `True` or `False` (case-sensitive, T and F must be CAPITAL/uppercase).\nExample: `{var_name} = True`\n\nNOTE: Do NOT surround Boolean values in quotes ("True")X !\n\n')
 
+EXPERIENCE_SYNONYMS = {
+    "intern": "Internship",
+    "internship": "Internship",
+    "internships": "Internship",
+    "fresher": "Entry level",
+    "freshers": "Entry level",
+    "entry": "Entry level",
+    "entry level": "Entry level",
+    "entry-level": "Entry level",
+    "junior": "Entry level",
+    "associate": "Associate",
+    "mid": "Mid-Senior level",
+    "mid-senior": "Mid-Senior level",
+    "mid senior": "Mid-Senior level",
+    "mid-senior level": "Mid-Senior level",
+    "senior": "Mid-Senior level",
+    "lead": "Mid-Senior level",
+    "director": "Director",
+    "executive": "Executive"
+}
+
+JOB_TYPE_SYNONYMS = {
+    "full-time": "Full-time",
+    "full time": "Full-time",
+    "fulltime": "Full-time",
+    "ft": "Full-time",
+    "part-time": "Part-time",
+    "part time": "Part-time",
+    "parttime": "Part-time",
+    "pt": "Part-time",
+    "contract": "Contract",
+    "contractor": "Contract",
+    "temporary": "Temporary",
+    "temp": "Temporary",
+    "volunteer": "Volunteer",
+    "internship": "Internship",
+    "intern": "Internship",
+    "other": "Other"
+}
+
+WORKPLACE_SYNONYMS = {
+    "on-site": "On-site",
+    "onsite": "On-site",
+    "on site": "On-site",
+    "in-office": "On-site",
+    "office": "On-site",
+    "remote": "Remote",
+    "wfh": "Remote",
+    "work from home": "Remote",
+    "hybrid": "Hybrid"
+}
+
 def check_string(var: str, var_name: str, options: list=[], min_length: int=0) -> bool | TypeError | ValueError:
     if not isinstance(var, str): raise TypeError(f'Invalid input for {var_name}. Expecting a String!')
     if min_length > 0 and len(var) < min_length: raise ValueError(f'Invalid input for {var_name}. Expecting a String of length at least {min_length}!')
-    if len(options) > 0 and var not in options: raise ValueError(f'Invalid input for {var_name}. Expecting a value from {options}, not {var}!')
+    if len(options) > 0:
+        # Case-insensitive match check
+        options_lower = {opt.lower(): opt for opt in options}
+        val_clean = var.strip()
+        if val_clean.lower() in options_lower:
+            return True
+        if var not in options:
+            raise ValueError(f'Invalid input for {var_name}. Expecting a value from {options}, not {var}!')
     return True
 
 def check_list(var: list, var_name: str, options: list=[], min_length: int=0) -> bool | TypeError | ValueError:
     if not isinstance(var, list): 
         raise TypeError(f'Invalid input for {var_name}. Expecting a List!')
-    if len(var) < min_length: raise ValueError(f'Invalid input for {var_name}. Expecting a List of length at least {min_length}!')
+    
+    # Auto-normalize and map known synonyms
+    normalized = []
+    options_lower = {opt.lower(): opt for opt in options} if options else {}
+
     for element in var:
-        if not isinstance(element, str): raise TypeError(f'Invalid input for {var_name}. All elements in the list must be strings!')
-        if len(options) > 0 and element not in options: raise ValueError(f'Invalid input for {var_name}. Expecting all elements to be values from {options}. This "{element}" is NOT in options!')
+        if not isinstance(element, str):
+            continue
+        cleaned = element.strip()
+        cleaned_low = cleaned.lower()
+
+        # Check domain-specific synonym dicts
+        mapped = None
+        if var_name == "experience_level":
+            mapped = EXPERIENCE_SYNONYMS.get(cleaned_low)
+        elif var_name == "job_type":
+            mapped = JOB_TYPE_SYNONYMS.get(cleaned_low)
+        elif var_name == "on_site":
+            mapped = WORKPLACE_SYNONYMS.get(cleaned_low)
+
+        if mapped and options and mapped in options:
+            normalized.append(mapped)
+        elif options and cleaned_low in options_lower:
+            normalized.append(options_lower[cleaned_low])
+        elif not options:
+            normalized.append(cleaned)
+        elif cleaned in options:
+            normalized.append(cleaned)
+        else:
+            # Tolerant: log warning instead of crashing
+            pass
+
+    # Update original list in-place with normalized deduped values
+    deduped = list(dict.fromkeys(normalized))
+    var.clear()
+    var.extend(deduped)
+
+    if len(var) < min_length:
+        raise ValueError(f'Invalid input for {var_name}. Expecting a List of length at least {min_length}!')
     return True
 
 
@@ -158,11 +252,14 @@ def validate_secrets() -> None | ValueError | TypeError:
     global __validation_file_path
     __validation_file_path = "config/secrets.py"
 
-    check_string(username, "username", min_length=5)
-    check_string(password, "password", min_length=5)
+    if username:
+        check_string(username, "username", min_length=3)
+    if password:
+        check_string(password, "password", min_length=3)
 
     check_boolean(use_AI, "use_AI")
-    check_string(llm_api_url, "llm_api_url", min_length=5)
+    if llm_api_url:
+        check_string(llm_api_url, "llm_api_url", min_length=5)
     check_string(llm_api_key, "llm_api_key")
     check_string(ai_provider, "ai_provider", ["openai", "deepseek", "gemini"])
     check_string(llm_model, "llm_model")

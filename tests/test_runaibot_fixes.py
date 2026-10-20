@@ -178,3 +178,67 @@ def test_easy_apply_detection_is_an_ordered_fallback_list(bot):
 # ------------------------------- M: the no-submit flag -----------------------------
 def test_stop_before_submit_setting_is_always_defined(bot):
     assert isinstance(bot.stop_before_submit, bool)
+
+
+# ------------------ N: Auto-assume and submit all components tests -----------------
+def test_assume_answers_fills_skill_experience_as_1(bot, monkeypatch):
+    '''With assume_answers_to_submit=True, skill-specific experience (e.g. Ai Agents) is answered with "1".'''
+    monkeypatch.setattr(bot, "assume_answers_to_submit", True)
+    monkeypatch.setattr(bot, "use_AI", False)
+    monkeypatch.setattr(bot, "print_lg", lambda *a, **k: None)
+
+    class FakeInput:
+        def __init__(self):
+            self.value = ""
+        def get_attribute(self, attr):
+            if attr == "value": return self.value
+            return "text"
+        def clear(self):
+            self.value = ""
+
+    fake_inp = FakeInput()
+    monkeypatch.setattr(bot, "human_type", lambda elem, text: setattr(elem, "value", str(text)))
+
+    question_div = FakeElement(children={
+        ".//input[@type='text']": fake_inp,
+        ".//label[@for]": FakeElement(text="How many years of experience do you have in creating Ai Agents *"),
+    })
+    modal = FakeElement(children={
+        ".//div[@data-test-form-element]": [question_div],
+        ".//button[contains(@aria-label, 'This is today')]": None,
+    })
+
+    bot.answer_questions(modal, set(), "Remote")
+    assert fake_inp.value == "1"
+    assert not bot.unanswered_questions
+
+
+def test_assume_answers_checks_checkboxes(bot, monkeypatch):
+    '''With assume_answers_to_submit=True, application checkboxes are automatically checked.'''
+    monkeypatch.setattr(bot, "assume_answers_to_submit", True)
+    monkeypatch.setattr(bot, "print_lg", lambda *a, **k: None)
+
+    class FakeCheckbox:
+        def __init__(self):
+            self.selected = False
+        def get_attribute(self, attr):
+            if attr == "id": return "consent_box"
+            return None
+        def is_selected(self):
+            return self.selected
+        def click(self):
+            self.selected = True
+
+    box = FakeCheckbox()
+    question_div = FakeElement(children={
+        ".//input[@type='checkbox']": box,
+        ".//label[@for]": FakeElement(text="I agree to terms and background check"),
+    })
+    modal = FakeElement(children={
+        ".//div[@data-test-form-element]": [question_div],
+        ".//button[contains(@aria-label, 'This is today')]": None,
+    })
+
+    bot.answer_questions(modal, set(), "Remote")
+    assert box.selected is True
+    assert not bot.unanswered_questions

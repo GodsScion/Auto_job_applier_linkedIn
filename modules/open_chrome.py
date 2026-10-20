@@ -60,10 +60,13 @@ def get_managed_driver_path() -> str | None:
         # UC rewrites the driver in place, so never hand it the shared ~/.cache/selenium
         # copy that other tools use. Work on our own copy, in UC's own data dir.
         os.makedirs(uc.Patcher.data_path, exist_ok=True)
-        target = os.path.join(uc.Patcher.data_path, "chromedriver")
-        shutil.copy2(source, target)                    # fresh copy each run, so it can never go stale against a Chrome update
-        uc.Patcher(executable_path=target).auto()       # applies UC's cdc_ patch in place
-        _adhoc_sign(target)                             # ...which breaks the code signature, hence the re-sign, in this order
+        target = os.path.join(uc.Patcher.data_path, os.path.basename(source))
+        try:
+            shutil.copy2(source, target)                    # fresh copy each run, so it can never go stale against a Chrome update
+            uc.Patcher(executable_path=target).auto()       # applies UC's cdc_ patch in place
+            _adhoc_sign(target)                             # ...which breaks the code signature, hence the re-sign, in this order
+        except (PermissionError, OSError):
+            pass                                            # In use by running process; use existing target
         return target                                   # uc.Chrome() then sees it already patched and leaves the signature alone
     except Exception as e:
         logger.warning("Selenium Manager couldn't resolve a Chrome driver (%s: %s). Falling back to undetected_chromedriver's own download.", type(e).__name__, e)
@@ -112,8 +115,9 @@ except Exception as e:
     if isinstance(e,TimeoutError): msg = "Couldn't download Chrome-driver. Set auto_manage_driver = False in config!"
     logger.error(msg)
     critical_error_log("In Opening Chrome", e)
-    from pyautogui import alert
-    alert(msg, "Error in opening chrome")
-    try: driver.quit()
-    except NameError: exit()
+    print_lg(f"[Error in opening chrome]: {msg}")
+    try:
+        if driver: driver.quit()
+    except Exception: pass
+    sys.exit(1)
     

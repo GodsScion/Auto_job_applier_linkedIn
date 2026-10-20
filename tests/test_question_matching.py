@@ -53,6 +53,7 @@ def pinned_config(bot, monkeypatch):
     monkeypatch.setattr(bot, "legally_authorized", "Yes")
     monkeypatch.setattr(bot, "us_citizenship", CITIZENSHIP)
     monkeypatch.setattr(bot, "state", STATE)
+    monkeypatch.setattr(bot, "assume_answers_to_submit", False)
 
 
 class FakeElement:

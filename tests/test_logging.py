@@ -195,6 +195,7 @@ def test_the_file_handler_rotates(log_file):
 
 
 def test_setup_logging_replaces_handlers_instead_of_stacking_them(log_file, capsys):
+    setup_logging(str(log_file))
     before = len(logger.handlers)
     setup_logging(str(log_file))
     assert len(logger.handlers) == before

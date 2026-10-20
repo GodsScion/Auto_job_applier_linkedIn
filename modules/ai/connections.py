@@ -51,15 +51,8 @@ _alerts_enabled = bool(showAiErrorAlerts)
 
 
 def _ai_error_alert(message: str, error: Exception, title: str = "AI Error") -> None:
-    '''Log an AI error and (optionally) show a dismissible dialog, mirroring the rest of the tool.'''
-    global _alerts_enabled
-    if _alerts_enabled and confirm is not None:
-        try:
-            choice = confirm(f"{message}\n\n{error}\n", title, ["Pause AI alerts", "Okay, continue"])
-            if choice == "Pause AI alerts":
-                _alerts_enabled = False
-        except Exception:
-            pass
+    '''Log an AI error cleanly without interrupting the automated run.'''
+    logger.warning("[AI Warning] %s: %s", message, error)
     critical_error_log(message, error)
 
 
@@ -78,11 +71,6 @@ def _resolve_provider(name: Optional[str]) -> str:
 def _msg_text(message) -> str:
     '''Extract plain text from a LangChain message (handles str content and content-block lists).'''
     text = getattr(message, "text", None)
-    if callable(text):
-        try:
-            text = text()
-        except Exception:
-            text = None
     if isinstance(text, str) and text:
         return text
     content = getattr(message, "content", "")
@@ -93,6 +81,8 @@ def _msg_text(message) -> str:
         for block in content:
             if isinstance(block, dict):
                 parts.append(block.get("text") or block.get("content") or "")
+            elif hasattr(block, "text"):
+                parts.append(str(block.text))
             else:
                 parts.append(str(block))
         return "".join(parts)
@@ -117,6 +107,12 @@ def create_ai_client() -> Optional[AIClient]:
     try:
         provider = _resolve_provider(cfg.ai_provider)
         model_name = cfg.llm_model
+        # Auto-upgrade deprecated Gemini model names to the active gemini-3.5-flash
+        if provider == "google_genai" or (cfg.ai_provider and "gemini" in str(cfg.ai_provider).lower()):
+            deprecated_gemini = ["2.0-flash", "1.5-flash", "1.5-pro", "2.5-flash-lite"]
+            if not model_name or any(dep in model_name for dep in deprecated_gemini):
+                print_lg(f"Note: Model '{model_name}' is deprecated. Upgrading to 'gemini-3.5-flash' for top performance.")
+                model_name = "gemini-3.5-flash"
         api_key = (getattr(cfg, "llm_api_key", "") or "").strip()
         temperature = getattr(cfg, "llm_temperature", None)
 
@@ -127,12 +123,16 @@ def create_ai_client() -> Optional[AIClient]:
 
         if provider == "google_genai":
             if api_key and api_key.lower() != "not-needed":
-                os.environ.setdefault("GOOGLE_API_KEY", api_key)
+                os.environ["GOOGLE_API_KEY"] = api_key
+                os.environ["GEMINI_API_KEY"] = api_key
+                kwargs["api_key"] = api_key
+            kwargs["max_retries"] = 1
             model = init_chat_model(model_name, model_provider="google_genai", **kwargs)
         else:
             base_url = (getattr(cfg, "llm_api_url", "") or "").strip()
             # OpenAI-compatible servers accept any key; use a placeholder when none is given.
             kwargs["api_key"] = api_key or "not-needed"
+            kwargs["max_retries"] = 1
             if base_url:
                 kwargs["base_url"] = base_url
             model = init_chat_model(model_name, model_provider="openai", **kwargs)

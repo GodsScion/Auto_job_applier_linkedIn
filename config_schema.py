@@ -55,8 +55,8 @@ AI_MODELS = {
     ],
     "deepseek": ["deepseek-chat", "deepseek-reasoner"],
     "gemini": [
-        "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash",
-        "gemini-1.5-flash", "gemini-1.5-pro",
+        "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.8-flash",
+        "gemini-2.5-flash", "gemini-2.5-pro",
     ],
 }
 
@@ -256,6 +256,8 @@ SCHEMA = [
             _f("Run settings", "questions", "pause_at_failed_question", "Pause on hard questions", "bool",
                "Pause and wait for you when the tool can't confidently answer a question. If off, it answers randomly. Ignored when 'Run in background' is on."),
             # --- advanced run options ---
+            _f("Run settings", "settings", "assume_answers_to_submit", "Auto-assume & submit all forms", "bool",
+               "Automatically fill and assume reasonable answers for all form components (experience=1, checkboxes, affirmative dropdowns/radios) to ensure applications are always submitted without discarding."),
             _f("Run settings", "settings", "auto_manage_driver", "Manage Chrome driver automatically", "bool",
                "Let the tool download and match the right Chrome driver for you. Recommended on so you don't have to install it yourself.", advanced=True),
             _f("Run settings", "settings", "safe_mode", "Safe mode", "bool",

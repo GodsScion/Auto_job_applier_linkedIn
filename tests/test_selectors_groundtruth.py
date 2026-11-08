@@ -270,6 +270,38 @@ def test_job_card_stable_anchors_still_present(card):
     assert [s for f in footers for s in find(f, "span") if s.text() == "Easy Apply"]
 
 
+# =================================================================================
+# 2b. REACT JOB CARD  (07_job_card_react.html) - the 2026 rewrite
+# =================================================================================
+
+@pytest.fixture(scope="module")
+def react_card():
+    return parse("07_job_card_react.html")
+
+
+def test_react_job_card_has_no_legacy_id_or_link(react_card):
+    '''Why the old locator died: no occludable id, no data-job-id and no per-card link.'''
+    assert find(react_card, d=attr("data-occludable-job-id")) == []
+    assert find(react_card, d=attr("data-job-id")) == []
+    assert find(react_card, "a") == []
+
+
+def test_react_job_card_exposes_componentkey(bot, react_card):
+    cards = find(react_card, d=lambda n: (n.attr("componentkey") or "").startswith(
+        "job-card-component-ref-"))
+    assert len(cards) == 1
+    assert cards[0].attr("componentkey") == "job-card-component-ref-4481055232"
+    # The discovery order in the bot starts with exactly this marker.
+    assert "componentkey" in bot.JOB_CARD_XPATHS[0]
+    assert "job-card-component-ref" in bot.JOB_CARD_XPATHS[0]
+
+
+def test_applier_no_longer_waits_on_the_dead_locator(bot):
+    src = inspect.getsource(bot.apply_to_jobs)
+    assert '//li[@data-occludable-job-id]' not in src
+    assert "find_job_cards" in src
+
+
 def test_job_card_source_has_no_dead_classes(sources):
     for name, src in sources.items():
         assert "job-card-container__primary-description" not in src, name

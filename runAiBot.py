@@ -28,13 +28,14 @@ csv.field_size_limit(1000000)
 
 from random import choice, shuffle
 from datetime import datetime
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, NoSuchWindowException, ElementNotInteractableException, WebDriverException
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, NoSuchWindowException, ElementNotInteractableException, WebDriverException, TimeoutException
 
 from config.personals import *
 from config.questions import *
@@ -275,8 +276,16 @@ def apply_filters() -> None:
     try:
         recommended_wait = recommended_filter_wait(click_gap)
 
-        # element_to_be_clickable, not presence: the filters button renders before it's usable.
-        wait.until(EC.element_to_be_clickable((By.XPATH, '//button[normalize-space()="All filters"]'))).click()
+        # The React search page sometimes renders the filters directly in a sticky
+        # toolbar, so "All filters" is not guaranteed to exist. Try the known labels,
+        # and if none opens, keep going with whatever controls are already visible.
+        if not wait_xp_click(driver, '//button[normalize-space()="All filters"]', 5):
+            wait_xp_click(
+                driver,
+                '//*[(self::button or self::a) and contains(translate(normalize-space(.), '
+                '"ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "all filters")]',
+                2,
+            )
         buffer(recommended_wait)
 
         wait_span_click(driver, sort_by)
@@ -312,9 +321,24 @@ def apply_filters() -> None:
         multi_sel_noWait(driver, commitments)
         if benefits or commitments: buffer(recommended_wait)
 
-        show_results_button: WebElement = wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(translate(@aria-label, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "apply current filters to show")]')))
-        show_results_button.click()
+        # In the modal this is the commit button. When the React toolbar applies filters
+        # live there is no such button, and results are already on screen.
+        show_results_xpath = (
+            '//button[contains(translate(@aria-label, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", '
+            '"abcdefghijklmnopqrstuvwxyz"), "apply current filters to show")]'
+        )
+        if not wait_xp_click(driver, show_results_xpath, 3):
+            wait_xp_click(
+                driver,
+                '//*[(self::button or self::a) and contains(translate(normalize-space(.), '
+                '"ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "show results")]',
+                2,
+            )
         buffer(3)   # let the results reload settle before anything reads the list
+        # The React filter panel is a native <dialog> and can stay open even though it
+        # applies filters live. Left open it covers the job page and every later click
+        # fails with "Other element would receive the click".
+        dismiss_open_dialogs()
 
         global pause_after_filters
         if pause_after_filters and "Turn off Pause after search" == pyautogui.confirm("These are your configured search results and filter. It is safe to change them while this dialog is open, any changes later could result in errors and skipping this search run.", "Please check your results", ["Turn off Pause after search", "Look's good, Continue"]):
@@ -332,7 +356,22 @@ def get_page_info() -> tuple[WebElement | None, int | None]:
     Function to get pagination element and current page number
     '''
     try:
-        pagination_element = try_find_by_classes(driver, ["jobs-search-pagination__pages", "artdeco-pagination", "artdeco-pagination__pages"])
+        try:
+            pagination_element = try_find_by_classes(driver, [
+                "jobs-search-pagination__pages",
+                "artdeco-pagination",
+                "artdeco-pagination__pages",
+                "jobs-search-pagination",
+            ])
+        except ValueError:
+            # The 2026 React search page no longer guarantees any of those class names.
+            pagination_element = try_xp(
+                driver,
+                "//*[contains(@class,'jobs-search-pagination') or contains(@class,'artdeco-pagination')]",
+                False,
+            )
+            if not pagination_element:
+                raise
         scroll_to_view(driver, pagination_element)
         # ".//" keeps this inside the pagination element; a leading "//" searches the whole document.
         current_page = int(pagination_element.find_element(By.XPATH, ".//button[contains(@class, 'active')]").text)
@@ -342,6 +381,363 @@ def get_page_info() -> tuple[WebElement | None, int | None]:
         current_page = None
         print_lg(e)
     return pagination_element, current_page
+
+
+# ---------------------------------------------------------------------------------
+# Job cards: support every LinkedIn DOM variant seen so far
+# ---------------------------------------------------------------------------------
+# The 2026 React search page renders each card as
+#     <div componentkey="job-card-component-ref-4481055232"> ... </div>
+# with no data-occludable-job-id, no data-job-id, no per-card <a>, and no click handler.
+# The job must be opened by URL: either ?currentJobId=<id> on the search page (keeps the
+# list and filters) or /jobs/view/<id>/. Older and guest pages still expose the classic
+# li[data-occludable-job-id], div[data-job-id] and div[data-entity-urn=urn:li:jobPosting:*].
+JOB_CARD_XPATHS = (
+    "//*[@componentkey and starts-with(@componentkey, 'job-card-component-ref-')]",
+    "//li[@data-occludable-job-id]",
+    "//*[@data-job-id and not(ancestor::*[@data-job-id])]",
+    "//*[@data-entity-urn and starts-with(@data-entity-urn, 'urn:li:jobPosting:') "
+    "and not(ancestor::*[@data-entity-urn])]",
+    "//li[.//a[contains(@href, '/jobs/view/')]]",
+)
+
+JOB_ID_PATTERNS = (
+    re.compile(r'job-card-component-ref-(\d+)'),
+    re.compile(r'urn:li:jobPosting:(\d+)'),
+    re.compile(r'[?&]currentJobId=(\d+)'),
+    re.compile(r'/jobs/view/(?:.*-)?(\d{6,})(?:[/?#]|$)'),
+    # Plain numeric values on data-occludable-job-id / data-job-id.
+    re.compile(r'^\s*(\d{5,})\s*$'),
+)
+
+JOB_TITLE_XPATHS = (
+    ".//div[contains(@class,'artdeco-entity-lockup__title')]//a",
+    ".//a[contains(@class,'job-card-container__link')]",
+    ".//a[contains(@href,'/jobs/view/')]",
+    ".//*[@data-testid='job-card-title']",
+    ".//h3",
+)
+
+JOB_COMPANY_XPATHS = (
+    ".//div[contains(@class,'artdeco-entity-lockup__subtitle')]",
+    ".//*[contains(@class,'job-card-container__company-name')]",
+    ".//h4[contains(@class,'base-search-card__subtitle')]",
+    ".//*[contains(@class,'job-search-card__subtitle')]",
+)
+
+JOB_LOCATION_XPATHS = (
+    ".//ul[contains(@class,'job-card-container__metadata-wrapper')]//span[@dir='ltr']",
+    ".//*[contains(@class,'job-search-card__location')]",
+    ".//*[@data-testid='job-card-location']",
+)
+
+# Detail-pane anchors. `#job-details` and the componentkey are LinkedIn's own stable
+# hooks; the classes after them cover the older Ember render.
+JOB_DETAIL_READY_XPATHS = (
+    "//*[@id='job-details']",
+    "//*[contains(@class,'jobs-description__content')]",
+    "//*[contains(@class,'jobs-box__html-content')]",
+    "//*[starts-with(@componentkey,'JobDetails_AboutTheJob_')]",
+    "//*[contains(@class,'jobs-details__main-content')]",
+    "//*[@id='jobs-apply-button-id']",
+    "//*[contains(@class,'jobs-apply-button')]",
+)
+
+JOB_DESCRIPTION_XPATHS = (
+    "//*[@id='job-details']",
+    "//*[starts-with(@componentkey,'JobDetails_AboutTheJob_')]",
+    "//*[contains(@class,'jobs-description__content')]",
+    "//*[contains(@class,'jobs-box__html-content')]",
+    "//*[contains(@class,'jobs-description-content')]",
+    "//*[contains(@class,'jobs-description')]",
+)
+
+_JOB_CARD_NOISE = re.compile(
+    r'^(?:Applied|Applied on.*|Easy Apply|Actively reviewing applicants|Be an early applicant|'
+    r'Viewed|Saved|Promoted|Promoted by.*|Dismiss .*|Follow|Following|Save|'
+    r'.*\bago\b|.*\bapplicants?\b.*)$',
+    re.IGNORECASE,
+)
+_JOB_WORK_STYLE = re.compile(r'^(Remote|Hybrid|On-?site)$', re.IGNORECASE)
+
+
+def _job_id_from_text(*values: str | None) -> str | None:
+    for value in values:
+        if not value:
+            continue
+        for pattern in JOB_ID_PATTERNS:
+            match = pattern.search(str(value))
+            if match:
+                return match.group(1)
+    return None
+
+
+def get_job_id(job: WebElement) -> str | None:
+    '''
+    Read a job ID from any of the markers LinkedIn has used, newest first.
+    * componentkey="job-card-component-ref-<id>"  (2026 React search page)
+    * data-occludable-job-id / data-job-id        (classic search page)
+    * data-entity-urn="urn:li:jobPosting:<id>"    (guest / SSR cards)
+    * /jobs/view/<id>/ links                      (legacy cards)
+    '''
+    attributes = ("componentkey", "data-occludable-job-id", "data-job-id", "data-entity-urn")
+
+    def from_node(node) -> str | None:
+        try:
+            return _job_id_from_text(*(node.get_attribute(name) for name in attributes))
+        except Exception:
+            return None
+
+    job_id = from_node(job)
+    if job_id:
+        return job_id
+    # Legacy cards carry the id on the outer <li>; React puts the componentkey on an
+    # inner wrapper. Search both directions once.
+    for xpath in (
+        ".//*[@data-job-id or @data-occludable-job-id or @data-entity-urn or @componentkey]",
+        "ancestor::*[@data-occludable-job-id or @data-job-id or @data-entity-urn or @componentkey]",
+    ):
+        try:
+            for node in job.find_elements(By.XPATH, xpath):
+                job_id = from_node(node)
+                if job_id:
+                    return job_id
+        except Exception:
+            pass
+    try:
+        for link in job.find_elements(By.XPATH, ".//a[@href]"):
+            job_id = _job_id_from_text(link.get_attribute("href"))
+            if job_id:
+                return job_id
+    except Exception:
+        pass
+    return None
+
+
+def _is_displayed(element: WebElement) -> bool:
+    try:
+        return element.is_displayed()
+    except Exception:
+        return False
+
+
+def find_job_cards(search_driver: WebDriver | None = None) -> list[WebElement]:
+    '''
+    Return the visible job cards on the current results page, whatever DOM variant
+    LinkedIn served. Variants are tried in order; the first non-empty one wins.
+    '''
+    search_driver = search_driver or driver
+    for xpath in JOB_CARD_XPATHS:
+        try:
+            candidates = search_driver.find_elements(By.XPATH, xpath)
+        except Exception:
+            continue
+        cards = []
+        seen: set[str] = set()
+        for card in candidates:
+            try:
+                if not _is_displayed(card):
+                    continue
+                job_id = get_job_id(card)
+                if not job_id:
+                    continue
+                if job_id in seen:
+                    continue
+                seen.add(job_id)
+                cards.append(card)
+            except Exception:
+                continue
+        if cards:
+            return cards
+    return []
+
+
+def load_more_job_cards() -> bool:
+    '''
+    Nudge the virtualised results list until another card enters the DOM.
+    Returns True when a job ID appeared that was not there before, False when exhausted.
+    '''
+    before = {get_job_id(card) for card in find_job_cards(driver)}
+    cards = find_job_cards(driver)
+    if not cards:
+        return False
+    try:
+        # Put the last rendered card at the top, which renders the next screenful below it.
+        scroll_to_view(driver, cards[-1], True)
+    except Exception:
+        pass
+    buffer(1)
+    if {get_job_id(card) for card in find_job_cards(driver)} - before:
+        return True
+    # React puts the scrollbar on the page shell, not the document. Advance one viewport
+    # at a time instead of jumping to the bottom, which would skip unrendered cards.
+    for xpath in (
+        "//main[@id='workspace']",
+        "//*[@componentkey='SearchResultsMainContent']",
+        "//*[@data-testid='lazy-column']",
+    ):
+        container = try_xp(driver, xpath, False)
+        if not container:
+            continue
+        for _ in range(3):
+            try:
+                driver.execute_script(
+                    "arguments[0].scrollTop += arguments[0].clientHeight;", container)
+                buffer(1)
+            except Exception:
+                break
+            if {get_job_id(card) for card in find_job_cards(driver)} - before:
+                return True
+        break
+    return False
+
+
+def _is_react_job_card(job: WebElement) -> bool:
+    try:
+        if (job.get_attribute("componentkey") or "").startswith("job-card-component-ref-"):
+            return True
+        return any(
+            (node.get_attribute("componentkey") or "").startswith("job-card-component-ref-")
+            for node in job.find_elements(By.XPATH, ".//*[@componentkey]")
+        )
+    except Exception:
+        return False
+
+
+def _first_displayed_in(scope: WebElement, xpaths: tuple[str, ...]) -> WebElement | None:
+    for xpath in xpaths:
+        try:
+            elements = scope.find_elements(By.XPATH, xpath)
+        except Exception:
+            continue
+        for element in elements:
+            if _is_displayed(element):
+                return element
+    return None
+
+
+def _job_card_lines(job: WebElement) -> list[str]:
+    '''Visible text of a card, with LinkedIn's UI badges filtered out.'''
+    try:
+        text = job.text or ""
+    except Exception:
+        return []
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    return [line for line in lines if not _JOB_CARD_NOISE.match(line)]
+
+
+def _card_details_from_lines(lines: list[str], title: str) -> tuple[str, str, str]:
+    '''
+    New React cards have no semantic company/location elements, so parse their text
+    lines. LinkedIn's order is title, company, location (which may also be
+    "Company · Location"). Returns (company, location, work_style).
+    '''
+    rest = list(lines)
+    while rest and rest[0] == title:
+        rest.pop(0)
+    company, location, work_style = "Unknown", "Unknown", "Unknown"
+    if not rest:
+        return company, location, work_style
+
+    first = rest[0]
+    parts = [part.strip() for part in re.split(r'\s*[·•]\s*', first) if part.strip()]
+    if len(parts) > 1:
+        company = parts[0]
+        location = parts[1]
+    else:
+        company = first
+        if len(rest) > 1:
+            location = re.split(r'\s*[·•]\s*', rest[1])[-1].strip()
+
+    for line in rest:
+        style = _JOB_WORK_STYLE.fullmatch(line)
+        if style:
+            work_style = style.group(1)
+            break
+    return company, location, work_style
+
+
+def _job_card_is_applied(job: WebElement) -> bool:
+    for xpath in (
+        ".//*[contains(@class,'job-card-container__footer-job-state')]",
+        ".//*[contains(@class,'job-card-container__footer')]//*",
+    ):
+        try:
+            for element in job.find_elements(By.XPATH, xpath):
+                text = (element.text or "").strip().lower()
+                if text == "applied" or text.startswith("applied on"):
+                    return True
+        except Exception:
+            continue
+    # "Applied" is filtered from _job_card_lines(), so read the raw text here.
+    try:
+        return any(line.strip().lower() in ("applied", "applied on")
+                   for line in (job.text or "").splitlines())
+    except Exception:
+        return False
+
+
+def wait_for_job_details_ready(timeout: float = 10.0) -> bool:
+    '''
+    Wait until the details pane (or the new job-view page) is actually rendered.
+    Returns False instead of raising, so callers can fall back to opening by URL.
+    '''
+    try:
+        WebDriverWait(driver, timeout).until(
+            lambda d: any(d.find_elements(By.XPATH, xpath) for xpath in JOB_DETAIL_READY_XPATHS)
+        )
+        return True
+    except Exception:
+        return False
+
+
+def open_job_by_id(job_id: str) -> None:
+    '''
+    Open a React-variant card. There is no link and clicking the card does nothing, so
+    put ?currentJobId=<id> on the current search URL: that loads the details pane while
+    keeping the results list, filters and pagination in place.
+    '''
+    parts = urlsplit(driver.current_url)
+    if "/jobs/search" in parts.path or "/jobs/search-results" in parts.path:
+        query = dict(parse_qsl(parts.query, keep_blank_values=True))
+        query["currentJobId"] = job_id
+        target = urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query, doseq=True), parts.fragment))
+    else:
+        target = f"https://www.linkedin.com/jobs/view/{job_id}/"
+    logger.info("Opening job %s in the details pane: %s", job_id, target)
+    driver.get(target)
+    wait_for_job_details_ready()
+
+
+def open_job_details(job: WebElement, job_id: str, clickable: WebElement | None) -> None:
+    '''Click the title when the card has a real link, otherwise open the job by URL.'''
+    if clickable is not None:
+        try:
+            scroll_to_view(driver, clickable, True)
+            clickable.click()
+            buffer(click_gap)
+            if wait_for_job_details_ready(3):
+                return
+        except Exception as e:
+            logger.warning("Could not open job %s by clicking its card: %s", job_id, e)
+    open_job_by_id(job_id)
+
+
+def find_job_description_text() -> str:
+    '''
+    Read the About-the-job text using the stable anchors of both the 2026 React detail
+    pane and the older Ember layout. The classic class lookup stays as the final
+    fallback so existing callers/tests keep their contract.
+    '''
+    for xpath in JOB_DESCRIPTION_XPATHS:
+        try:
+            for element in driver.find_elements(By.XPATH, xpath):
+                text = (element.text or "").strip()
+                if text:
+                    return text
+        except Exception:
+            continue
+    return find_by_class(driver, "jobs-box__html-content").text
 
 
 
@@ -357,45 +753,64 @@ def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_j
     * skip: A boolean flag to skip this job
     '''
     skip = False
-    # Every class on a job card that carried data is now a rotating random string, so anchor
-    # on the artdeco lockup structure instead. The title link is no longer the card's first
-    # <a> in every layout either, so address it through the lockup title too.
-    job_details_button = job.find_element(By.XPATH, ".//div[contains(@class,'artdeco-entity-lockup__title')]//a")
-    scroll_to_view(driver, job_details_button, True)
-    job_id = job.get_dom_attribute('data-occludable-job-id')
+    # LinkedIn serves several card layouts. The classic one still has the artdeco lockup
+    # and a title link; the 2026 React one has neither, so read everything from the card's
+    # text lines and open the job by URL. Never key off a rotating class.
+    job_id = get_job_id(job)
+    if not job_id:
+        logger.warning("Could not read a job ID from a search result card; skipping it.")
+        return ("", "Unknown", "Unknown", "Unknown", "Unknown", True)
+
+    title_element = _first_displayed_in(job, JOB_TITLE_XPATHS)
+    scroll_to_view(driver, title_element or job, True)
+
+    card_lines = _job_card_lines(job)
+
     # aria-label is the whole title; .text of the link also drags in the verified-badge node,
     # and slicing at the first "\n" silently ate the last character when there wasn't one.
-    title = job_details_button.get_dom_attribute('aria-label') or job_details_button.text
-    title = title.split("\n")[0].removesuffix(" with verification").strip()
+    if title_element is not None:
+        title = title_element.get_attribute('aria-label') or title_element.text or ""
+    else:
+        title = card_lines[0] if card_lines else "Unknown"
+    title = title.split("\n")[0].removesuffix(" with verification").strip() or "Unknown"
+
+    line_company, line_location, line_work_style = _card_details_from_lines(card_lines, title)
+
     # The subtitle used to read "Company · Location (Style)". It is now the company alone,
     # and the location moved into its own metadata list.
-    company = job.find_element(By.XPATH, ".//div[contains(@class,'artdeco-entity-lockup__subtitle')]").text.strip()
-    location_ele = try_xp(job, ".//ul[contains(@class,'job-card-container__metadata-wrapper')]//span[@dir='ltr']", False)
-    work_location = location_ele.text.strip() if location_ele else "Unknown"
-    work_style = "Unknown"
+    company_element = _first_displayed_in(job, JOB_COMPANY_XPATHS)
+    company = company_element.text.strip() if company_element is not None else ""
+    company = company or line_company
+
+    location_element = _first_displayed_in(job, JOB_LOCATION_XPATHS)
+    work_location = location_element.text.strip() if location_element is not None else ""
+    work_location = work_location or line_location
+    work_style = line_work_style
     if '(' in work_location and ')' in work_location:
         work_style = work_location[work_location.rfind('(')+1:work_location.rfind(')')]
         work_location = work_location[:work_location.rfind('(')].strip()
-    
+
     # Skip if previously rejected due to blacklist or already applied
     if company in blacklisted_companies:
         print_lg(f'Skipping "{title} | {company}" job (Blacklisted Company). Job ID: {job_id}!')
         skip = True
-    elif job_id in rejected_jobs: 
+    elif job_id in rejected_jobs:
         print_lg(f'Skipping previously rejected "{title} | {company}" job. Job ID: {job_id}!')
         skip = True
-    try:
-        if job.find_element(By.CLASS_NAME, "job-card-container__footer-job-state").text == "Applied":
-            skip = True
-            print_lg(f'Already applied to "{title} | {company}" job. Job ID: {job_id}!')
-    except: pass
-    try: 
-        if not skip: job_details_button.click()
-    except Exception as e:
-        logger.warning('Failed to click "%s | %s" job on details button. Job ID: %s!', title, company, job_id)
-        # print_lg(e)
-        discard_job()
-        job_details_button.click() # To pass the error outside
+    if _job_card_is_applied(job):
+        skip = True
+        print_lg(f'Already applied to "{title} | {company}" job. Job ID: {job_id}!')
+
+    if not skip:
+        try:
+            clickable = title_element if title_element is not None and title_element.tag_name == "a" else None
+        except Exception:
+            clickable = None
+        # The React card has no working click target even if a decorative link appears
+        # in some render; always open it by URL so the next iteration still has the list.
+        if _is_react_job_card(job):
+            clickable = None
+        open_job_details(job, job_id, clickable)
     buffer(click_gap)
     return (job_id,title,company,work_location,work_style,skip)
 
@@ -523,13 +938,547 @@ def match_answer_to_option(answer: str | None, option_texts: list[str]) -> int |
     return None
 
 
+# The job details top card is the container the date-posted line lives in. LinkedIn keeps
+# renaming and re-nesting it, so try the known class families, then test ids, then any
+# element that visibly owns the apply button. `None` means "this render has no top card" -
+# callers must cope, because the rest of the job can still be read from the page.
+TOP_CARD_XPATHS = (
+    "//*[contains(@class,'job-details-jobs-unified-top-card')]",
+    "//*[contains(@class,'jobs-unified-top-card')]",
+    "//*[contains(@class,'jobs-details__main-content')]",
+    "//*[contains(@class,'job-details__main-content')]",
+    "//*[@data-testid='job-details-top-card']",
+    "//*[contains(@data-testid,'top-card')]",
+    "//*[starts-with(@componentkey,'JobDetails_TopCard_')]",
+    "//*[starts-with(@componentkey,'JobDetails_') and (.//button[@id='jobs-apply-button-id'] "
+    "or .//*[@data-testid='apply-button'] or .//*[contains(@aria-label,'Easy Apply')])]",
+    "//*[contains(@class,'job-details') and (.//button[@id='jobs-apply-button-id'] "
+    "or .//*[@data-testid='apply-button'] or .//*[contains(@aria-label,'Easy Apply')])]",
+)
+
+# Native modal sheets (the React search page's filter panel is one) that can sit on top of
+# the job page and swallow every click. The Easy Apply modal is deliberately excluded: it
+# is part of the application we are trying to start, not an obstruction.
+DIALOG_XPATHS = (
+    "//dialog[@open]",
+    "//*[@data-testid='dialog' and @open]",
+    "//*[@role='dialog' and not(contains(@class,'jobs-easy-apply-modal'))]",
+)
+
+
+def get_jobs_top_card() -> WebElement | None:
+    '''Return the visible job-details top card, or `None` when this render has none.'''
+    for xpath in TOP_CARD_XPATHS:
+        try:
+            card = driver.find_element(By.XPATH, xpath)
+            try:
+                if not card.is_displayed(): continue
+            except Exception:
+                pass
+            return card
+        except NoSuchElementException:
+            continue
+        except Exception as e:
+            logger.warning('Failed to look up the job top card with xpath "%s": %s', xpath, e)
+    return None
+
+
+def get_time_posted_text(jobs_top_card: WebElement | None) -> str:
+    '''Read the "posted N ago" line, tolerating the top card being absent.'''
+    if jobs_top_card is not None:
+        try:
+            return jobs_top_card.find_element(By.XPATH, './/span[contains(normalize-space(), " ago")]').text
+        except Exception:
+            pass
+    for xpath in (
+        "//*[contains(@class,'job-details-jobs-unified-top-card')]//span[contains(normalize-space(), ' ago')]",
+        "//*[contains(@class,'jobs-unified-top-card')]//span[contains(normalize-space(), ' ago')]",
+        "//*[starts-with(@componentkey,'JobDetails_')]//span[contains(normalize-space(), ' ago')]",
+        "//main//span[contains(normalize-space(), ' ago')]",
+    ):
+        try:
+            element = driver.find_element(By.XPATH, xpath)
+            if element.is_displayed(): return element.text
+        except Exception:
+            continue
+    return ""
+
+
+def _has_displayed(scope, xpath: str) -> bool:
+    '''True when at least one visible element under `scope` matches `xpath`.'''
+    try:
+        return any(element.is_displayed() for element in scope.find_elements(By.XPATH, xpath))
+    except Exception:
+        return False
+
+
+def _is_easy_apply_dialog(dialog: WebElement) -> bool:
+    '''
+    True for the application sheet, including native <dialog> renders without the class.
+
+    The 2026 sheet can label its controls only through their text (`Next`,
+    `Submit application`) and rotating design-system classes. Those texts, plus the
+    Apply-to header / progress region, are stable enough to tell the application sheet
+    apart from the filter or job-details dialogs, which must still be closable.
+    '''
+    try:
+        if "jobs-easy-apply-modal" in (dialog.get_attribute("class") or ""):
+            return True
+    except Exception:
+        pass
+
+    strong_signals = (
+        ".//*[@aria-label='Submit application' or @aria-label='Continue to next step' "
+        "or @aria-label='Review your application' or contains(@aria-label,'job application progress')]",
+        ".//*[self::button or self::span or self::a]"
+        "[normalize-space(.)='Submit application' or normalize-space(.)='Continue to next step']",
+        ".//*[self::h1 or self::h2 or self::h3][starts-with(normalize-space(.), 'Apply to')]",
+        ".//*[contains(normalize-space(.), 'Your job application progress')]",
+    )
+    for xpath in strong_signals:
+        if _has_displayed(dialog, xpath):
+            return True
+
+    # Early steps may expose only "Next" / "Review". Pair that with an application form
+    # so a stray navigation label in another dialog is not mistaken for the apply sheet.
+    has_step_button = (
+        _has_displayed(dialog, ".//*[self::button or self::span or self::a]"
+                               "[normalize-space(.)='Next' or normalize-space(.)='Review']")
+    )
+    has_form_control = any(_has_displayed(dialog, xpath) for xpath in (
+        ".//form",
+        ".//input",
+        ".//select",
+        ".//textarea",
+        ".//*[@data-test-form-element]",
+    ))
+    return has_step_button and has_form_control
+
+
+def _open_dialogs() -> list[WebElement]:
+    '''Visible native modal sheets currently covering the page, minus the Easy Apply modal.'''
+    dialogs: list[WebElement] = []
+    for xpath in DIALOG_XPATHS:
+        try:
+            found = driver.find_elements(By.XPATH, xpath)
+        except Exception:
+            continue
+        for dialog in found:
+            if any(dialog == known for known in dialogs):
+                continue
+            try:
+                if not dialog.is_displayed(): continue
+            except Exception:
+                pass
+            try:
+                if _is_easy_apply_dialog(dialog):
+                    continue
+            except Exception:
+                pass
+            dialogs.append(dialog)
+    return dialogs
+
+
+def _is_inside(element: WebElement | None, container: WebElement) -> bool:
+    '''True when `element` is `container` or one of its descendants.'''
+    if element is None: return False
+    try:
+        return bool(driver.execute_script("return arguments[0].contains(arguments[1]);", container, element))
+    except Exception:
+        pass
+    try:
+        owner_ids = {owner.id for owner in element.find_elements(By.XPATH, "ancestor-or-self::dialog[@open]")}
+        return container.id in owner_ids
+    except Exception:
+        return False
+
+
+def dismiss_open_dialogs(keep: WebElement | None = None, attempts: int = 3) -> bool:
+    '''
+    Close modal sheets covering the job page, without touching `keep`'s own dialog (the
+    apply button may legitimately live inside the open job-details sheet).
+
+    Returns True when none are left. Every click / key press is best-effort: a dialog that
+    refuses to close must never take the run down with it.
+    '''
+    for _ in range(attempts):
+        blocked = [dialog for dialog in _open_dialogs() if not _is_inside(keep, dialog)]
+        if not blocked:
+            return True
+        for dialog in blocked:
+            try:
+                close = dialog.find_element(
+                    By.XPATH,
+                    ".//button[@data-test-modal-close-btn or @aria-label='Dismiss' "
+                    "or @aria-label='Close' or contains(@class,'artdeco-modal__dismiss')]",
+                )
+                if close.is_displayed():
+                    close.click()
+                    continue
+            except Exception:
+                pass
+            try:
+                actions.send_keys(Keys.ESCAPE).perform()
+            except Exception:
+                try:
+                    driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+                except Exception:
+                    pass
+        sleep(0.5)
+    remaining = [dialog for dialog in _open_dialogs() if not _is_inside(keep, dialog)]
+    if remaining:
+        logger.warning("A modal dialog is still covering the job page after trying to close it.")
+    return not remaining
+
+
+def find_apply_button(xpath: str, top_card: WebElement | None = None) -> WebElement | None:
+    '''
+    Locate the apply button, preferring an open job-details sheet and then the job top
+    card over a document-wide search. Without that ordering, the React layout matches an
+    Easy Apply button in the search-results list, which the open details dialog covers.
+    '''
+    scopes: list[WebElement] = []
+    for dialog in _open_dialogs():
+        if not any(dialog == known for known in scopes):
+            scopes.append(dialog)
+    if top_card is None:
+        top_card = get_jobs_top_card()
+    if top_card is not None:
+        scopes.append(top_card)
+    scopes.append(driver)
+
+    for scope in scopes:
+        try:
+            button = scope.find_element(By.XPATH, xpath)
+            if button.is_displayed(): return button
+        except NoSuchElementException:
+            continue
+        except Exception as e:
+            logger.warning('Failed to look up the apply button with xpath "%s": %s', xpath, e)
+    return None
+
+
+def click_apply_button(button: WebElement, attempts: int = 2) -> bool:
+    '''
+    Click an apply button, recovering from an overlay dialog that intercepts the click.
+
+    A normal click is tried first; if something covers the button, any covering dialog is
+    closed (never the one the button belongs to) and the click retried. As a last resort a
+    script click is used: the element is the one we located, so it still applies to the
+    intended job, it just bypasses an overlay that would not go away.
+    '''
+    for attempt in range(attempts):
+        try:
+            scroll_to_view(driver, button)
+            button.click()
+            return True
+        except ElementClickInterceptedException as e:
+            if easy_apply_modal_is_open():
+                # The first click already opened the application sheet; it now covers the
+                # button. Retrying/dismissing would close the very modal we want.
+                logger.info("The apply button is covered by the Easy Apply modal that is already open.")
+                return True
+            logger.warning("The apply button click was intercepted by another element%s.",
+                           "" if attempt + 1 >= attempts else "; closing it and retrying")
+            logger.debug("Intercepted click detail: %s", e)
+            if attempt + 1 >= attempts:
+                break
+            dismiss_open_dialogs(keep=button)
+        except (ElementNotInteractableException, WebDriverException) as e:
+            logger.warning("The apply button could not be clicked normally: %s", e)
+            break
+    try:
+        driver.execute_script("arguments[0].click();", button)
+        return True
+    except Exception as e:
+        logger.warning("Even a script click on the apply button failed: %s", e)
+        return False
+
+
+# About Company anchors. Class names churn every restyle; the heading and LinkedIn's
+# componentkeys survive. The React SDUI page mostly renders this as
+# componentkey="JobDetails_AboutTheCompany_..." or a plain heading inside a div.
+_UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+_LOWERCASE = "abcdefghijklmnopqrstuvwxyz"
+
+
+def _lower_attr(attribute: str) -> str:
+    '''XPath 1.0 expression for a lower-cased attribute value.'''
+    return f"translate(@{attribute}, '{_UPPERCASE}', '{_LOWERCASE}')"
+
+
+def _lower_text(expression: str = ".") -> str:
+    '''XPath 1.0 expression for a lower-cased, whitespace-normalised text value.'''
+    return f"translate(normalize-space({expression}), '{_UPPERCASE}', '{_LOWERCASE}')"
+
+
+# 2026 React renders componentkeys in mixed case, and the page may render the block with
+# none of the old classes at all. Every attribute check is therefore case-insensitive.
+ABOUT_COMPANY_XPATHS = (
+    "//*[contains(@class,'jobs-company__box')]",
+    "//*[contains(@class,'jobs-company')]",
+    f"//*[contains({_lower_attr('componentkey')}, 'aboutthecompany')]",
+    f"//*[contains({_lower_attr('componentkey')}, 'aboutcompany')]",
+    f"//*[contains({_lower_attr('componentkey')}, 'companydescription')]",
+    f"//*[contains({_lower_attr('componentkey')}, 'about_company')]",
+    f"//*[contains({_lower_attr('componentkey')}, 'company_description')]",
+    f"//*[contains({_lower_attr('componentkey')}, 'jobdetails_company')]",
+    f"//*[contains({_lower_attr('data-testid')}, 'about-company')]",
+    f"//*[contains({_lower_attr('data-testid')}, 'about-us')]",
+    f"//*[contains({_lower_attr('data-testid')}, 'company-description')]",
+)
+
+ABOUT_COMPANY_HEADING_XPATH = (
+    "//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6 "
+    "or @role='heading']"
+    f"[contains({_lower_text()}, 'about the company')]"
+)
+
+# Short wrappers (e.g. <span>About the company</span>) are headings too. Excluding long
+# nodes stops this matching a whole container that merely mentions the phrase.
+ABOUT_COMPANY_TITLE_XPATH = (
+    "//*[(self::div or self::span or self::p or self::strong or self::b) and "
+    f"contains({_lower_text()}, 'about the company') and "
+    "string-length(normalize-space(.)) < 80]"
+)
+
+OTHER_SECTION_MARKERS = (
+    "about the job",
+    "job description",
+    "similar jobs",
+    "people also viewed",
+    "jobs you may like",
+    "your profile and resume",
+    "see how you compare",
+    "people you can reach out",
+    "meet the hiring team",
+    "set alert for similar jobs",
+)
+
+
+def _first_displayed(xpath: str) -> WebElement | None:
+    '''First visible element matching `xpath`, or None.'''
+    try:
+        for element in driver.find_elements(By.XPATH, xpath):
+            try:
+                if element.is_displayed(): return element
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return None
+
+
+def _about_company_heading() -> WebElement | None:
+    for xpath in (ABOUT_COMPANY_HEADING_XPATH, ABOUT_COMPANY_TITLE_XPATH):
+        element = _first_displayed(xpath)
+        if element is not None:
+            return element
+    return None
+
+
+def find_about_company_section() -> WebElement | None:
+    '''
+    Return the container holding the "About the company" text, or None.
+
+    The 2026 React details page does not reliably use `jobs-company__box` or even a
+    `<section>` around this block. Anchors are tried first; if none match, the
+    "About the company" heading is located and its parents are climbed until the node also
+    contains the description - but never past another section heading, because scanning
+    the whole job-details pane would run the blacklist over the job description too.
+    '''
+    for xpath in ABOUT_COMPANY_XPATHS:
+        element = _first_displayed(xpath)
+        if element is not None:
+            return element
+
+    heading = _about_company_heading()
+    if heading is not None:
+        return _climb_to_about_company_container(heading)
+    return None
+
+
+def _climb_to_about_company_container(heading: WebElement) -> WebElement:
+    '''
+    Grow the heading into the smallest ancestor that still holds company copy only.
+
+    Stops as soon as the ancestor also owns another section ("About the job", "People you
+    can reach out to", ...) so the blacklist never runs over the job description.
+    '''
+    try:
+        heading_low = (heading.text or "").strip().lower()
+    except Exception:
+        heading_low = ""
+    heading_low = heading_low or "about the company"
+
+    node = heading
+    best = heading
+    for _ in range(5):
+        try:
+            parent = node.find_element(By.XPATH, "..")
+        except Exception:
+            break
+        try:
+            text = (parent.text or "").strip()
+        except Exception:
+            break
+        if not text:
+            break
+        low = text.lower()
+        if "about the company" not in low:
+            break
+        extra = low.replace(heading_low, "", 1).strip()
+        # Crossed into a sibling section (the parent now owns About the job too).
+        if any(marker in extra for marker in OTHER_SECTION_MARKERS):
+            break
+        best = parent
+        if len(extra) > 30:
+            break
+        node = parent
+    return best
+
+
+# Last-resort text extraction. Runs only when no element could be identified, and works
+# from the raw DOM text nodes, so it does not depend on class names, componentkeys or even
+# the block being a `<section>`. It cuts the company copy at the next section heading.
+_ABOUT_COMPANY_TEXT_JS = r"""
+const needle = 'about the company';
+const stopMarkers = [
+    'about the job', 'job description', 'similar jobs', 'people also viewed',
+    'jobs you may like', 'your profile and resume', 'see how you compare',
+    'people you can reach out', 'meet the hiring team', 'set alert for similar jobs',
+    'skills associated with'
+];
+const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+let node;
+while ((node = walker.nextNode())) {
+    const own = (node.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    if (own !== needle && own !== needle + ':') continue;
+
+    // Climb until the block has copy beyond the heading itself, then cut at the next
+    // known heading so the job description is never included.
+    let element = node.parentElement;
+    let text = '';
+    for (let depth = 0; depth < 8 && element; depth++) {
+        text = (element.innerText || '').trim();
+        if (text.toLowerCase().indexOf(needle) !== -1 && text.length > own.length + 30) break;
+        element = element.parentElement;
+    }
+    if (!element || !text) continue;
+
+    let body = text.slice(text.toLowerCase().indexOf(needle) + needle.length).trim();
+    const low = body.toLowerCase();
+    let cut = body.length;
+    for (const marker of stopMarkers) {
+        const at = low.indexOf(marker);
+        if (at !== -1 && at < cut) cut = at;
+    }
+    body = body.slice(0, cut).trim();
+    if (body.length > 20) return body;
+}
+return null;
+"""
+
+
+def _about_company_text_via_js() -> str | None:
+    '''Extract the About Company copy straight from the DOM text, or None.'''
+    try:
+        text = driver.execute_script(_ABOUT_COMPANY_TEXT_JS)
+    except Exception:
+        return None
+    if not isinstance(text, str):
+        return None
+    text = text.strip()
+    return text or None
+
+
+def _read_about_company() -> str | None:
+    '''Text of the About Company section, by element first and by DOM text second.'''
+    section = find_about_company_section()
+    if section is not None:
+        try: scroll_to_view(driver, section)
+        except Exception: pass
+        try:
+            text = (section.text or "").strip()
+        except Exception:
+            text = ""
+        # A heading-only match is not the section; let the text fallback find the copy.
+        if text and text.lower() not in ("about the company", "about the company:"):
+            return text
+    return _about_company_text_via_js()
+
+
+def _scroll_job_details_to_bottom() -> None:
+    '''
+    Scroll the details pane (and window) down so a lazily rendered company card can mount.
+
+    The search page scrolls the right-hand details container, not the window, and the
+    left results list must not be touched: its React cards are virtualised, so scrolling
+    it would unmount the cards still queued for this run.
+    '''
+    try:
+        driver.execute_script(
+            """
+            const isScrollable = el => {
+                if (!el || el === document.body || el === document.documentElement) return false;
+                const style = window.getComputedStyle(el);
+                return /(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight + 20;
+            };
+            const scrollAncestors = el => {
+                let node = el;
+                for (let hops = 0; node && node !== document.body && hops < 12; hops++) {
+                    if (isScrollable(node)) node.scrollTop = node.scrollHeight;
+                    node = node.parentElement;
+                }
+            };
+            const roots = document.querySelectorAll(
+                '#job-details, [data-testid="job-details"], [class*="job-details"],' +
+                '[class*="jobs-details"], [class*="scaffold-layout__detail"]');
+            for (const root of roots) scrollAncestors(root);
+
+            // The pane holding "About the job" is the one that must reveal the company card.
+            for (const el of document.querySelectorAll('h2, h3, div, span')) {
+                if ((el.textContent || '').trim().toLowerCase() !== 'about the job') continue;
+                scrollAncestors(el);
+                break;
+            }
+            window.scrollTo(0, document.body.scrollHeight);
+            """
+        )
+    except Exception:
+        pass
+
+
 # Function to check for Blacklisted words in About Company
-def check_blacklist(rejected_jobs: set, job_id: str, company: str, blacklisted_companies: set) -> tuple[set, set, WebElement] | ValueError:
-    jobs_top_card = try_find_by_classes(driver, ["job-details-jobs-unified-top-card__primary-description-container","job-details-jobs-unified-top-card__primary-description","jobs-unified-top-card__primary-description","jobs-details__main-content"])
-    about_company_org = find_by_class(driver, "jobs-company__box")
-    scroll_to_view(driver, about_company_org)
-    about_company_org = about_company_org.text
-    about_company = about_company_org.lower()
+def check_blacklist(rejected_jobs: set, job_id: str, company: str, blacklisted_companies: set) -> tuple[set, set, WebElement | None]:
+    jobs_top_card = get_jobs_top_card()
+    about_company_text = _read_about_company()
+    # The company card is often lazily rendered below the job description. Scroll and
+    # re-check a couple of times before declaring the section absent.
+    if not about_company_text:
+        for _ in range(2):
+            _scroll_job_details_to_bottom()
+            sleep(0.8)
+            about_company_text = _read_about_company()
+            if about_company_text:
+                break
+    if not about_company_text:
+        # Last line of defence: the configured words are documented to include company
+        # names, so test the company we already read even when LinkedIn never rendered
+        # the company card on this pane.
+        company_low = (company or "").lower()
+        if not any(word.lower() in company_low for word in about_company_good_words):
+            word = find_bad_word(company or "", about_company_bad_words)
+            if word:
+                rejected_jobs.add(job_id)
+                blacklisted_companies.add(company)
+                raise ValueError(f'\n"{company}"\n\nContains "{word}".')
+        logger.warning("About Company section not found; skipping company blacklist check.")
+        if jobs_top_card is not None:
+            try: scroll_to_view(driver, jobs_top_card)
+            except Exception: pass
+        return rejected_jobs, blacklisted_companies, jobs_top_card
+    about_company = about_company_text.lower()
     skip_checking = False
     for word in about_company_good_words:
         if word.lower() in about_company:
@@ -537,13 +1486,15 @@ def check_blacklist(rejected_jobs: set, job_id: str, company: str, blacklisted_c
             skip_checking = True
             break
     if not skip_checking:
-        word = find_bad_word(about_company_org, about_company_bad_words)
+        word = find_bad_word(about_company_text, about_company_bad_words)
         if word:
             rejected_jobs.add(job_id)
             blacklisted_companies.add(company)
-            raise ValueError(f'\n"{about_company_org}"\n\nContains "{word}".')
+            raise ValueError(f'\n"{about_company_text}"\n\nContains "{word}".')
     buffer(click_gap)
-    scroll_to_view(driver, jobs_top_card)
+    if jobs_top_card is not None:
+        try: scroll_to_view(driver, jobs_top_card)
+        except Exception: pass
     return rejected_jobs, blacklisted_companies, jobs_top_card
 
 
@@ -586,7 +1537,7 @@ def get_job_description(
     skipMessage = None
     try:
         found_masters = 0
-        jobDescription = find_by_class(driver, "jobs-box__html-content").text
+        jobDescription = find_job_description_text()
         jobDescriptionLow = jobDescription.lower()
         bad_word = find_bad_word(jobDescription, bad_words)
         if bad_word:
@@ -973,9 +1924,14 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
 
 
 
-# The apply button, Easy Apply or external. `id` is stable and semantic; the class is the
-# fallback for older renders. Never the design-system size token (artdeco-button--<n>).
-apply_button_xpath = ".//button[@id='jobs-apply-button-id' or contains(@class,'jobs-apply-button')]"
+# The apply button, Easy Apply or external. `id` is stable and semantic; the class,
+# data-testid and aria-label are fallbacks for newer renders. Never the design-system
+# size token (artdeco-button--<n>).
+apply_button_xpath = (
+    ".//*[(self::button or self::a) and (@id='jobs-apply-button-id' "
+    "or contains(@class,'jobs-apply-button') or @data-testid='apply-button' "
+    "or contains(@aria-label,'Easy Apply') or normalize-space(.)='Easy Apply')]"
+)
 
 def external_apply(pagination_element: WebElement, job_id: str, job_link: str, resume: str, date_listed, application_link: str, screenshot_name: str) -> tuple[bool, str, int]:
     '''
@@ -1015,12 +1971,28 @@ def external_apply(pagination_element: WebElement, job_id: str, job_link: str, r
 
 
 
-# Easy Apply modal buttons. All of these are `type="button"`, so type is no help, and all of
-# them must be searched INSIDE the dialog: document-wide, "Next" also matches the search
-# results pagination control (aria-label "View next page").
-next_button_xpath = './/button[@aria-label="Continue to next step" or contains(normalize-space(.), "Next")]'
-review_button_xpath = './/button[@aria-label="Review your application" or normalize-space(.)="Review"]'
-submit_button_xpath = './/button[@aria-label="Submit application" or normalize-space(.)="Submit application"]'
+# Easy Apply modal buttons. The 2026 React sheet may put the clickable text on a bare
+# `<span>` instead of a `<button>`, so match either - but only on the exact label, because
+# a parent span's text can contain several steps at once. All lookups stay INSIDE the
+# dialog: document-wide, "Next" also matches the search results pagination control.
+next_button_xpath = (
+    './/*[(self::button or self::span or self::a) and ('
+    '@aria-label="Continue to next step" or '
+    'translate(normalize-space(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", '
+    '"abcdefghijklmnopqrstuvwxyz")="next")]'
+)
+review_button_xpath = (
+    './/*[(self::button or self::span or self::a) and ('
+    '@aria-label="Review your application" or '
+    'translate(normalize-space(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", '
+    '"abcdefghijklmnopqrstuvwxyz")="review")]'
+)
+submit_button_xpath = (
+    './/*[(self::button or self::span or self::a) and ('
+    '@aria-label="Submit application" or '
+    'translate(normalize-space(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", '
+    '"abcdefghijklmnopqrstuvwxyz")="submit application")]'
+)
 
 # Easy Apply detection strategies, tried in order, most stable signal first. The button also
 # still says "Easy Apply" in its aria-label - the widely repeated claim that LinkedIn dropped
@@ -1031,8 +2003,11 @@ easy_apply_locators = [
     ("apply button id", ".//button[@id='jobs-apply-button-id']"),
     # ponytail: not seen in the captured DOM, kept as a cheap extra shot before the classes.
     ("in-app apply URL flag", ".//a[contains(@href, 'openSDUIApplyFlow=true')]"),
+    ("apply button test id", ".//button[@data-testid='apply-button']"),
     ("aria-label", ".//button[contains(@class,'jobs-apply-button') and contains(@aria-label, 'Easy Apply')]"),
+    ("easy apply aria-label", ".//button[contains(@aria-label, 'Easy Apply')]"),
     ("button label", ".//button[contains(@class,'jobs-apply-button')][.//span[contains(normalize-space(.), 'Easy Apply')]]"),
+    ("easy apply text", ".//button[normalize-space(.)='Easy Apply']"),
     ("apply button", apply_button_xpath),
 ]
 
@@ -1120,10 +2095,50 @@ def submitted_jobs(job_id: str, title: str, company: str, work_location: str, wo
 # `data-control-name` is the language-independent anchor; the text is the fallback.
 discard_button_xpath = ".//button[@data-control-name='discard_application_confirm_btn' or contains(normalize-space(.), 'Discard')]"
 
+EASY_APPLY_MODAL_XPATHS = (
+    "//*[contains(@class,'jobs-easy-apply-modal')]",
+    "//dialog[@open]",
+    "//*[@data-testid='dialog' and @open]",
+    "//*[@role='dialog']",
+    "//*[contains(@class,'artdeco-modal')]",
+)
+
+
+def _visible_easy_apply_modal() -> WebElement | None:
+    '''Return the visible Easy Apply dialog, whatever markup LinkedIn rendered it with.'''
+    seen: list[WebElement] = []
+    for xpath in EASY_APPLY_MODAL_XPATHS:
+        try:
+            candidates = driver.find_elements(By.XPATH, xpath)
+        except Exception:
+            continue
+        for modal in candidates:
+            if any(modal == known for known in seen):
+                continue
+            seen.append(modal)
+            try:
+                if modal.is_displayed() and _is_easy_apply_dialog(modal):
+                    return modal
+            except Exception:
+                continue
+    return None
+
+
 def easy_apply_modal_is_open() -> bool:
     '''True while an Easy Apply modal is still on screen and swallowing every click.'''
-    try: return any(m.is_displayed() for m in driver.find_elements(By.CLASS_NAME, "jobs-easy-apply-modal"))
-    except Exception: return False
+    return _visible_easy_apply_modal() is not None
+
+
+def find_easy_apply_modal(timeout: float = 5.0) -> WebElement:
+    '''Wait for and return the visible Easy Apply dialog, whatever its class names are.'''
+    deadline = time.time() + timeout
+    while True:
+        modal = _visible_easy_apply_modal()
+        if modal is not None:
+            return modal
+        if time.time() >= deadline:
+            raise TimeoutException("Timed out waiting for the Easy Apply modal.")
+        sleep(0.25)
 
 # Function to discard the job application
 def discard_job() -> None:
@@ -1136,13 +2151,106 @@ def discard_job() -> None:
     dialog animation (2s was too short), click Discard, and verify the modal is gone.
     ESCAPE stays as the fallback.
     '''
-    for dismiss in (lambda: try_xp(driver, ".//button[@data-test-modal-close-btn]"),
+    for dismiss in (lambda: try_xp(driver, ".//button[@data-test-modal-close-btn or @aria-label='Dismiss' or @aria-label='Close']"),
                     lambda: actions.send_keys(Keys.ESCAPE).perform()):
         try: dismiss()
         except Exception as e: logger.warning("Couldn't dismiss the application modal. %s", e)
         wait_xp_click(driver, discard_button_xpath, 5)
         if not easy_apply_modal_is_open(): return
     logger.warning("The Easy Apply modal is still open after trying to discard it.")
+
+
+# Phrases LinkedIn uses on the sheet shown after a successful Easy Apply submission.
+APPLICATION_SENT_TERMS = (
+    "your application was sent",
+    "your application has been sent",
+    "your application was submitted",
+    "your application has been submitted",
+    "application sent to",
+    "application was sent to",
+)
+
+
+def application_sent_confirmation() -> WebElement | None:
+    '''Return the visible "Your application was sent to ..." sheet, or None.'''
+    seen: list[WebElement] = []
+    for xpath in (
+        "//dialog[@open]",
+        "//*[@data-testid='dialog' and @open]",
+        "//*[@role='dialog']",
+        "//*[contains(@class,'artdeco-modal')]",
+        "//*[contains(@class,'jobs-easy-apply-modal')]",
+    ):
+        try:
+            candidates = driver.find_elements(By.XPATH, xpath)
+        except Exception:
+            continue
+        for dialog in candidates:
+            if any(dialog == known for known in seen):
+                continue
+            seen.append(dialog)
+            try:
+                if not dialog.is_displayed():
+                    continue
+                text = (dialog.text or "").lower()
+            except Exception:
+                continue
+            if any(term in text for term in APPLICATION_SENT_TERMS):
+                return dialog
+    return None
+
+
+def close_application_confirmation(timeout: float = 6.0) -> bool:
+    '''
+    Wait for the post-submit "Your application was sent to <company>" sheet, then close it
+    with its Done/Dismiss button (ESCAPE as fallback) and verify it is gone.
+
+    This used to be a document-wide search for a "Done" span. The React confirmation sheet
+    does not always render one, so a submitted application could leave a modal open that
+    then swallowed clicks for the next job. Returns True when no confirmation is left.
+    '''
+    deadline = time.time() + timeout
+    dialog = None
+    while time.time() < deadline:
+        dialog = application_sent_confirmation()
+        if dialog is not None:
+            break
+        sleep(0.25)
+
+    if dialog is None:
+        # Older flow: a plain "Done" button and no message we recognise as the confirmation.
+        if wait_span_click(driver, "Done", 1):
+            return True
+        return not easy_apply_modal_is_open()
+
+    clicked = False
+    for xpath in (
+        ".//button[normalize-space(.)='Done' or normalize-space(.)='Dismiss']",
+        ".//button[@aria-label='Done' or @aria-label='Dismiss' or @aria-label='Close']",
+        ".//button[@data-test-modal-close-btn]",
+    ):
+        try:
+            button = dialog.find_element(By.XPATH, xpath)
+            if button.is_displayed():
+                button.click()
+                clicked = True
+                break
+        except Exception:
+            continue
+    if not clicked:
+        try: actions.send_keys(Keys.ESCAPE).perform()
+        except Exception: pass
+
+    for _ in range(4):
+        sleep(0.5)
+        if application_sent_confirmation() is None:
+            return True
+        try: actions.send_keys(Keys.ESCAPE).perform()
+        except Exception: pass
+    logger.warning('The "Your application was sent" confirmation is still on screen.')
+    if application_sent_confirmation() is not None:
+        dismiss_open_dialogs()
+    return application_sent_confirmation() is None
 
 
 def questions_are_stalled(previous_blocked: set | None) -> bool:
@@ -1178,22 +2286,33 @@ def apply_to_jobs(search_terms: list[str]) -> None:
         current_count = 0
         try:
             while current_count < switch_number:
-                # Wait until job listings are loaded
-                wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[@data-occludable-job-id]")))
+                # Wait until job listings are loaded. LinkedIn has used several card
+                # layouts; `find_job_cards` knows each of them.
+                wait.until(lambda d: bool(find_job_cards(d)))
 
                 pagination_element, current_page = get_page_info()
 
                 # Find all job listings in current page
                 buffer(3)
-                job_index = 0
+                # Opening a React card reloads the search URL, so an index would point at
+                # the wrong card after the reload. Track the IDs already handled instead.
+                processed_job_ids: set[str] = set()
                 while True:
-                    # LinkedIn virtualises this list: off-screen <li>s aren't in the DOM yet and
-                    # rendered ones go stale as we scroll, so a single snapshot only ever gets
-                    # one screenful. Re-query each time instead of holding that snapshot.
-                    job_listings = driver.find_elements(By.XPATH, "//li[@data-occludable-job-id]")
-                    if job_index >= len(job_listings): break
-                    job = job_listings[job_index]
-                    job_index += 1
+                    # LinkedIn virtualises this list: off-screen cards aren't in the DOM yet
+                    # and rendered ones go stale as we scroll, so re-query each time.
+                    job_listings = find_job_cards(driver)
+                    job = None
+                    job_id = None
+                    for candidate in job_listings:
+                        candidate_id = get_job_id(candidate)
+                        if candidate_id and candidate_id not in processed_job_ids:
+                            job, job_id = candidate, candidate_id
+                            break
+                    if job is None:
+                        if not load_more_job_cards():
+                            break
+                        continue
+                    processed_job_ids.add(job_id)
                     if keep_screen_awake: pyautogui.press('shiftright')
                     if current_count >= switch_number: break
                     print_lg("\n-@-\n")
@@ -1265,7 +2384,9 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     try:
                         # try: time_posted_text = find_by_class(driver, "jobs-unified-top-card__posted-date", 2).text
                         # except: 
-                        time_posted_text = jobs_top_card.find_element(By.XPATH, './/span[contains(normalize-space(), " ago")]').text
+                        time_posted_text = get_time_posted_text(jobs_top_card)
+                        if not time_posted_text:
+                            raise ValueError("No time-posted text found on the job page")
                         print("Time Posted: " + time_posted_text)
                         if time_posted_text.__contains__("Reposted"):
                             reposted = True
@@ -1293,15 +2414,42 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                             skills = "Error extracting skills"
 
                     uploaded = False
+                    # A modal left behind by a previous job would cover this job's apply
+                    # button and make the click land on the stale application instead.
+                    if easy_apply_modal_is_open():
+                        logger.warning("An Easy Apply modal was left open from the previous job; discarding it first.")
+                        discard_job()
                     # Is this an Easy Apply job? Try each locator in `easy_apply_locators` in
                     # turn and confirm by the modal opening; a new browser tab means external.
+                    # The React search page can leave its filter sheet open as a native
+                    # <dialog>, which covers the apply button; look for the button inside the
+                    # job top card / open sheet first and recover from an intercepted click.
                     is_easy_apply = False
+                    easy_apply_button_seen = False
+                    apply_top_card = get_jobs_top_card()
                     for how, xpath in easy_apply_locators:
-                        apply_button = try_xp(driver, xpath, False)  # detect only, never click
+                        if easy_apply_modal_is_open():
+                            is_easy_apply = True
+                            print_lg("Easy Apply modal is already open.")
+                            break
+                        apply_button = find_apply_button(xpath, apply_top_card)
                         if not apply_button: continue
+                        tabs_open = len(driver.window_handles)
                         try:
-                            tabs_open = len(driver.window_handles)
-                            apply_button.click()
+                            button_label = " ".join(
+                                str(apply_button.get_attribute(name) or "") for name in ("id", "aria-label")
+                            ).lower()
+                        except Exception:
+                            button_label = ""
+                        try: button_label += " " + (apply_button.text or "").lower()
+                        except Exception: pass
+                        if "easy apply" in button_label or "jobs-apply-button-id" in button_label:
+                            easy_apply_button_seen = True
+                        if not click_apply_button(apply_button):
+                            print_lg(f"Easy Apply check '{how}' didn't pan out: the apply button stayed covered.")
+                            dismiss_open_dialogs(keep=apply_button)
+                            continue
+                        try:
                             buffer(click_gap)
                             if len(driver.window_handles) > tabs_open:
                                 # A new tab opened -> external apply. Close it and return to LinkedIn.
@@ -1311,23 +2459,40 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                 driver.switch_to.window(linkedIn_tab)
                                 print_lg(f"A new tab opened ({how}) - external application.")
                                 break
-                            find_by_class(driver, "jobs-easy-apply-modal", 3)
-                            is_easy_apply = True
-                            print_lg(f"Easy Apply detected ({how}).")
-                            break
+                            # The application sheet can render a beat after the click.
+                            try: find_easy_apply_modal(3)
+                            except Exception: pass
+                            if easy_apply_modal_is_open():
+                                is_easy_apply = True
+                                print_lg(f"Easy Apply detected ({how}).")
+                                break
+                            print_lg(f"Easy Apply check '{how}' didn't open the application modal.")
                         except Exception as e:
                             print_lg(f"Easy Apply check '{how}' didn't pan out.", e)
                             # Dismiss whatever popped up and let the next strategy try.
                             try: actions.send_keys(Keys.ESCAPE).perform()
                             except: pass
+                    if not is_easy_apply and easy_apply_button_seen:
+                        # The control we found is an Easy Apply button, but the flow never
+                        # opened. Falling through to external_apply would click it again and
+                        # record a non-existent external job, so skip it explicitly.
+                        logger.warning("The Easy Apply button was found but the application dialog never opened; "
+                                       "skipping the job instead of treating it as external.")
+                        failed_job(job_id, job_link, resume, date_listed, "Easy Apply dialog did not open",
+                                   Exception("Easy Apply button did not open the application flow"),
+                                   application_link, screenshot_name)
+                        failed_count += 1
+                        dismiss_open_dialogs()
+                        continue
                     if is_easy_apply:
                         try: 
-                            # Bound before the try: the finally below scopes its clicks to the
-                            # modal, and an unbound name in there would replace the real failure.
-                            modal = driver
+                            # The 2026 apply sheet is not guaranteed to carry
+                            # `jobs-easy-apply-modal`, so bind the same dialog the detection
+                            # just found and scope every step/Review/Submit lookup to it.
+                            modal = None
                             try:
                                 errored = ""
-                                modal = find_by_class(driver, "jobs-easy-apply-modal")
+                                modal = find_easy_apply_modal(5)
                                 wait_xp_click(modal, next_button_xpath, 1)
                                 resume = "Previous resume"
                                 next_button = True
@@ -1366,6 +2531,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                     buffer(click_gap)
 
                             except NoSuchElementException: errored = "nose"
+                            except TimeoutException: errored = "nose"
                             finally:
                                 # Nothing in here may raise: an exception raised in a finally
                                 # REPLACES the pending one, which is why every failure used to be
@@ -1375,7 +2541,8 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                 if questions_list and errored != "stuck": 
                                     print_lg("Answered the following questions...", questions_list)
                                     print("\n\n" + "\n".join(str(question) for question in questions_list) + "\n\n")
-                                wait_xp_click(modal, review_button_xpath, 1, scrollTop=True)
+                                if modal is not None:
+                                    wait_xp_click(modal, review_button_xpath, 1, scrollTop=True)
                                 cur_pause_before_submit = pause_before_submit
                                 if errored == "stuck":
                                     discard_reason = "Required questions left unanswered."
@@ -1387,19 +2554,24 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                     if decision == "Discard Application": discard_reason = "Job application discarded by user!"
                                     else: pause_before_submit = False if "Disable Pause" == decision else True
                                     # try_xp(modal, ".//span[normalize-space(.)='Review']")
+                                if not discard_reason and modal is None:
+                                    discard_reason = "Easy Apply modal did not open"
                                 if not discard_reason:
                                     follow_company(modal)
                                     if wait_xp_click(modal, submit_button_xpath, 2, scrollTop=True): 
                                         date_applied = datetime.now()
-                                        if not wait_span_click(driver, "Done", 2): actions.send_keys(Keys.ESCAPE).perform()
+                                        # Close "Your application was sent to <company>" before
+                                        # moving on; an open sheet intercepts the next job's clicks.
+                                        if not close_application_confirmation():
+                                            logger.warning("Submitted the application, but its confirmation dialog could not be closed.")
                                     elif errored != "stuck" and cur_pause_before_submit and "Yes" in pyautogui.confirm("You submitted the application, didn't you 😒?", "Failed to find Submit Application!", ["Yes", "No"]):
                                         date_applied = datetime.now()
-                                        wait_span_click(driver, "Done", 2)
+                                        close_application_confirmation()
                                     else:
                                         logger.warning("Since, Submit Application failed, discarding the job application...")
-                                        # if screenshot_name == "Not Available":  screenshot_name = screenshot(driver, job_id, "Failed to click Submit application")
-                                        # else:   screenshot_name = [screenshot_name, screenshot(driver, job_id, "Failed to click Submit application")]
-                                        if errored == "nose": discard_reason = "Failed to click Submit application 😑"
+                                        # Reached here means the Submit click never landed, so the
+                                        # job must not be recorded as applied.
+                                        discard_reason = "Failed to click Submit application 😑"
                             # Outside the finally, so this only runs when no real exception is
                             # already on its way up - it can't destroy the genuine cause any more.
                             if discard_reason: raise Exception(discard_reason)
@@ -1446,7 +2618,9 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
 
 
-                # Switching to next page
+                # Switching to next page. Re-query: opening a React job reloads the search
+                # page, which makes the element captured before the inner loop stale.
+                pagination_element, current_page = get_page_info()
                 if pagination_element == None:
                     print_lg("Couldn't find pagination element, probably at the end page of results!")
                     break

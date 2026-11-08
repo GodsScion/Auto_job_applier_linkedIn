@@ -1,0 +1,27 @@
+<!--
+  2026 React search-results job card.
+
+  This is the layout that broke the old locator:
+    * no data-occludable-job-id (or data-job-id) on the card
+    * no per-card <a>, so there is nothing to click
+    * the only stable marker is componentkey="job-card-component-ref-<jobId>"
+
+  The bot must read the id from componentkey and open the job by URL.
+-->
+<div componentkey="job-card-component-ref-4481055232"
+     class="f3e4a8b1 artdeco-card display-flex flex-column">
+  <div class="ab12cd34">
+    <span dir="ltr">Java Developer - Workplace Services Engineering</span>
+  </div>
+  <div class="ef56gh78">
+    <span dir="ltr">Charles Schwab</span>
+  </div>
+  <div class="ij90kl12">
+    <span dir="ltr">Austin, Texas, United States (Hybrid)</span>
+  </div>
+  <div class="mn34op56">
+    <span>Actively reviewing applicants</span>
+    <span>Easy Apply</span>
+  </div>
+  <button aria-label="Dismiss Java Developer - Workplace Services Engineering job">Dismiss</button>
+</div>
